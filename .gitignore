@@ -1,0 +1,63 @@
+# ==========================================
+# LaTeX Build Directory
+# ==========================================
+
+/build/*
+!/build/.gitkeep
+# Everyone who clones the repository already has a build/ directory.
+
+# ==========================================
+# TeXstudio
+# ==========================================
+
+*.txss
+*.txss2
+
+# ==========================================
+# Backup / Temporary Files
+# ==========================================
+
+*.bak
+*.backup
+*.tmp
+*.swp
+*.swo
+*~
+
+# ==========================================
+# Operating System
+# ==========================================
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==========================================
+# IDE
+# ==========================================
+
+.vscode/
+.idea/
+
+# ==========================================
+# Generated (should be covered by /build/, but just in case)
+# ==========================================
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.lot
+*.nav
+*.out
+*.run.xml
+*.snm
+*.synctex.gz
+*.toc
+*.vrb
+*.xdv
+*.dvi
+*.ps

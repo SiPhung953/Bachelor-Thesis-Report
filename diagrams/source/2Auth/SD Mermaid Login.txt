@@ -1,0 +1,64 @@
+%%{init: {
+  "theme": "redux",
+  "themeVariables": {
+    "fontFamily": "Times New Roman, serif"
+  },
+  "sequence": {
+    "wrap": true,
+    "width": 200,
+    "height": 65,
+    "actorMargin": 100,
+    "messageFontSize": 18,
+    "actorFontSize": 14,
+    "noteFontSize": 16,
+    "messageMargin": 50,
+    "activationWidth": 12,
+    "diagramMarginX": 30,
+    "diagramMarginY": 30,
+    "useMaxWidth": true
+  }
+}}%%
+
+sequenceDiagram
+    actor Guest as : Guest
+    participant FrontendUI as «boundary»<br/>: Frontend UI
+    participant AuthController as «control»<br/>: AuthController
+    participant AuthService as «service»<br/>: AuthService
+    participant PasswordHasher as «utility»<br/>: PasswordHasher
+    participant PrismaClient as «persistence»<br/>: PrismaClient
+    participant Database as «database»<br/>: Database
+
+    Guest->>+FrontendUI: 1 : Enter login credentials
+    FrontendUI->>+AuthController: 2 : login(credentials)
+    AuthController->>+AuthService: 3 : authenticateUser(credentials)
+    
+    AuthService->>+PrismaClient: 4 : findUserByEmail(email)
+    PrismaClient-->>+Database: 5: fetchUser(email)
+    Database-->>-PrismaClient: 6 : user
+    PrismaClient-->>AuthService: 7: user
+    
+    alt Condition: User doesn't exist
+        AuthService-->>AuthController: 8 : return authenticationError
+        AuthController-->>FrontendUI: 9 : HTTP 401 Unauthorized
+        FrontendUI-->>Guest: 10 : Display "Invalid username or password"
+    
+    else Condition: Wrong password
+        AuthService->>+PasswordHasher: 8 : verifyPassword(password, storedHash)
+        PasswordHasher-->>AuthService: 9 : false
+        AuthService-->>AuthController: 10 : return authenticationError
+        AuthController-->>FrontendUI: 11 : HTTP 401 Unauthorized
+        FrontendUI-->>Guest: 12 : Display "Invalid username or password"
+    
+    else Condition: User exist and password is correct
+        PasswordHasher-->>-AuthService: 8 : true
+
+        AuthService->>AuthService: 9 : generateSessionToken(user)
+        
+        AuthService-->>-AuthController: 10 : authContext
+        AuthController-->>-FrontendUI: 11 : HTTP 200 OK
+        deactivate FrontendUI
+
+        FrontendUI-->>Guest: 12 : Redirect user to dashboard
+    end
+
+    note over Guest, Database: NOTE:<br/>credentials = email, password

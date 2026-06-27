@@ -1,0 +1,75 @@
+%%{init: {
+  "theme": "redux",
+  "themeVariables": {
+    "fontFamily": "Times New Roman, serif"
+  },
+  "sequence": {
+    "wrap": true,
+    "width": 200,
+    "height": 65,
+    "actorMargin": 100,
+    "messageFontSize": 18,
+    "actorFontSize": 14,
+    "noteFontSize": 16,
+    "messageMargin": 50,
+    "activationWidth": 12,
+    "diagramMarginX": 30,
+    "diagramMarginY": 30,
+    "useMaxWidth": true
+  }
+}}%%
+
+sequenceDiagram
+    actor AuthenticatedUser as : Authenticated User
+    participant FrontendUI as «boundary»<br/>: Frontend UI
+    participant JwtAuthentication as «security»<br/>: JWTAuthentication
+    participant ProfileController as «control»<br/>: ProfileController
+    participant ProfileService as «service»<br/>: ProfileService
+    participant PrismaClient as «persistence»<br/>: PrismaClient
+    participant Database as «database»<br/>: Database
+
+    AuthenticatedUser->>+FrontendUI: 1 : Edit personal information
+    FrontendUI-->>-AuthenticatedUser: 2 : Display edit form
+
+    AuthenticatedUser->>+FrontendUI: 3 : Click Save
+    FrontendUI->>+JwtAuthentication: 4 : updateProfile(updateData)
+
+    JwtAuthentication->>JwtAuthentication: 5 : verifyAccessToken(accessToken)
+
+    alt Conditon: User is not authenticated
+        JwtAuthentication-->>FrontendUI: 6 : HTTP 401 Unauthorized
+        FrontendUI-->>AuthenticatedUser: 7 : Redirect to Login page
+
+    else Condition: User is authenticated
+        JwtAuthentication->>+ProfileController: 6 : updatePersonalInformation(user, updateData)
+        deactivate JwtAuthentication
+        ProfileController->>+ProfileService: 7 : updatePersonalInformation(userId, updateData)
+
+        ProfileService->>+PrismaClient: 8 : findUserProfileByUserId(userId)
+
+        PrismaClient->>+Database: 9 : fetchUserProfile(userId)
+        Database-->>-PrismaClient: 10 : userProfileData
+
+        alt Condition: Profile does not exist
+            PrismaClient-->>ProfileService: 11 : null
+            ProfileService-->>ProfileController: 12 : profileNotFoundError
+            ProfileController-->>FrontendUI: 13 : HTTP 404 Profile not found
+            FrontendUI-->>AuthenticatedUser: 14 : Display profile not found message
+
+        else Condition: Profile exists
+            PrismaClient-->>-ProfileService: 11 : userProfile
+
+            ProfileService->>+PrismaClient: 12 : updateUserProfile(userId, updateData)
+
+            PrismaClient->>+Database: 13 : updateProfileRecord(userId, updateData)
+
+            Database-->>-PrismaClient: 14 : updatedProfileData
+            PrismaClient-->>-ProfileService: 15 : updatedProfile
+
+            ProfileService-->>-ProfileController: 16 : UpdatePersonalInformationResponse
+
+            ProfileController-->>-FrontendUI: 17 : HTTP 200 OK
+
+            FrontendUI-->>-AuthenticatedUser: 18 : Display updated profile
+        end
+    end

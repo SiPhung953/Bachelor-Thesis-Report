@@ -1,0 +1,68 @@
+%%{init: {
+  "theme": "redux",
+  "themeVariables": {
+    "fontFamily": "Times New Roman, serif"
+  },
+  "sequence": {
+    "wrap": true,
+    "width": 200,
+    "height": 65,
+    "actorMargin": 100,
+    "messageFontSize": 18,
+    "actorFontSize": 14,
+    "noteFontSize": 16,
+    "messageMargin": 50,
+    "activationWidth": 12,
+    "diagramMarginX": 30,
+    "diagramMarginY": 30,
+    "useMaxWidth": true
+  }
+}}%%
+
+sequenceDiagram
+    actor Guest as : Guest
+    participant FrontendUI as «boundary»<br/>: Frontend UI
+    participant CompanyProfileController as «control»<br/>: CompanyProfileController
+    participant CompanyProfileService as «service»<br/>: CompanyProfileService
+    participant PrismaClient as «persistence»<br/>: PrismaClient
+    participant Database as «database»<br/>: Database
+
+    Guest->>+FrontendUI: 1 : Click company name
+    FrontendUI->>+CompanyProfileController: 2 : getCompany(companyId)
+    CompanyProfileController->>+CompanyProfileService: 3 : getCompany(companyId)
+    CompanyProfileService->>+PrismaClient: 4 : findCompanyById(companyId)
+    PrismaClient->>+Database: 5 : fetchCompany(companyId)
+    Database-->>-PrismaClient: 6 : companyData
+
+    alt Company does not exist
+        PrismaClient-->>CompanyProfileService: 7a : companyNotFound
+        CompanyProfileService-->>CompanyProfileController: 8a : NotFoundError
+        CompanyProfileController-->>FrontendUI: 9a : HTTP 404 Not Found
+        FrontendUI-->>Guest: 10a : Display company not found message
+    else Company exists
+        PrismaClient-->>CompanyProfileService: 7 : company
+        CompanyProfileService->>PrismaClient: 8 : findActiveJobs(companyId)
+        PrismaClient->>+Database: 9 : fetchActiveJobs(companyId)
+        Database-->>-PrismaClient: 10 : activeJobData
+
+        alt No active job postings exist
+            PrismaClient-->>CompanyProfileService: 11a : empty activeJobList
+            CompanyProfileService-->>CompanyProfileController: 12a : emptyProfileDetails
+            CompanyProfileController-->>FrontendUI: 13a : emptyProfileDetails
+            FrontendUI-->>Guest: 14a : Display company profile with empty job list
+        else Active job postings exist
+            PrismaClient-->>CompanyProfileService: 11 : activeJobList
+            deactivate PrismaClient
+            
+            CompanyProfileService-->>CompanyProfileController: 12 : profileDetails
+            deactivate CompanyProfileService
+            
+            CompanyProfileController-->>FrontendUI: 13 : profileDetails
+            deactivate CompanyProfileController
+            
+            FrontendUI-->>Guest: 14 : Display company profile and active job list
+            deactivate FrontendUI
+        end
+    end
+
+    Note over Guest,Database: NOTE:<br/>companyId = selected company identifier<br/>profileDetails = collection containing base company info and a list of active job entities<br/>emptyProfileDetails = company info matched with an empty collection of jobs<br/>activeJobList = only Job Posting records with status ACTIVE<br/>empty activeJobList = [] when company exists but has no ACTIVE job postings

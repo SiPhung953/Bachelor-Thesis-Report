@@ -1,0 +1,84 @@
+%%{init: {
+  "theme": "redux",
+  "themeVariables": {
+    "fontFamily": "Times New Roman, serif"
+  },
+  "sequence": {
+    "wrap": true,
+    "width": 200,
+    "height": 65,
+    "actorMargin": 100,
+    "messageFontSize": 18,
+    "actorFontSize": 14,
+    "noteFontSize": 16,
+    "messageMargin": 50,
+    "activationWidth": 12,
+    "diagramMarginX": 30,
+    "diagramMarginY": 30,
+    "useMaxWidth": true
+  }
+}}%%
+
+sequenceDiagram
+    actor AuthenticatedUser as : Authenticated User
+    participant FrontendUI as «boundary»<br/>: Frontend UI
+    participant JwtAuthentication as «security»<br/>: JWTAuthentication
+    participant ProfileController as «control»<br/>: ProfileController
+    participant ProfileService as «service»<br/>: ProfileService
+    participant FileStorageService as «utility»<br/>: FileStorageService
+    participant PrismaClient as «persistence»<br/>: PrismaClient
+    participant Database as «database»<br/>: Database
+
+    AuthenticatedUser->>+FrontendUI: 1 : Select avatar image
+    FrontendUI-->>-AuthenticatedUser: 2 : Display image preview
+
+    AuthenticatedUser->>+FrontendUI: 3 : Click Upload
+
+    FrontendUI->>+JwtAuthentication: 4 : changeAvatar(file)
+
+    JwtAuthentication->>JwtAuthentication: 5 : verifyAccessToken(accessToken)
+
+    alt User is not authenticated
+        JwtAuthentication-->>FrontendUI: 6 : HTTP 401 Unauthorized
+        FrontendUI-->>AuthenticatedUser: 7 : Redirect to Login page
+
+    else User is authenticated
+
+        JwtAuthentication->>+ProfileController: 6 : changeAvatar(user, file)
+        deactivate JwtAuthentication
+        ProfileController->>+ProfileService: 7 : changeAvatar(userId, file)
+
+        alt File is missing or invalid
+
+            ProfileService-->>ProfileController: 8 : validationError
+
+            ProfileController-->>FrontendUI: 9 : HTTP 400 Bad Request
+
+            FrontendUI-->>AuthenticatedUser: 10 : Display validation error
+
+        else File is valid
+
+            ProfileService->>+FileStorageService: 8 : saveAvatar(userId, file)
+
+            FileStorageService->>FileStorageService: 9 : generateUniqueFilename()
+
+            FileStorageService->>FileStorageService: 10 : persistFile()
+
+            FileStorageService-->>-ProfileService: 11 : avatarUrl
+
+            ProfileService->>+PrismaClient: 12 : updateAvatar(userId, avatarUrl)
+
+            PrismaClient->>+Database: 13 : saveAvatarUrl(userId, avatarUrl)
+
+            Database-->>-PrismaClient: 14 : updatedProfileData
+
+            PrismaClient-->>-ProfileService: 15 : updatedProfile
+
+            ProfileService-->>-ProfileController: 16 : ChangeAvatarResponse
+
+            ProfileController-->>-FrontendUI: 17 : HTTP 200 OK
+
+            FrontendUI-->>-AuthenticatedUser: 18 : Display updated avatar
+
+        end
+    end

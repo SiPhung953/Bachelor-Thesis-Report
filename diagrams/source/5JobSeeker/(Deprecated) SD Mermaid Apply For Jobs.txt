@@ -1,0 +1,105 @@
+%%{init: {
+"theme": "redux",
+"themeVariables": {
+"fontFamily": "Times New Roman, serif"
+},
+"sequence": {
+"wrap": true,
+"width": 250,
+"height": 65,
+"actorMargin": 100,
+"messageFontSize": 20,
+"actorFontSize": 16,
+"noteFontSize": 16,
+"messageMargin": 50,
+"activationWidth": 12,
+"diagramMarginX": 30,
+"diagramMarginY": 30,
+"useMaxWidth": true
+}
+}}%%
+
+sequenceDiagram
+    actor JobSeeker as : Job Seeker
+    participant FrontendUI as «boundary»<br/>: Frontend UI
+    participant JwtAuthentication as «security»<br/>: JWTAuthentication
+    participant ApplicationController as «control»<br/>: ApplicationController
+    participant ApplicationService as «service»<br/>: ApplicationService
+    participant PrismaClient as «persistence»<br/>: PrismaClient
+    participant Database as «database»<br/>: Database
+
+    JobSeeker->>+FrontendUI: Select Job and click Apply Now
+
+    FrontendUI->>+JwtAuthentication: applyJob()
+
+    %% Guard 1: Is User authenticated?
+    alt Condition: User not authenticated
+        JwtAuthentication-->>FrontendUI: HTTP 401 Unauthorized
+        FrontendUI-->>JobSeeker: Redirect to Login Page
+    end
+
+    JwtAuthentication->>+ApplicationController: applyJob(currentUser, request)
+    deactivate JwtAuthentication
+    ApplicationController->>+ApplicationService: applyJob(currentUser, request)
+
+    %% Guard 2: is User a Job Seeker?
+    alt Condition: User is not JOB_SEEKER
+        ApplicationService-->>ApplicationController: NotJobSeekerError
+        ApplicationController-->>FrontendUI: HTTP 403 Forbidden
+    end
+
+    %% Guard 3: Job existence
+    ApplicationService->>+PrismaClient: findJobById(jobId)
+    PrismaClient->>+Database: Query Job
+    Database-->>-PrismaClient: Job
+
+    alt Condition: Job not found
+        PrismaClient-->>ApplicationService: null
+        ApplicationService-->>ApplicationController: JobNotFoundError
+        ApplicationController-->>FrontendUI: HTTP 404 Not Found
+    end
+
+        %% Guard 4: Job inactive
+        alt Condition: Job inactive
+            ApplicationService-->>ApplicationController: JobInactiveError
+            ApplicationController-->>FrontendUI: HTTP 400
+		end
+    ApplicationService->>PrismaClient: findResumeById(resumeId)
+    PrismaClient->>Database: Query Resume
+    Database-->>PrismaClient: Resume
+
+    alt Condition: Validation failed
+        Note over ApplicationService: Job inactive OR Resume not found OR Resume not owned by current user
+        ApplicationService-->>ApplicationController: ValidationError
+        ApplicationController-->>FrontendUI: HTTP 400/403/404
+
+		
+		%% Guard 5: Resume not found
+        else Condition: Validation passed
+
+        ApplicationService->>PrismaClient: findApplicationByUserAndJob()
+        PrismaClient->>Database: Query Application
+        Database-->>PrismaClient: Application
+
+
+            alt Condition: Application already exists
+                ApplicationService-->>ApplicationController: ApplicationDuplicateError
+                ApplicationController-->>FrontendUI: HTTP 409 Conflict
+
+                else Condition: No existing application
+
+                ApplicationService->>PrismaClient: createApplication()
+                PrismaClient->>Database: INSERT application
+                Database-->>PrismaClient: Application
+
+                PrismaClient-->>ApplicationService: Application
+                ApplicationService-->>ApplicationController: ApplyJobResponse
+                ApplicationController-->>FrontendUI: HTTP 201 Created
+                FrontendUI-->>JobSeeker: Application submitted successfully
+
+            end
+        end
+    end
+    end
+    end
+

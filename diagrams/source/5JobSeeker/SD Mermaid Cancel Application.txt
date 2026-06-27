@@ -1,0 +1,78 @@
+%%{init: {
+	"theme": "redux",
+	"themeVariables": {
+		"fontFamily": "Times New Roman, serif"
+},
+	"sequence": {
+		"wrap": true,
+		"width": 200,
+		"height": 65,
+		"actorMargin": 100,
+		"messageFontSize": 22,
+		"actorFontSize": 16,
+		"noteFontSize": 16,
+		"messageMargin": 50,
+		"activationWidth": 12,
+		"diagramMarginX": 30,
+		"diagramMarginY": 30,
+		"useMaxWidth": true
+	}
+}}%%
+
+sequenceDiagram
+    actor JobSeeker as Job Seeker
+    participant FrontendUI as «boundary»<br/>Frontend UI
+    participant JwtAuthentication as «security»<br/>JWTAuthentication
+    participant ApplicationController as «control»<br/>ApplicationController
+    participant ApplicationService as «service»<br/>ApplicationService
+    participant PrismaClient as «persistence»<br/>PrismaClient
+    participant Database as «database»<br/>Database
+
+    JobSeeker->>+FrontendUI: 1 : User clicks "Withdraw Application"
+
+    FrontendUI->>+JwtAuthentication: 2 : withdrawApplication(applicationId)
+    JwtAuthentication->>JwtAuthentication: 3 : verifyAccessToken()
+
+    break Condition: User is not authenticated
+        JwtAuthentication-->>FrontendUI: 4a : HTTP 401 Unauthorized
+        FrontendUI-->>JobSeeker: 5a : Redirect to Login page
+    end
+
+    JwtAuthentication->>+ApplicationController: 4 : withdrawApplication(user, applicationId)
+    deactivate JwtAuthentication
+    ApplicationController->>+ApplicationService: 5 : withdrawApplication(user, applicationId)
+
+    break Condition: User is not Job Seeker
+        ApplicationService-->>ApplicationController: 6a :  unauthorizedRoleError
+        ApplicationController-->>FrontendUI: 7a : HTTP 403 Forbidden
+    end
+
+    ApplicationService->>+PrismaClient: 6 : findApplicationById(applicationId)
+    PrismaClient->>+Database: 7 : fetchApplicationRecord(applicationId)
+    Database-->>-PrismaClient: 8 : application
+
+    break Condition: Application does not exist
+        PrismaClient-->>-ApplicationService: 9a : null
+        ApplicationService-->>ApplicationController: 10a : applicationNotFoundError
+        ApplicationController-->>FrontendUI: 11a : HTTP 404 Not Found
+    end
+
+
+    break Condition: Application does not belong to current user
+        ApplicationService-->>ApplicationController: 9b : applicationOwnershipError
+        ApplicationController-->>FrontendUI: 10b : HTTP 403 Forbidden
+    end
+
+    break Condition: Application status is not SUBMITTED
+        ApplicationService-->>ApplicationController: 9c : invalidStatusError
+        ApplicationController-->>FrontendUI: 10c : HTTP 400 Bad Request
+    end
+
+    ApplicationService->>+PrismaClient: 9 : updateApplicationStatus()
+    PrismaClient->>+Database: 10 : updateApplicationStatus()
+    Database-->>-PrismaClient: 11 : updated application
+
+    PrismaClient-->>-ApplicationService: 12 : application
+    ApplicationService-->>-ApplicationController: 13 : WithdrawApplicationResponse
+    ApplicationController-->>-FrontendUI: 14 : HTTP 200 OK
+    FrontendUI-->>-JobSeeker: 15 : Display "Application withdrawn successfully"

@@ -1,0 +1,73 @@
+%%{init: {
+  "theme": "redux",
+  "themeVariables": {
+    "fontFamily": "Times New Roman, serif"
+  },
+  "sequence": {
+    "wrap": true,
+    "width": 200,
+    "height": 65,
+    "actorMargin": 100,
+    "messageFontSize": 18,
+    "actorFontSize": 14,
+    "noteFontSize": 16,
+    "messageMargin": 50,
+    "activationWidth": 12,
+    "diagramMarginX": 30,
+    "diagramMarginY": 30,
+    "useMaxWidth": true
+  }
+}}%%
+
+sequenceDiagram
+    actor AuthenticatedUser as : Authenticated User
+    participant FrontendUI as «boundary»<br/>: Frontend UI
+    participant JwtAuthentication as «security»<br/>: JWTAuthentication
+    participant ResumeController as «control»<br/>: ResumeController
+    participant ResumeService as «service»<br/>: ResumeService
+    participant FileStorageService as «utility»<br/>: FileStorageService
+    participant PrismaClient as «persistence»<br/>: PrismaClient
+    participant Database as «database»<br/>: Database
+
+    AuthenticatedUser->>+FrontendUI: 1 : Select CV file
+    FrontendUI-->>-AuthenticatedUser: 2 : Display selected file
+
+    AuthenticatedUser->>+FrontendUI: 3 : Click Upload CV
+
+    FrontendUI->>+JwtAuthentication: 4 : uploadResume(file)
+
+    JwtAuthentication->>JwtAuthentication: 5 : verifyAccessToken(accessToken)
+
+    alt Condition: User is not authenticated
+
+        JwtAuthentication-->>FrontendUI: 6 : HTTP 401 Unauthorized
+        FrontendUI-->>AuthenticatedUser: 7 : Redirect to Login page
+
+    else Condition: User is authenticated
+
+        JwtAuthentication->>+ResumeController: 6 : uploadResume(user, file)
+		deactivate JwtAuthentication
+		ResumeController->>+ResumeService: 7 : uploadResume(userId, file)
+
+        alt Condition: File is missing or invalid
+
+            ResumeService-->>ResumeController: 8 : validationError
+            ResumeController-->>FrontendUI: 9 : HTTP 400 Bad Request
+            FrontendUI-->>AuthenticatedUser: 10 : Display validation error
+
+        else Condition: File is valid
+
+            ResumeService->>+FileStorageService: 8 : saveResume(userId, file)
+            FileStorageService->>FileStorageService: 9 : generateUniqueFilename()
+            FileStorageService->>FileStorageService: 10 : persistFile()
+            FileStorageService-->>-ResumeService: 11 : filePath
+            ResumeService->>+PrismaClient: 12 : createResume(userId, filePath)
+            PrismaClient->>+Database: 13 : insertResumeRecord(userId, filePath)
+            Database-->>-PrismaClient: 14 : createdResumeData
+            PrismaClient-->>-ResumeService: 15 : resume
+            ResumeService-->>-ResumeController: 16 : UploadResumeResponse
+            ResumeController-->>-FrontendUI: 17 : HTTP 201 Created<br/>UploadResumeResponse
+            FrontendUI-->>-AuthenticatedUser: 18 : Display uploaded CV
+
+        end
+    end

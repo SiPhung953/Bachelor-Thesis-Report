@@ -1,0 +1,58 @@
+%%{init: {
+  "theme": "redux",
+  "themeVariables": {
+    "fontFamily": "Times New Roman, serif"
+  },
+  "sequence": {
+    "wrap": true,
+    "width": 200,
+    "height": 65,
+    "actorMargin": 100,
+    "messageFontSize": 18,
+    "actorFontSize": 14,
+    "noteFontSize": 16,
+    "messageMargin": 50,
+    "activationWidth": 12,
+    "diagramMarginX": 30,
+    "diagramMarginY": 30,
+    "useMaxWidth": true
+  }
+}}%%
+
+sequenceDiagram
+    actor Guest as : Guest
+    participant FrontendUI as «boundary»<br/>: Frontend UI
+    participant AuthController as «control»<br/>: AuthController
+    participant AuthService as «service»<br/>: AuthService
+    participant PasswordHasher as «Utility»<br/>: PasswordHasher
+    participant PrismaClient as «ORM»<br/>: PrismaClient
+    participant Database as «database»<br/>: Database
+
+    Guest->>+FrontendUI: 1 : User go to register page and type in credentials
+    FrontendUI->>+AuthController: 2 : register(credentials)
+    AuthController->>+AuthService: 3 : registerUser(credentials)
+    
+    AuthService->>+PrismaClient: 4 : checkExistingUser(email)
+    PrismaClient-->>-AuthService: 5 : user
+    
+    alt Condition: User already exist
+        AuthService-->>AuthController: 6 : return registrationError
+        AuthController-->>FrontendUI: 7 : HTTP 409 Conflict
+        FrontendUI-->>Guest: 8 : Display "This email already exist"
+    
+    else Condition: User doesn't exist
+		AuthService->>+PasswordHasher: 6 : hash(password)
+		PasswordHasher-->>-AuthService: 7 : passwordHash
+		
+		AuthService->>+PrismaClient: 8 : saveUser(userData)
+		PrismaClient->>+Database: 9 : insertUser(userData)
+		Database-->>-PrismaClient: 10 : created user record
+		PrismaClient-->>-AuthService: 11 : createdUser
+		
+		AuthService-->>-AuthController: 12 : return user
+		AuthController-->>-FrontendUI: 13 : HTTP 201 Created
+		FrontendUI-->>Guest: 14: Display "Registration Success"
+		deactivate FrontendUI
+	end
+	
+    note over Guest, Database: NOTE:<br/>credentials = fullName, email, password

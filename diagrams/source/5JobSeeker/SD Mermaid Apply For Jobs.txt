@@ -1,0 +1,113 @@
+%%{init: {
+	"theme": "redux",
+	"themeVariables": {
+		"fontFamily": "Times New Roman, serif"
+	},
+	"sequence": {
+		"wrap": true,
+		"width": 200,
+		"height": 65,
+		"actorMargin": 100,
+		"messageFontSize": 18,
+		"actorFontSize": 14,
+		"noteFontSize": 16,
+		"messageMargin": 50,
+		"activationWidth": 12,
+		"diagramMarginX": 30,
+		"diagramMarginY": 30,
+		"useMaxWidth": true
+	}
+}}%%
+
+sequenceDiagram
+    actor JobSeeker as : Job Seeker
+    participant FrontendUI as «boundary»<br/>: Frontend UI
+    participant JwtAuthentication as «security»<br/>: JWTAuthentication
+    participant ApplicationController as «control»<br/>: ApplicationController
+    participant ApplicationService as «service»<br/>: ApplicationService
+    participant PrismaClient as «persistence»<br/>: PrismaClient
+    participant Database as «database»<br/>: Database
+
+    JobSeeker->>FrontendUI: 1 : View job details
+    JobSeeker->>+FrontendUI: 2 : Click apply button
+
+    FrontendUI->>JwtAuthentication: 3 : applyJob(applicationPayload)
+    activate JwtAuthentication
+    JwtAuthentication->>JwtAuthentication: 4 : verifyAccessToken(accessToken)
+
+    %% GUARD 1: Authentication Early Return
+    break User is not authenticated
+        JwtAuthentication-->>FrontendUI: 5a : HTTP 401 Unauthorized
+        FrontendUI-->>JobSeeker: 6a : Redirect to Login page
+    end
+    
+    %% Happy Path Proceeds Flattens Out
+    JwtAuthentication->>ApplicationController: 5 : applyJob(user, applicationPayload)
+    deactivate JwtAuthentication
+    activate ApplicationController
+    
+    ApplicationController->>ApplicationService: 6 : applyJob(userId, applicationPayload)
+    activate ApplicationService
+
+    %% GUARD 2: Role Check Early Return
+    break User role is not Job Seeker
+        ApplicationService-->>ApplicationController: 7a : unauthorizedRoleError
+        ApplicationController-->>FrontendUI: 8a : HTTP 403 Forbidden
+        FrontendUI-->>JobSeeker: 9a : Display role restriction warning
+    end
+
+    %% Fetch Target Job
+    ApplicationService->>+PrismaClient: 7 : findJobById(jobId)
+    PrismaClient->>+Database: 8 : fetchJobRecord(jobId)
+    Database-->>-PrismaClient: 9 : jobData
+    PrismaClient-->>-ApplicationService: 10 : job | null
+
+    %% GUARD 3 & 4: Job State Validation Early Returns
+    break Job record does not exist
+        ApplicationService-->>ApplicationController: 11a : jobNotFoundError
+        ApplicationController-->>FrontendUI: 12a : HTTP 404 Not Found
+    end
+    break Job is inactive
+        ApplicationService-->>ApplicationController: 11b : invalidJobStatusError
+        ApplicationController-->>FrontendUI: 12b : HTTP 400 Bad Request
+    end
+
+    %% Fetch Attached Resume
+    ApplicationService->>+PrismaClient: 11 : findResumeById(resumeId)
+    PrismaClient->>+Database: 12 : fetchResumeRecord(resumeId)
+    Database-->>-PrismaClient: 13 : resumeData
+    PrismaClient-->>-ApplicationService: 14 : resume
+
+    %% GUARD 5 & 6: Resume Validation Early Returns
+    break Resume does not exist
+        ApplicationService-->>ApplicationController: 15a : resumeNotFoundError
+        ApplicationController-->>FrontendUI: 16a : HTTP 404 Not Found
+    end
+    break Resume does not belong to user
+        ApplicationService-->>ApplicationController: 15b : resumeOwnershipError
+        ApplicationController-->>FrontendUI: 16b : HTTP 403 Forbidden
+    end
+
+    %% Check Duplication
+    ApplicationService->>+PrismaClient: 15 : findApplicationByUserAndJob(userId, jobId)
+    PrismaClient->>+Database: 16 : fetchApplicationRecord(userId, jobId)
+    Database-->>-PrismaClient: 17 : applicationData
+    PrismaClient-->>-ApplicationService: 18 : application
+
+    %% GUARD 7: Duplicate Check Early Return
+    break Application already exists
+        ApplicationService-->>ApplicationController: 19a : duplicateApplicationError
+        ApplicationController-->>FrontendUI: 20a : HTTP 409 Conflict
+    end
+
+    %% Execution Core (Happy Path Terminal)
+    ApplicationService->>+PrismaClient: 19 : createApplication(userId, applicationPayload)
+    PrismaClient->>+Database: 20 : insertApplicationRecord(userId, applicationPayload)
+    Database-->>-PrismaClient: 21 : createdApplicationData
+    PrismaClient-->>-ApplicationService: 22 : applicationInstance
+
+    ApplicationService-->>ApplicationController: 23 : ApplyJobResponse
+    deactivate ApplicationService
+    ApplicationController-->>FrontendUI: 24 : HTTP 201 Created
+    deactivate ApplicationController
+    FrontendUI-->>-JobSeeker: 25 : Display success confirmation message

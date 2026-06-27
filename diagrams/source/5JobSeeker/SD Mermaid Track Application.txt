@@ -1,0 +1,67 @@
+%%{init: {
+	"theme": "redux",
+	"themeVariables": {
+		"fontFamily": "Times New Roman, serif"
+},
+	"sequence": {
+		"wrap": true,
+		"width": 200,
+		"height": 65,
+		"actorMargin": 100,
+		"messageFontSize": 18,
+		"actorFontSize": 16,
+		"noteFontSize": 16,
+		"messageMargin": 50,
+		"activationWidth": 12,
+		"diagramMarginX": 30,
+		"diagramMarginY": 30,
+		"useMaxWidth": true
+	}
+}}%%
+
+sequenceDiagram
+    actor JobSeeker as : Job Seeker
+    participant FrontendUI as «boundary»<br/>: Frontend UI
+    participant JwtAuthentication as «security»<br/>: JWTAuthentication
+    participant ApplicationController as «control»<br/>: ApplicationController
+    participant ApplicationService as «service»<br/>: ApplicationService
+    participant PrismaClient as «persistence»<br/>: PrismaClient
+    participant Database as «database»<br/>: Database
+
+    JobSeeker->>+FrontendUI: 1 : User opens "My Applications" page
+
+    FrontendUI->>+JwtAuthentication: 2 : getMyApplications()
+    JwtAuthentication->>JwtAuthentication: 3 : verifyAccessToken()
+
+    break Condition: User is not authenticated
+		JwtAuthentication-->>FrontendUI: 4a : HTTP 401 Unauthorized
+		FrontendUI-->>JobSeeker: 5a : Redirect to Login page
+    end
+
+    JwtAuthentication->>+ApplicationController: 4 : getMyApplications(currentUser)
+	deactivate JwtAuthentication
+    ApplicationController->>+ApplicationService: 5 : getMyApplications(currentUser)
+
+    break Condition: User is not Job Seeker
+		ApplicationService-->>ApplicationController: unauthorizedRoleError
+		ApplicationController-->>FrontendUI: HTTP 403 Forbidden
+		FrontendUI-->>JobSeeker: Display role restriction warning
+    end
+
+    ApplicationService->>+PrismaClient: 6 : findApplicationsByUserId(userId)
+    PrismaClient->>+Database: 7 : fetchUserApplications(userId)
+    Database-->>-PrismaClient: 8 : applications
+
+    alt Condition: No applications found
+        PrismaClient-->>ApplicationService: 9a : []
+        ApplicationService-->>ApplicationController: 10a : ApplicationList
+        ApplicationController-->>FrontendUI: 11a : HTTP 200 OK
+        FrontendUI-->>JobSeeker: 12a : Display "No applications found"
+    else
+        PrismaClient-->>-ApplicationService: 9 : applications
+        ApplicationService-->>-ApplicationController: 10 : ApplicationList
+        ApplicationController-->>-FrontendUI: 11 : HTTP 200 OK
+        FrontendUI-->>-JobSeeker: 12 : Display application list
+    end
+
+    Note over JobSeeker,Database: NOTE:<br/>Each application includes job title, company name,<br/>application status, and applied date.

@@ -1,0 +1,98 @@
+classDiagram
+direction LR
+
+class ProfileService {
+  <<Service>>
+  +updatePersonalInformation(userId, request)
+  +updateJobPreferences(userId, request)
+  +changeAvatar(userId, file)
+  +changePassword(userId, request)
+  -validateProtectedFields(request)
+  -validateProfileOwnership(userId)
+  -validateJobPreferenceValues(request)
+  -validateAvatarFile(file)
+  -validatePasswordChange(userId, request)
+}
+
+class PasswordHasher {
+  <<Utility>>
+  +hash(password)
+  +compare(rawPassword, passwordHash)
+}
+
+class FileStorageService {
+  <<Utility>>
+  +saveAvatar(file)
+  +deleteFile(fileUrl)
+}
+
+class PrismaClient {
+  <<Database Access>>
+  +user
+  +userProfile
+  +userJobPreference
+}
+
+class User {
+  <<Entity>>
+  +String id
+  +String email
+  +String passwordHash
+  +Number roleId
+  +String status
+  +DateTime createdAt
+  +DateTime updatedAt
+}
+
+class UserProfile {
+  <<Entity>>
+  +String id
+  +String userId
+  +String fullName
+  +String headline
+  +String phoneNumber
+  +String city
+  +String summary
+  +String avatarUrl
+  +DateTime createdAt
+  +DateTime updatedAt
+}
+
+class UserJobPreference {
+  <<Entity>>
+  +String id
+  +String userId
+  +ProfileVisibility profileVisibility
+  +JobSearchStatus jobSearchStatus
+  +String desiredJobTitle
+  +String preferredLocation
+  +DateTime createdAt
+  +DateTime updatedAt
+}
+
+class ProfileVisibility {
+  <<Enum>>
+  PRIVATE
+  VISIBLE_TO_EMPLOYERS
+}
+
+class JobSearchStatus {
+  <<Enum>>
+  NOT_LOOKING
+  OPEN_TO_WORK
+  CASUALLY_LOOKING
+}
+
+ProfileService --> PasswordHasher : verifies and hashes password
+ProfileService --> FileStorageService : stores/replaces avatar
+ProfileService --> PrismaClient : queries/updates data
+
+PrismaClient ..> User : accesses
+PrismaClient ..> UserProfile : accesses
+PrismaClient ..> UserJobPreference : accesses
+
+User "1" --> "0..1" UserProfile : owns
+User "1" --> "0..1" UserJobPreference : owns
+
+UserJobPreference --> ProfileVisibility : uses
+UserJobPreference --> JobSearchStatus : uses

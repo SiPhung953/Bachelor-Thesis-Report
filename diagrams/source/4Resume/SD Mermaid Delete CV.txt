@@ -1,0 +1,65 @@
+sequenceDiagram
+    actor AuthenticatedUser as : Authenticated User
+    participant FrontendUI as «boundary»<br/>: Frontend UI
+    participant JwtAuthentication as «security»<br/>: JWTAuthentication
+    participant ResumeController as «control»<br/>: ResumeController
+    participant ResumeService as «service»<br/>: ResumeService
+    participant FileStorageService as «utility»<br/>: FileStorageService
+    participant PrismaClient as «persistence»<br/>: PrismaClient
+    participant Database as «database»<br/>: Database
+
+    AuthenticatedUser->>FrontendUI: 1 : Click Delete CV
+    FrontendUI->>AuthenticatedUser: 2 : Display confirmation dialog
+    AuthenticatedUser->>FrontendUI: 3 : Confirm deletion
+    FrontendUI->>JwtAuthentication: 4 : DELETE /users/me/resumes/{resumeId}<br/>accessToken
+    JwtAuthentication->>JwtAuthentication: 5 : verifyAccessToken(accessToken)
+
+    alt Condition: User is not authenticated
+        JwtAuthentication-->>FrontendUI: 6 : HTTP 401 Unauthorized
+        FrontendUI-->>AuthenticatedUser: 7 : Redirect to Login page
+
+    else Condition: User is authenticated
+
+        JwtAuthentication->>ResumeController: 6 : deleteResume(currentUser, resumeId)
+        ResumeController->>ResumeService: 7 : deleteResume(currentUser.id, resumeId)
+        ResumeService->>PrismaClient: 8 : findResumeById(resumeId)
+        PrismaClient->>Database: 9 : SELECT resume
+        Database-->>PrismaClient: 10 : resumeData
+        PrismaClient-->>ResumeService: 11 : resume
+
+        alt Condition: Resume does not exist
+            ResumeService-->>ResumeController: 12 : resumeNotFoundError
+            ResumeController-->>FrontendUI: 13 : HTTP 404 Not Found
+            FrontendUI-->>AuthenticatedUser: 14 : Display error message
+
+        else Condition: Resume belongs to another user
+            ResumeService-->>ResumeController: 12 : accessDeniedError
+            ResumeController-->>FrontendUI: 13 : HTTP 403 Forbidden
+            FrontendUI-->>AuthenticatedUser: 14 : Display authorization error
+
+        else Condition: Resume is valid
+			
+			alt Condition: Resume is currently used in at least one application
+
+				ResumeService->>PrismaClient: 12 : softDeleteResume(resumeId)
+				PrismaClient->>Database: 13 : UPDATE resumes<br/>SET deletedAt = now()
+				Database-->>PrismaClient: 14 : updatedResume
+				PrismaClient-->>ResumeService: 15 : deletedResume
+				ResumeService-->>ResumeController: 16 : DeleteResumeResponse
+				ResumeController-->>FrontendUI: 17 : HTTP 200 OK<br/>DeleteResumeResponse
+				FrontendUI-->>AuthenticatedUser: 18 : Remove CV from profile page
+			
+			else Condition: Resume is not used in any application
+			
+				ResumeService->>PrismaClient: 12 : hardDeleteResume(resumeId)
+				PrismaClient->>Database: 13 : DELETE resumes<br/>WHERE id IS resumeId
+				Database-->>PrismaClient: 14 : deletedResume
+				ResumeService->>FileStorageService: 15 : deleteResumeFile(filePath)
+				FileStorageService->>FileStorageService: 16 : Remove file from storage
+				FileStorageService-->>ResumeService: 17 : deletionResult
+				PrismaClient-->>ResumeService: 18 : deletedResume
+				ResumeService-->>ResumeController: 19 : DeleteResumeResponse
+				ResumeController-->>FrontendUI: 20 : HTTP 200 OK<br/>DeleteResumeResponse
+				FrontendUI-->>AuthenticatedUser: 21 : Remove CV from profile page
+        end
+    end

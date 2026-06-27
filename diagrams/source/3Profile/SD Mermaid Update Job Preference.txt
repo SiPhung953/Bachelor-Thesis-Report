@@ -1,0 +1,71 @@
+%%{init: {
+  "theme": "redux",
+  "themeVariables": {
+    "fontFamily": "Times New Roman, serif"
+  },
+  "sequence": {
+    "wrap": true,
+    "width": 200,
+    "height": 65,
+    "actorMargin": 100,
+    "messageFontSize": 18,
+    "actorFontSize": 14,
+    "noteFontSize": 16,
+    "messageMargin": 50,
+    "activationWidth": 12,
+    "diagramMarginX": 30,
+    "diagramMarginY": 30,
+    "useMaxWidth": true
+  }
+}}%%
+
+sequenceDiagram
+    actor AuthenticatedUser as : Authenticated User
+    participant FrontendUI as «boundary»<br>: Frontend UI
+    participant JwtAuthentication as «security»<br/>: JWTAuthentication
+    participant ProfileController as «control»<br/>: ProfileController
+    participant ProfileService as «service»<br/>: ProfileService
+    participant PrismaClient as «persistence»<br/>: PrismaClient
+    participant Database as «database»<br/>: Database
+
+    AuthenticatedUser->>+FrontendUI: 1 : Edit job preferences
+    FrontendUI-->>-AuthenticatedUser: 2 : Display preference form
+
+    AuthenticatedUser->>+FrontendUI: 3 : Click Save
+
+    FrontendUI->>+JwtAuthentication: 4 : updateJobPreferences(preferenceData)
+
+    JwtAuthentication->>JwtAuthentication: 5 : verifyAccessToken(accessToken)
+
+    alt Condition: User is not authenticated
+        JwtAuthentication-->>FrontendUI: 6 : HTTP 401 Unauthorized
+        FrontendUI-->>AuthenticatedUser: 7 : Redirect to Login page
+
+    else Condition: User is authenticated
+
+        JwtAuthentication->>+ProfileController: 6 : updateJobPreference(user, preferenceData)
+        deactivate JwtAuthentication
+        ProfileController->>+ProfileService: 7 : updateJobPreference(userId, preferenceData)
+
+        ProfileService->>+PrismaClient: 8 : findPreferenceByUserId(userId)
+
+        PrismaClient->>+Database: 9 : fetchUserJobPreference(userId)
+        Database-->>-PrismaClient: 10 : userJobPreferenceData
+
+        PrismaClient-->>-ProfileService: 11 : userJobPreference
+
+        ProfileService->>+PrismaClient: 12 : updateUserJobPreference(userId, preferenceData)
+
+        PrismaClient->>+Database: 13 : updatePreferenceRecord(userId, preferenceData)
+
+
+        Database-->>-PrismaClient: 14 : updatedPreferenceData
+        PrismaClient-->>-ProfileService: 15 : updatedPreference
+
+        ProfileService-->>-ProfileController: 16 : UpdateJobPreferenceResponse
+
+        ProfileController-->>-FrontendUI: 17 : HTTP 200 OK
+
+        FrontendUI-->>-AuthenticatedUser: 18 : Display updated preferences
+    end
+    note over AuthenticatedUser, Database: NOTE:<br/>The implementation of this use case uses Prisma's upsert() method to simplify persistence logic.<br/>The method combines the create and update operations into a single database transaction.

@@ -1,0 +1,71 @@
+%%{init: {
+  "theme": "redux",
+  "themeVariables": {
+    "fontFamily": "Times New Roman, serif"
+  },
+  "sequence": {
+    "wrap": true,
+    "width": 200,
+    "height": 65,
+    "actorMargin": 100,
+    "messageFontSize": 18,
+    "actorFontSize": 18,
+    "noteFontSize": 16,
+    "messageMargin": 50,
+    "activationWidth": 12,
+    "diagramMarginX": 30,
+    "diagramMarginY": 30,
+    "useMaxWidth": true
+  }
+}}%%
+
+sequenceDiagram
+    actor Guest as : Guest
+    participant FrontendUI as «boundary»<br/>: Frontend UI
+    participant JobDiscoveryController as «control»<br/>: JobDiscoveryController
+    participant JobDiscoveryService as «service»<br/>: JobDiscoveryService
+    participant PrismaClient as «persistence»<br/>: PrismaClient
+    participant Database as «database»<br/>: Database
+
+    Guest->>FrontendUI: 1 : User enter job's criteria
+    activate FrontendUI
+
+    FrontendUI->>JobDiscoveryController: 2 : searchJobs(filters)
+    activate JobDiscoveryController
+
+    JobDiscoveryController->>JobDiscoveryService: 3 : searchJobs(filters)
+    activate JobDiscoveryService
+
+    JobDiscoveryService->>PrismaClient: 4 : findJobs(filters)
+    activate PrismaClient
+
+    PrismaClient->>Database: 5 : fetchJobs(filters)
+    activate Database
+
+    Database-->>PrismaClient: 6 : jobData
+    deactivate Database
+
+    alt Condition: No matching job postings exist
+        PrismaClient-->>JobDiscoveryService: 7 : empty jobList
+
+        JobDiscoveryService-->>JobDiscoveryController: 8 : empty jobList
+
+        JobDiscoveryController-->>FrontendUI: 9 : empty jobList
+
+        FrontendUI-->>Guest: 10 : Display empty result message
+
+    else Condition: Matching job postings exist
+        PrismaClient-->>JobDiscoveryService: 7 : jobList
+        deactivate PrismaClient
+
+        JobDiscoveryService-->>JobDiscoveryController: 8 : jobList
+        deactivate JobDiscoveryService
+
+        JobDiscoveryController-->>FrontendUI: 9 : jobList
+        deactivate JobDiscoveryController
+
+        FrontendUI-->>Guest: 10 : Display job list
+        deactivate FrontendUI
+    end
+
+    Note over Guest,Database: NOTE:<br/>criteria / filters = keyword, employmentType, location<br/>jobList = Collection of Job entities (id, title, description, etc.)<br/>empty jobList = [] when no matching ACTIVE job posting exists

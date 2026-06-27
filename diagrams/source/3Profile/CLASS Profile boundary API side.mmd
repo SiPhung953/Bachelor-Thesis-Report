@@ -1,0 +1,110 @@
+classDiagram
+direction LR
+
+class AuthenticatedUser {
+  <<Actor>>
+}
+
+class CurrentUser {
+  <<Auth Context>>
+  +String id
+  +String email
+  +Number roleId
+  +String status
+}
+
+class ProfileController {
+  <<Controller>>
+  +updatePersonalInformation(currentUser, request)
+  +updateJobPreferences(currentUser, request)
+  +changeAvatar(currentUser, file)
+  +changePassword(currentUser, request)
+}
+
+class UpdatePersonalInformationRequest {
+  <<DTO>>
+  +String fullName
+  +String headline
+  +String phoneNumber
+  +String city
+  +String summary
+}
+
+class UpdatePersonalInformationResponse {
+  <<DTO>>
+  +String message
+  +UserProfile profile
+  +DateTime updatedAt
+}
+
+class UpdateJobPreferenceRequest {
+  <<DTO>>
+  +ProfileVisibility profileVisibility
+  +JobSearchStatus jobSearchStatus
+  +String desiredJobTitle
+  +String preferredLocation
+}
+
+class UpdateJobPreferenceResponse {
+  <<DTO>>
+  +String message
+  +UserJobPreference jobPreference
+  +DateTime updatedAt
+}
+
+class ChangeAvatarRequest {
+  <<DTO>>
+  +UploadedFile file
+}
+
+class ChangeAvatarResponse {
+  <<DTO>>
+  +String message
+  +String avatarUrl
+  +DateTime updatedAt
+}
+
+class ChangePasswordRequest {
+  <<DTO>>
+  +String currentPassword
+  +String newPassword
+  +String confirmNewPassword
+}
+
+class ChangePasswordResponse {
+  <<DTO>>
+  +String message
+  +DateTime updatedAt
+}
+
+class UploadedFile {
+  <<DTO>>
+  +String originalName
+  +String mimeType
+  +Number size
+  +Buffer buffer
+}
+
+class ProfileService {
+  <<Service>>
+  +updatePersonalInformation(userId, request)
+  +updateJobPreferences(userId, request)
+  +changeAvatar(userId, file)
+  +changePassword(userId, request)
+}
+
+AuthenticatedUser --> ProfileController : uses
+ProfileController --> CurrentUser : reads authenticated user
+
+ProfileController ..> UpdatePersonalInformationRequest : receives
+ProfileController ..> UpdateJobPreferenceRequest : receives
+ProfileController ..> ChangeAvatarRequest : receives
+ProfileController ..> ChangePasswordRequest : receives
+ProfileController ..> UploadedFile : receives
+
+ProfileController ..> UpdatePersonalInformationResponse : returns
+ProfileController ..> UpdateJobPreferenceResponse : returns
+ProfileController ..> ChangeAvatarResponse : returns
+ProfileController ..> ChangePasswordResponse : returns
+
+ProfileController --> ProfileService : calls
