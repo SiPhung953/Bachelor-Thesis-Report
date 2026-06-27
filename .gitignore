@@ -1,10 +1,19 @@
 # ==========================================
-# LaTeX Build Directory
+# LaTeX Generated filed
 # ==========================================
-
-/build/*
-!/build/.gitkeep
-# Everyone who clones the repository already has a build/ directory.
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.lot
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
 
 # ==========================================
 # TeXstudio
@@ -38,26 +47,3 @@ desktop.ini
 
 .vscode/
 .idea/
-
-# ==========================================
-# Generated (should be covered by /build/, but just in case)
-# ==========================================
-*.aux
-*.bbl
-*.bcf
-*.blg
-*.fdb_latexmk
-*.fls
-*.lof
-*.log
-*.lot
-*.nav
-*.out
-*.run.xml
-*.snm
-*.synctex.gz
-*.toc
-*.vrb
-*.xdv
-*.dvi
-*.ps
