@@ -1,0 +1,99 @@
+\documentclass[
+	english,
+	12pt,
+	a4paper,
+	oneside
+]{report}
+
+% PACKAGES
+\usepackage[utf8]{inputenc}
+
+% Margin and layout
+\usepackage[a4paper, margin=2.5cm]{geometry}
+
+% Font encoding
+\usepackage[T1]{fontenc}
+
+% Diagrams
+\usepackage{graphicx}
+\graphicspath{{diagrams/exported/}{figures/screenshots/}{figures/ui/}}
+
+% Tables
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+
+% Colors (for reference, header, etc.)
+\usepackage{xcolor}
+
+% Mutilingual environment
+\usepackage{babel}
+
+% Reference
+\usepackage{hyperref}
+
+% Captions
+\usepackage{caption}
+\usepackage{subcaption}
+
+% DOCUMENT
+\begin{document}
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%% Front Matter
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	\pagenumbering{roman}
+	
+	\input{frontmatter/title-page}
+	\clearpage
+	
+	\input{frontmatter/acknowledgement}
+	\clearpage
+	
+	\input{frontmatter/abstract}
+	\clearpage
+	
+	\tableofcontents
+	\clearpage
+	
+	\listoffigures
+	\clearpage
+	
+	\listoftables
+	\clearpage
+	
+	\input{frontmatter/abbreviations}
+	
+	
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%% Main Matter
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	\clearpage
+	\pagenumbering{arabic}
+	
+	\input{chapters/chapter1-introduction}
+	
+	\input{chapters/chapter2-literature-review}
+	
+	\input{chapters/chapter3-system-analysis}
+	
+	\input{chapters/chapter4-system-design}
+	
+	\input{chapters/chapter5-implementation}
+	
+	\input{chapters/chapter6-testing}
+	
+	\input{chapters/chapter7-conclusion}
+	
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%% References
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	\bibliographystyle{IEEEtran}
+	\bibliography{references}
+	
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%% Appendix
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	\appendix
+	\input{backmatter/appendix}
+\end{document}
