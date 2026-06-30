@@ -1,0 +1,173 @@
+\fancypagestyle{plain}{
+	\fancyhf{}
+	\fancyfoot[R]{\thepage}
+	\renewcommand{\headrulewidth}{0pt}
+	\renewcommand{\footrulewidth}{0pt}
+}
+
+\chapter{System Analysis}
+
+\section{Problem Statement}
+The rapid growth of Internet technologies has significantly transformed the recruitment process. Traditional methods, such as submitting printed resumes directly to companies, have gradually been replaced by online recruitment platforms that enable employers to publish vacancies and job seekers to submit applications electronically. This digital transformation has reduced geographical barriers and accelerated communication between employers and candidates.\\
+However, the increasing number of online recruitment services has also introduced new challenges for job seekers. While online platforms provide greater access to employment opportunities, users often need to navigate different interface designs, search mechanisms, and application workflows across multiple websites. This fragmentation may increase the learning curve for new users and require them to maintain personal profiles and resumes records across multiple recruitment platforms, making the job search process less efficient.\\
+Employers face similar challenges when managing recruitment activities across numerous candidates. Recruitment involves publishing job vacancies, reviewing applications, communicating hiring decisions, and maintaining up-to-date recruitment records. Performing these tasks efficiently becomes increasingly difficult without a centralized platform that organizes recruitment information and supports interactions between employers and job seekers.\\
+These challenges motivate the development of a centralized recruitment platform. A web-based recruitment platform provides a centralized environment where job seekers can search for employment opportunities, maintain professional profiles, upload resumes, and track submitted applications. At the same time, employers can manage company information, publish job postings, and review applications through a unified interface.\\
+Since the proposed system stores sensitive personal information and supports operations that modify data, authentication is required to verify user identity before granting access to protected resources. After authentication, users can securely update their personal profiles, resumes, job applications, or company information according to their permissions.\\
+Furthermore, different categories of users require different system capabilities. The system adopts role-based access control to ensure that each user can only access functions relevant to their responsibilities. Job Seekers are responsible for maintaining personal profiles and applying for jobs. Employers manage company profiles, publish job postings, and review applications. Administrators supervise the platform by managing user accounts and moderating job postings. Separating permissions according to user roles improves both system security and usability.
+
+\section{Functional Requirement}
+Functional requirements define the core functionalities that the proposed recruitment platform must provide in order to satisfy the needs of its stakeholders. These requirements describe the services and operations that the system is expected to perform for different categories of users. For clarity and readability, the functional requirements are organized into major functional modules based on their business responsibilities, as summarized in Table~\ref{tab:functional-requirements}.\\
+
+\begin{table}[H]
+	\centering
+	\caption{Summary of Functional Requirements.}
+	\label{tab:functional-requirements}
+	\begin{tabular}{|p{4cm}|p{10cm}|}
+		\hline
+		\textbf{Module} & \textbf{Description} \\
+		\hline
+		
+		Authentication &
+		Supports user registration, login, logout, and password recovery to ensure secure access to the system. \\
+		\hline
+		
+		User Profile Management &
+		Allows job seekers to maintain personal information, update job preferences, and manage uploaded resumes. \\
+		\hline
+		
+		Job Discovery &
+		Provides browsing, searching, filtering, and viewing of available job postings. \\
+		\hline
+		
+		Job Application &
+		Enables job seekers to submit applications, withdraw applications before processing, and monitor application status. \\
+		\hline
+		
+		Company Management &
+		Allows employers to create and maintain company information presented to prospective applicants. \\
+		\hline
+		
+		Job Posting Management &
+		Allows employers to create, edit, publish, close, and manage job postings throughout their recruitment lifecycle. \\
+		\hline
+		
+		Recruitment Management &
+		Supports employers in reviewing submitted applications and updating the recruitment status of candidates. \\
+		\hline
+		
+		Administration &
+		Allows administrators to manage user accounts, moderate job postings, and maintain overall platform integrity. \\
+		\hline
+		
+	\end{tabular}
+\end{table}
+
+The proposed recruitment platform is organized into eight major functional modules that collectively support the complete recruitment workflow. These modules cover the essential operations required by job seekers, employers, and administrators, while providing a clear separation of responsibilities within the system.
+
+\section{Non-Functional Requirement}
+Non-functional requirements define the quality attributes and operational constraints that influence how the proposed recruitment platform performs its functions. These requirements focus on aspects such as security, performance, usability, reliability, maintainability, and compatibility. The major non-functional requirements considered during the system design are summarized in Table~\ref{tab:non-functional-requirements}.
+
+\begin{table}[H]
+	\centering
+	\caption{Summary of Non-Functional Requirements.}
+	\label{tab:non-functional-requirements}
+	\begin{tabular}{|p{4cm}|p{10cm}|}
+		\hline
+		\textbf{Category} & \textbf{Description} \\
+		\hline
+		
+		Security &
+		The system shall authenticate users before granting access to protected resources and enforce role-based authorization. Sensitive credentials shall be securely stored using password hashing techniques. \\
+		\hline
+		
+		Performance &
+		The system shall provide responsive access to common operations such as browsing job postings, submitting applications, and managing recruitment information. \\
+		\hline
+		
+		Usability &
+		The system shall provide a responsive web interface with consistent navigation, clear validation messages, and an intuitive user experience for all supported roles. \\
+		\hline
+		
+		Reliability &
+		The system shall ensure data consistency through proper validation, controlled data modification, and appropriate error handling mechanisms. \\
+		\hline
+		
+		Maintainability &
+		The system shall adopt a modular architecture with clearly separated components to simplify future maintenance and feature extension. \\
+		\hline
+		
+		Compatibility &
+		The system shall support modern desktop web browsers without requiring additional client-side software installation. \\
+		\hline
+		
+	\end{tabular}
+\end{table}
+
+The non-functional requirements establish the quality objectives of the proposed system and serve as guiding principles throughout the system design and implementation. Satisfying these requirements helps ensure that the platform is secure, reliable, maintainable, and capable of providing a consistent user experience.
+
+\section{Use Case Analysis}
+Use case analysis identifies the interactions between system users and the proposed recruitment platform. By modeling these interactions, the functional scope of the system can be clearly illustrated from the perspective of different user roles. This section first presents the shared use cases that are common across multiple actors before discussing the specialized use cases associated with each primary user role.\\
+
+The proposed recruitment platform supports three primary user roles: Job Seeker, Employer, and Administrator. Each role performs different business functions and therefore interacts with a different subset of the system.\\
+
+\subsection{Shared Use Cases}
+To simplify the Use Case Model, the actors are organized using UML actor generalization. Users who have successfully signed in are represented by the generalized actor Authenticated User, while unauthenticated visitors are represented by the Guest actor.\\
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.5\linewidth]{diagrams/exported/Use Case/Use-Case-Public-crop.pdf}
+	\caption{Guest Use Case Diagram.}
+	\label{diagram:uc-guest}
+\end{figure}
+
+As illustrated in Figure \ref{diagram:uc-guest}, Guest users are limited to publicly accessible functions such as browsing available job postings, viewing company information, and creating a new account. These use cases provide basic system accessibility without requiring authentication while encouraging users to register before accessing personalized recruitment features.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{diagrams/exported/Use Case/Use-Case-Authenticated-crop.pdf}
+	\caption{Authenticated User Use Case Diagram.}
+	\label{diagram:uc-authenticated}
+\end{figure}
+
+Figure \ref{diagram:uc-authenticated} illustrates the common functionalities available to all authenticated users regardless of their assigned role. These shared use cases include authentication-related operations such as updating account information, changing passwords, and logging out. Additional business-specific functions are introduced through the specialized actors discussed in the following sections.
+
+\subsection{Specialized Use Cases}
+The following subsections present the business-specific use cases associated with each primary user role.
+
+\subsubsection{Job Seeker Use Cases}
+The Job Seeker represents the primary user of the recruitment platform. This actor is responsible for searching employment opportunities, maintaining personal information, and participating in the recruitment process through job applications.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\linewidth]{diagrams/exported/Use Case/Use-Case-Job Seeker-crop.pdf}
+	\caption{Job Seeker Use Case Diagram.}
+	\label{diagram:uc-job_seeker}
+\end{figure}
+
+As shown in Figure \ref{diagram:uc-job_seeker}, the Job Seeker interacts with the system through two major functional areas: profile and job application management.
+
+\subsubsection{Employer Use Cases}
+The Employer actor represents organizations or recruiters responsible for publishing job postings and evaluating applicants.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{diagrams/exported/Use Case/Use-Case-Employer-crop.pdf}
+	\caption{Employer Use Case Diagram.}
+	\label{diagram:uc-employer}
+\end{figure}
+
+Illustrated in Figure \ref{diagram:uc-employer}, the Employer's use cases focus on company management, job posting management, and recruitment management. Together, these functions support the complete recruitment lifecycle, from creating a company profile to reviewing applications and updating recruitment status.
+
+\subsubsection{Back Office Worker Use Cases}
+The Back Office Worker represents internal personnel responsible for maintaining platform integrity and ensuring that the recruitment platform operates correctly.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{diagrams/exported/Use Case/Use-Case-Back Office-crop.pdf}
+	\caption{Back Office Worker Use Case Diagram.}
+	\label{diagram:uc-back_office}
+\end{figure}
+
+Unlike Job Seekers and Employers, the Back Office Workers primarily performs supervisory tasks highlighted in Figure \ref{diagram:uc-back_office}. These include user management, moderation of job postings, and maintaining the overall quality and security of the platform.
+
+
