@@ -1,0 +1,171 @@
+\fancypagestyle{plain}{
+	\fancyhf{}
+	\fancyfoot[R]{\thepage}
+	\renewcommand{\headrulewidth}{0pt}
+	\renewcommand{\footrulewidth}{0pt}
+}
+
+\chapter{System Design}
+\label{chapter:system-design}
+
+\section{Design Overview}
+\label{c4:section:design-overview}
+This chapter presents the technical design of the proposed system based on the requirements identified in Chapter \ref{chapter:system-analysis}. It describes the system architecture, database design, backend structure, and frontend organization that form the blueprint for the implementation discussed in Chapter 5.\\
+
+The design follows a small set of guiding principles, each addressing one or more non-functional requirements identified previously. Table~\ref{tab:design-principles} summarizes these principles and their rationale.
+
+\begin{table}[H]
+	\centering
+	\caption{Design Principles and Rationale.}
+	\label{tab:design-principles}
+	\begin{tabular}{|p{4.2cm}|p{9.8cm}|}
+		\hline
+		\textbf{Principle} & \textbf{Rationale} \\
+		\hline
+		
+		Layered Architecture &
+		Separates presentation, API, business logic, and data access concerns, improving maintainability and testability. \\
+		\hline
+		
+		Feature-Oriented Modular Design &
+		Organizes code by business domain (e.g., Profile, Job, Application) rather than by technical type, keeping related logic together and easing future extension. \\
+		\hline
+		
+		Thin Controller, Rich Service &
+		Controllers handle only request/response concerns; business logic and validation reside in services, reducing duplication and improving reusability. \\
+		\hline
+		
+		Security by Design &
+		Authentication and authorization are consistently enforced to protect restricted resources, while credentials are securely stored using industry-standard cryptographic techniques. \\
+		\hline
+		
+		Data Integrity &
+		Relational constraints, foreign keys, and database integrity rules ensure data consistency and prevent invalid relationships. \\
+		\hline
+		
+	\end{tabular}
+\end{table}
+
+These principles are applied consistently across all modules of the system, including those where implementation is still in progress at the time of writing (e.g., Employer and Back Office Worker features), ensuring maintainability and reduces coupling between components for future development.\\
+
+The remainder of this chapter is organized as follows. Section \ref{c4:section:system-architecture} presents the system architecture, including the C4-based container view. Section \ref{c4:section:database-design} details the database design and entity-relationship model. Section \ref{c4:section:backend-design} describes the backend design, including the layered structure and module organization illustrated through the Profile module. Section \ref{c4:section:frontend-design} covers the frontend design. Section \ref{c4:section:summary} summarizes the chapter.
+
+\section{System Architecture}
+\label{c4:section:system-architecture}
+The system architecture is documented using the C4 model, which describes a software system at progressively narrower levels of zoom: Context, Container, and Component. This progression matches the layered, modular design principles established in Section \ref{c4:section:design-overview}, letting each stakeholder read only the level of detail relevant to them.
+
+\subsection{System Context}
+The System Context diagram identifies the system's boundary and its interactions with external actors, without describing internal structure.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.85\linewidth]{diagrams/exported/C4/C1-System-Context-Diagram-crop.pdf}
+	\caption{System Context Diagram.}
+	\label{diagram:c1-context}
+\end{figure}
+
+As shown in Figure~\ref{diagram:c1-context}, three actors interact with the Online Recruitment Platform: the Job Seeker browses and applies for jobs, the Employer publishes and manages job postings, and the System Administrator moderates users and platform content. These actors correspond directly to the roles established in the use case analysis in Chapter \ref{chapter:system-analysis}.
+
+\subsection{Container View}
+The Container diagram decomposes the system into its major deployable units and shows how they communicate.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{diagrams/exported/C4/C2-Container-Diagram-crop.pdf}
+	\caption{Container Diagram.}
+	\label{diagram:c2-container}
+\end{figure}
+
+As illustrated in Figure~\ref{diagram:c2-container}, the system consists of three containers:
+
+\begin{itemize}
+	\item The Frontend Web App is a React single-page application that renders the user interface.
+	\item The Backend API is a Node.js/Express service, built with TypeScript and Prisma ORM, that implements all business logic and exposes it as a REST API.
+	\item The Database is a PostgreSQL instance that persists user accounts, job postings, applications, and other platform data.
+\end{itemize}
+
+The Frontend communicates with the Backend over HTTPS using JSON, and the Backend communicates with the Database using SQL through Prisma.
+
+\subsection{Component View: Frontend}
+The Frontend component diagram decomposes the Frontend Web App container into its internal building blocks.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{diagrams/exported/C4/C3-Component-Diagram-(FE)-crop.pdf}
+	\caption{Frontend Component Diagram.}
+	\label{diagram:c3-frontend}
+\end{figure}
+
+As shown in Figure~\ref{diagram:c3-frontend}, the frontend is organized around role-oriented feature components: 
+
+\begin{itemize}
+	\item The Authentication UI handles login, registration, and role-based redirection.
+	\item the \textbf{Job Discovery UI} and \textbf{Job Seeker Application UI} support job browsing and application submission.
+	\item the \textbf{Profile Management UI} manages personal information, avatar, and resumes.
+	\item The Employer Job Management UI supports job posting management.
+	\item The System Administration UI provides moderation tools.
+\end{itemize}
+
+All feature components reuse a common Shared UI Components library and communicate with the backend exclusively through a centralized API Client, which handles HTTP requests, authentication tokens, and response parsing.
+
+\subsection{Component View: Backend}
+The Backend component diagram decomposes the Backend API container into functional components that implement the platform's business capabilities.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{diagrams/exported/C4/C3-Component-Diagram-(BE)-crop.pdf}
+	\caption{Backend Component Diagram.}
+	\label{diagram:c3-backend}
+\end{figure}
+
+As illustrated in Figure~\ref{diagram:c3-backend}, the backend is organized into role-oriented business components. 
+
+\begin{itemize}
+	\item The Job Discovery, Profile, Resume/CV, and Application Management components support the Job Seeker's workflow.
+	\item The Job Posting and Application Management components provide employers with job publishing and application review capabilities.
+	\item The Administration/Moderation component enables platform administrators to manage users and job postings.
+\end{itemize}
+
+Common functionality is centralized in shared infrastructure components. The Authentication component manages user registration, login, and authorization using JWT-based authentication, while the Mailing Service handles email notifications. File assets are stored through the File Storage component.\\
+
+All business components interact with the PostgreSQL database through the shared \textbf{Prisma Client}, ensuring a consistent data access mechanism across the application.
+
+
+\section{Database Design}
+\label{c4:section:database-design}
+The database design defines how the system's persistent data is organized and managed. It identifies the main business entities, their relationships, and the constraints that ensure data consistency. The design follows the principles introduced in Section~\ref{c4:section:design-overview}, particularly data integrity, by using a normalized relational schema with clearly defined primary and foreign key relationships.
+
+\subsection{Entity Relationship Diagram}
+Figure~\ref{diagram:erd-overview} presents an overview of the database schema used by the Online Recruitment Platform. To improve readability, the overview diagram includes the primary entities, key attributes, and relationships while omitting system-generated fields such as timestamps and audit metadata. The complete schema is organized into five functional groups, each corresponding to a major business domain and discussed in the following subsections.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{diagrams/exported/ERD/Overview-ERD-crop.pdf}
+	\caption{Entity Relationship Diagram.}
+	\label{diagram:erd-overview}
+\end{figure}
+
+\begin{a3diagram}
+	
+	\includegraphics[
+	width=\AThreePrintableWidth,
+	keepaspectratio
+	]{diagrams/exported/ERD/Overview-ERD-crop.pdf}
+	
+	\vspace{8mm}
+	
+	\captionof{figure}{Overview Entity Relationship Diagram.}
+	
+	\label{diagram:erd-overview-test}
+	
+\end{a3diagram}
+
+
+\section{Backend Design}
+\label{c4:section:backend-design}
+
+\section{Frontend Design}
+\label{c4:section:frontend-design}
+
+\section{Summary}
+\label{c4:section:summary}
