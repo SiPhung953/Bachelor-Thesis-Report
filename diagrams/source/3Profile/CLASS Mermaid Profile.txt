@@ -1,0 +1,102 @@
+%%{init: {
+  "theme": "default",
+  "htmlLabels": false,
+  "themeVariables": {
+    "fontFamily": "Times New Roman",
+    "fontSize": "14px"
+  },
+  "class": {
+    "diagramPadding": 8,
+    "nodeSpacing": 40,
+    "rankSpacing": 50,
+    "hideEmptyMembersBox": true
+  }
+}}%%
+
+classDiagram
+direction LR
+
+  %% ==========================================
+  %% 1. PRESENTATION LAYER (Controllers)
+  %% ==========================================
+  class ProfileController {
+    <<Controller>>
+    +getMyProfile(userId) GetPersonalInformationResponse
+    +updatePersonalInformation(userId, UpdatePersonalInformationRequest) UpdatePersonalInformationResponse
+    +gẹtobPreference(userId) GetJobPreferenceResponse
+    +updateJobPreferences(userId, UpdateJobPreferencesRequest) UpdateJobPreferencesResponse
+    +changeAvatar(userId, file) avatarUrl
+    +changePassword(userId, ChangePasswordRequest) ChangePasswordResponse
+  }
+
+  %% ==========================================
+  %% 2. APPLICATION LAYER (Services)
+  %% ==========================================
+  class ProfileService {
+    <<Service>>
+    +getMyProfile(userId) GetPersonalInformationResponse
+    +updatePersonalInformation(userId, UpdatePersonalInformationRequest) UpdatePersonalInformationResponse
+    +gẹtobPreference(userId) GetJobPreferenceResponse
+    +updateJobPreferences(userId, UpdateJobPreferencesRequest) UpdateJobPreferencesResponse
+    +changeAvatar(userId, file) avatarUrl
+    +changePassword(userId, ChangePasswordRequest) ChangePasswordResponse
+  }
+
+  %% ==========================================
+  %% 3. INFRASTRUCTURE & UTILITY LAYER
+  %% ==========================================
+  class PasswordHasher {
+    <<Utility>>
+    +hash(password) String
+    +compare(password, passwordHash) boolean
+  }
+
+  class PrismaClient {
+    <<Utility>>
+    +user
+    +userProfile
+    +userJobPreference
+  }
+
+  %% ==========================================
+  %% 4. DOMAIN LAYER (Entities)
+  %% ==========================================
+  class User {
+    <<Entity>>
+    +UUID id
+    +String email
+    +String passwordHash
+  }
+
+  class UserProfile {
+    <<Entity>>
+    +String fullName
+    +DateTime dateOfBirth
+    +String headline
+    +String summary
+    +String phoneNumber
+    +String avatarUrl
+  }
+
+  class UserJobPreference {
+    <<Entity>>
+    +String desiredJobTitle
+    +String preferredLocation
+    +JobSearchStatus jobSearchStatus [NOT_LOOKING|OPEN_TO_WORK]
+    +ProfileVisibility profileVisibility [PRIVATE|VISIBLE_TO_EMPLOYERS]
+  }
+
+  %% ==========================================
+  %% RELATIONSHIPS (Flows Left-To-Right)
+  %% ==========================================
+  
+  %% Presentation to Application
+  ProfileController --> ProfileService : delegates to
+
+  %% Service Dependencies
+  ProfileService --> PasswordHasher : uses
+  ProfileService --> PrismaClient : queries
+
+  %% Entity Domain Relationships (Right Anchor)
+  User "1" --> "0..1" UserProfile : owns
+  User "1" --> "0..1" UserJobPreference : owns

@@ -47,6 +47,31 @@
 \usepackage{caption}
 \usepackage{subcaption}
 
+\captionsetup[table]{position=top}
+
+\newenvironment{usecasespectable}[2]
+{
+	\renewcommand{\arraystretch}{1.3}
+	\begin{longtable}{|>{\bfseries}p{4cm}|p{10.5cm}|}
+		\caption{#1}
+		\label{#2}\\
+		
+		\hline
+		\textbf{Field} & \textbf{Specification}\\
+		\hline
+		\endfirsthead
+		
+		\multicolumn{2}{c}
+		{\tablename\ \thetable\ (Continued)}\\
+		\hline
+		\textbf{Field} & \textbf{Specification}\\
+		\hline
+		\endhead
+}
+{
+	\end{longtable}
+}
+
 % DOCUMENT
 \begin{document}
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

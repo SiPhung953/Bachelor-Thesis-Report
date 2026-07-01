@@ -1,0 +1,90 @@
+%%{init: {
+  "theme": "default",
+  "htmlLabels": false,
+  "themeVariables": {
+    "fontFamily": "Times New Roman",
+    "fontSize": "14px"
+  },
+  "class": {
+    "diagramPadding": 8,
+    "nodeSpacing": 40,
+    "rankSpacing": 50,
+    "hideEmptyMembersBox": true
+  }
+}}%%
+
+classDiagram
+direction LR
+
+  %% ==========================================
+  %% 1. PRESENTATION LAYER (Controllers)
+  %% ==========================================
+  class JobDiscoveryController {
+    <<Controller>>
+    +searchJobs(SearchJobsQuery) SearchJobsResponse
+    +getJobDetail(jobId) GetJobDetailResponse
+  }
+
+  class CompanyProfileController {
+    <<Controller>>
+    +getCompanyProfile(companyId) CompanyProfileResponse
+  }
+
+  %% ==========================================
+  %% 2. APPLICATION LAYER (Services)
+  %% ==========================================
+  class JobDiscoveryService {
+    <<Service>>
+    +searchJobs(SearchJobsQuery) SearchJobsResponse
+    +getJobDetail(jobId) GetJobDetailResponse
+  }
+
+  class CompanyProfileService {
+    <<Service>>
+    +getCompanyProfile(companyId) CompanyProfileResponse
+  }
+
+  %% ==========================================
+  %% 3. INFRASTRUCTURE LAYER (Utilities)
+  %% ==========================================
+  class PrismaClient {
+    <<Utility>>
+    +job
+    +company
+  }
+
+  %% ==========================================
+  %% 4. DOMAIN LAYER (Entities)
+  %% ==========================================
+  class Job {
+    <<Entity>>
+    +UUID id
+    +String title
+    +String description
+    +EmploymentType type [ON_SITE|REMOTE|HYBRID]
+    +String location
+    +JobStatus status [ACTIVE|CLOSED|EXPIRED|...]
+  }
+
+  class Company {
+    <<Entity>>
+    +UUID id
+    +String name
+    +String district
+    +String city
+  }
+
+  %% ==========================================
+  %% RELATIONSHIPS (Clean LR Pipeline)
+  %% ==========================================
+  
+  %% Controllers to Services
+  JobDiscoveryController --> JobDiscoveryService : delegates to
+  CompanyProfileController --> CompanyProfileService : delegates to
+
+  %% Services to ORM Data Access
+  JobDiscoveryService --> PrismaClient : queries data
+  CompanyProfileService --> PrismaClient : queries data
+
+  %% Entity Domain Graph (Self-contained on the right)
+  Job "0..*" --> "1" Company : belongs to

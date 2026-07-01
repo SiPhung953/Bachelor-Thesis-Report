@@ -1,0 +1,115 @@
+%%{init: {
+  "theme": "default",
+  "htmlLabels": false,
+  "themeVariables": {
+    "fontFamily": "Times New Roman",
+    "fontSize": "14px"
+  },
+  "class": {
+    "diagramPadding": 8,
+    "nodeSpacing": 40,
+    "rankSpacing": 50,
+    "hideEmptyMembersBox": true
+  }
+}}%%
+
+classDiagram
+direction LR
+
+  %% ==========================================
+  %% 1. PRESENTATION LAYER (Controllers)
+  %% ==========================================
+  class AuthController {
+    <<Controller>>
+    +register(RegisterRequest) RegisterResponse
+    +login(LoginRequest) LoginResponse
+    +logout() LogoutResponse
+    +requestPasswordReset(ForgotPasswordRequest) ForgotPasswordResponse
+    +resetPassword(ResetPasswordRequest) ResetPasswordResponse
+    +validateResetToken(token) Boolean
+  }
+
+  %% ==========================================
+  %% 2. APPLICATION LAYER (Services)
+  %% ==========================================
+  class AuthService {
+    <<Service>>
+    +register(RegisterRequest) RegisterResponse
+    +login(LoginRequest) LoginResponse
+    +logout() LogoutResponse
+    +requestPasswordReset(ForgotPasswordRequest) ForgotPasswordResponse
+    +resetPassword(ResetPasswordRequest) ResetPasswordResponse
+    +validateResetToken(token) boolean
+  }
+
+  %% ==========================================
+  %% 3. INFRASTRUCTURE & UTILITY LAYER
+  %% ==========================================
+  class PasswordHasher {
+    <<Utility>>
+    +hash(password) String
+    +compare(password, paswordHash) boolean
+  }
+
+  class ResetTokenUtils {
+    <<Utility>>
+    +generateToken() String
+    +hashToken(token) String
+  }
+
+  class EmailService {
+    <<Utility>>
+    +sendPasswordResetEmail(email, resetUrl) void
+  }
+
+  class PrismaClient {
+    <<Utility>>
+    +user
+    +passwordResetToken
+    +role
+  }
+
+  %% ==========================================
+  %% 4. DOMAIN LAYER (Entities)
+  %% ==========================================
+  class User {
+    <<Entity>>
+    +UUID id
+    +String email
+    +String passwordHash
+    +UserStatus status [ACTIVE|BANNED]
+    +DateTime createdAt
+    +DateTime updatedAt
+  }
+
+  class PasswordResetToken {
+    <<Entity>>
+    +UUID id
+    +UUID userId
+    +String tokenHash
+    +DateTime expiresAt
+    +DateTime usedAt
+  }
+
+  class Role {
+    <<Entity>>
+    +Int id
+    +String name
+  }
+
+  %% ==========================================
+  %% RELATIONSHIPS (Flows Left-To-Right)
+  %% ==========================================
+  
+  %% Presentation to Application
+  AuthController --> AuthService : delegates to
+
+  %% Service Dependencies
+  AuthService --> PasswordHasher : uses
+  AuthService --> ResetTokenUtils : uses
+  AuthService --> EmailService : uses
+  AuthService --> PrismaClient : queries
+
+  %% Entity Domain Relationships (Right Anchor)
+  User "0..*" --> "1" Role : assigned
+  PasswordResetToken "0..*" --> "1" User : belongs to

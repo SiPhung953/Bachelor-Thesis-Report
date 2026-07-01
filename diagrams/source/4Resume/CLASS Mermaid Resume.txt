@@ -1,0 +1,85 @@
+%%{init: {
+  "theme": "default",
+  "htmlLabels": false,
+  "themeVariables": {
+    "fontFamily": "Times New Roman",
+    "fontSize": "14px"
+  },
+  "class": {
+    "diagramPadding": 8,
+    "nodeSpacing": 40,
+    "rankSpacing": 50,
+    "hideEmptyMembersBox": true
+  }
+}}%%
+
+classDiagram
+direction LR
+
+  %% ==========================================
+  %% 1. PRESENTATION LAYER (Controllers)
+  %% ==========================================
+  class ResumeController {
+    <<Controller>>
+    +getMyResume(userId) GetMyResumeResponse
+    +uploadResume(userId, resumeTitle, resumeFile) UploadResumeResponse
+    +deleteResume(userId, resumeId) SuccessResponse
+  }
+
+  %% ==========================================
+  %% 2. APPLICATION LAYER (Services)
+  %% ==========================================
+  class ResumeService {
+    <<Service>>
+    +getMyResume(userId) GetMyResumeResponse
+    +uploadResume(userId, resumeTitle, resumeFile) UploadResumeResponse
+    +deleteResume(userId, resumeId) SuccessResponse
+  }
+
+  %% ==========================================
+  %% 3. INFRASTRUCTURE & UTILITY LAYER
+  %% ==========================================
+  class FileStorageService {
+    <<Utility>>
+    +saveCv(file) String
+    +deleteFile(fileUrl) void
+  }
+
+  class PrismaClient {
+    <<Utility>>
+    +user
+    +resume
+  }
+
+  %% ==========================================
+  %% 4. DOMAIN LAYER (Entities)
+  %% ==========================================
+  class User {
+    <<Entity>>
+    +UUID id
+  }
+
+  class Resume {
+    <<Entity>>
+    +UUID id
+    +UUID userId
+    String title
+    +String fileName
+    +String fileUrl
+    +ResumeFileType fileType [PDF|DOC|DOCX]
+    +DateTime uploadedAt
+  }
+
+  %% ==========================================
+  %% RELATIONSHIPS (Flows Left-To-Right)
+  %% ==========================================
+  
+  %% Presentation to Application
+  ResumeController --> ResumeService : delegates to
+
+  %% Service Dependencies
+  ResumeService --> FileStorageService : uses
+  ResumeService --> PrismaClient : queries
+
+  %% Entity Domain Relationships (Right Anchor)
+  User "1" --> "0..*" Resume : owns

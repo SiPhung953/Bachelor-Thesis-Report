@@ -170,4 +170,316 @@ The Back Office Worker represents internal personnel responsible for maintaining
 
 Unlike Job Seekers and Employers, the Back Office Workers primarily performs supervisory tasks highlighted in Figure \ref{diagram:uc-back_office}. These include user management, moderation of job postings, and maintaining the overall quality and security of the platform.
 
+\section{Use Case Specification}
+The Use Case Diagrams presented in the previous section provide an overview of the functional scope of the proposed recruitment platform. This section further illustrates the system behavior by presenting detailed specifications for selected use cases that represent the primary functionalities performed by different user roles. 
 
+\newpage
+\subsection{Guest: Login}
+
+\begin{usecasespectable}
+	{Use Case Specification: Login.}
+	{tab:ucs-login}
+	
+	Use Case ID & UC-AUTH-02 \\ \hline
+	
+	Use Case Name & Login \\ \hline
+	
+	Primary Actor & Guest \\ \hline
+	
+	Description &
+	Allows a guest to authenticate using registered credentials and become an authenticated user.
+	\\ \hline
+	
+	Goal & 
+	Authenticate a registered user and grant access to protected system functions.
+	\\ \hline
+	
+	Preconditions &
+	\begin{itemize}
+		\item The user has a registered account.
+		\item The user is not currently authenticated.
+	\end{itemize}
+	\\ \hline
+	
+	Trigger &
+	The user clicks "Log In" button from the website's header
+	\\ \hline
+	
+	Main Success Scenario &
+	\begin{enumerate}
+		\item Guest selects "Login"
+		\item System displays the login form.
+		\item Guest enters email and password.
+		\item Guest submits the login form.
+		\item System validates the submitted credentials.
+		\item System authenticates the user.
+		\item System establishes an authenticated session.
+		\item System redirects the user to the authenticated homepage.
+		\item System displays a successful login message.
+	\end{enumerate}
+	\\ \hline
+	
+	Alternative Flows &
+	\textbf{A1. Invalid credentialsd}
+	\begin{enumerate}
+		\item The system reports the error "Invalid email or password".
+	\end{enumerate}
+	
+	\textbf{A2. Invalid email address}
+	\begin{enumerate}
+		\item The system reports the error "Invalid email".
+	\end{enumerate}
+	
+	\textbf{A3. Missing required input fields}
+	\begin{enumerate}
+		\item The system reports the error "Please fill out required fields".
+	\end{enumerate}
+	
+	\textbf{A4. Account is suspended}
+	\begin{enumerate}
+		\item System denies authentication.
+		\item System informs the user that the account has been suspended.
+	\end{enumerate}
+	\\ \hline
+	
+	Postconditions &
+	\begin{itemize}
+		\item The user is successfully authenticated.
+		\item The user gains access to functions available to authenticated users.
+	\end{itemize}
+	\\ \hline
+	
+\end{usecasespectable}
+
+\newpage
+\subsection{Authenticated User: Update Personal Information}
+
+\begin{usecasespectable}
+	{Use Case Specification: Update Personal Information.}
+	{tab:ucs-update_personal_information}
+
+	Use Case ID & UC-PROFILE-01 \\ \hline
+	
+	Use Case Name & Update Personal Information \\ \hline
+	
+	Primary Actor & Authenticated User \\ \hline
+	
+	Goal & Maintain accurate personal information within the platform. \\ \hline
+	
+	Description &
+	Allows an authenticated user to update personal profile information.
+	\\ \hline
+	
+	Preconditions &
+	\begin{itemize}
+		\item User is authenticated.
+	\end{itemize}
+	\\ \hline
+	
+	Trigger &
+	The user selects the Profile page.
+	\\ \hline
+	
+	Main Success Scenario &
+	\begin{enumerate}
+		\item User opens the profile page.
+		\item System displays current profile information.
+		\item User edits profile information.
+		\item User submits the changes.
+		\item System validates the submitted information.
+		\item System updates the profile.
+		\item System confirms the successful update.
+	\end{enumerate}
+	\\ \hline
+	
+	Alternative Flows &
+	\textbf{A1. Invalid input}
+	\begin{enumerate}
+		\item System highlights invalid fields.
+		\item User corrects the information.
+	\end{enumerate}
+	\\ \hline
+	
+	Postconditions &
+	\begin{itemize}
+		\item Updated profile information is stored.
+	\end{itemize}
+	\\ \hline
+\end{usecasespectable}
+
+\newpage
+\subsection{Job Seeker: Apply for Job}
+
+\begin{usecasespectable}
+	{Use Case Specification: Apply for Job.}
+	{tab:ucs-apply_for_job}
+	
+	Use Case ID & UC-JS-01 \\ \hline
+	
+	Use Case Name & Apply for Job \\ \hline
+	
+	Primary Actor & Job Seeker \\ \hline
+	
+	Goal & Submit a job application to an employer. \\ \hline
+	
+	Description &
+	Allows a Job Seeker to submit an application for a published job posting.
+	\\ \hline
+	
+	Preconditions &
+	\begin{itemize}
+		\item Job Seeker is authenticated.
+		\item Job posting is open for applications.
+		\item Job Seeker has an uploaded resume.
+	\end{itemize}
+	\\ \hline
+	
+	Trigger &
+	The Job Seeker selects the \textbf{Apply} option on a job posting.
+	\\ \hline
+	
+	Main Success Scenario &
+	\begin{enumerate}
+		\item Job Seeker views a job posting.
+		\item Job Seeker selects Apply.
+		\item System displays the application form.
+		\item Job Seeker selects a resume.
+		\item Job Seeker submits the application.
+		\item System validates the submission.
+		\item System records the application.
+		\item System confirms successful submission.
+	\end{enumerate}
+	\\ \hline
+	
+	Alternative Flows &
+	\textbf{A1. Resume unavailable}
+	\begin{enumerate}
+		\item System requests the Job Seeker to upload a resume.
+	\end{enumerate}
+	
+	\textbf{A2. Already applied}
+	\begin{enumerate}
+		\item System rejects the submission.
+		\item System informs the Job Seeker that an application already exists.
+	\end{enumerate}
+	\\ \hline
+	
+	Postconditions &
+	\begin{itemize}
+		\item A new job application is created.
+	\end{itemize}
+	\\ \hline
+	
+\end{usecasespectable}
+
+\newpage
+\subsection{Employer: Publish Job Posting}
+
+\begin{usecasespectable}
+	{Use Case Specification: Publish Job Posting.}
+	{ucs-publish_job_posting}
+	
+	Use Case ID & UC-EMP-01 \\ \hline
+	
+	Use Case Name & Publish Job Posting \\ \hline
+	
+	Primary Actor & Employer \\ \hline
+	
+	Goal & Publish a job posting for potential applicants. \\ \hline
+	
+	Description &
+	Allows an Employer to create and publish a new job posting.
+	\\ \hline
+	
+	Preconditions &
+	\begin{itemize}
+		\item Employer is authenticated.
+		\item Employer has a registered company profile.
+	\end{itemize}
+	\\ \hline
+	
+	Trigger &
+	Employer selects the Create Job Posting function.
+	\\ \hline
+	
+	Main Success Scenario &
+	\begin{enumerate}
+		\item Employer enters job information.
+		\item Employer submits the job posting.
+		\item System validates the submitted information.
+		\item System creates the job posting.
+		\item System publishes the job posting.
+		\item System confirms successful publication.
+	\end{enumerate}
+	\\ \hline
+	
+	Alternative Flows &
+	\textbf{A1. Invalid job information}
+	\begin{enumerate}
+		\item System identifies invalid fields.
+		\item Employer updates the information.
+	\end{enumerate}
+	\\ \hline
+	
+	Postconditions &
+	\begin{itemize}
+		\item Job posting becomes visible to Job Seekers.
+	\end{itemize}
+	\\ \hline
+\end{usecasespectable}
+
+\newpage
+\subsection{Back Office Worker: Approve Job Posting}
+
+\begin{usecasespectable}
+	{Use Case Specification: Approve Job Posting.}
+	{ucs-approve_job_posting}
+	
+	Use Case ID & UC-ADMIN-01 \\ \hline
+	
+	Use Case Name & Approve Job Posting \\ \hline
+	
+	Primary Actor & Back Office Worker \\ \hline
+	
+	Goal & Review and approve job postings before they become publicly available. \\ \hline
+	
+	Description &
+	Allows an Back Office Worker to review submitted job postings and determine whether they comply with platform policies.
+	\\ \hline
+	
+	Preconditions &
+	\begin{itemize}
+		\item Back Office Worker is authenticated.
+		\item A job posting is awaiting approval.
+	\end{itemize}
+	\\ \hline
+	
+	Trigger &
+	Administrator opens the pending job posting list.
+	\\ \hline
+	
+	Main Success Scenario &
+	\begin{enumerate}
+		\item Back Office Worker reviews the job posting.
+		\item Back Office Worker verifies the submitted information.
+		\item Back Office Worker approves the posting.
+		\item System updates the posting status.
+		\item System makes the job posting publicly available.
+	\end{enumerate}
+	\\ \hline
+	
+	Alternative Flows &
+	\textbf{A1. Job posting rejected}
+	\begin{enumerate}
+		\item Administrator rejects the posting.
+		\item System records the decision.
+		\item System notifies the Employer.
+	\end{enumerate}
+	\\ \hline
+	
+	Postconditions &
+	\begin{itemize}
+		\item The job posting is approved or rejected.
+	\end{itemize}
+	\\ \hline
+\end{usecasespectable}
