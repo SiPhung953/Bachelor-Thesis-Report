@@ -74,6 +74,34 @@
 	\end{longtable}
 }
 
+% A3 landscape page for oversized diagrams
+\usepackage{pdflscape}   % marks the PDF page as landscape for on-screen viewing
+
+\newcommand{\A3width}{42cm}
+\newcommand{\A3height}{29.7cm}
+\newcommand{\A4width}{21cm}
+\newcommand{\A4height}{29.7cm}
+
+\newenvironment{a3figure}[1][]
+{
+	\clearpage
+	\begin{landscape}
+	\newgeometry{paperwidth=\A3width, paperheight=\A3height, margin=1.5cm}
+	\pdfpagewidth=\A3width
+	\pdfpageheight=\A3height
+	\thispagestyle{empty}
+	\begin{figure}[H]
+	\centering
+}
+{
+	\end{figure}
+	\end{landscape}
+	\pdfpagewidth=\A4width
+	\pdfpageheight=\A4height
+	\restoregeometry
+	\clearpage
+}
+
 % DOCUMENT
 \begin{document}
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
