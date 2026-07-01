@@ -1,0 +1,57 @@
+\usepackage{geometry}
+\usepackage{afterpage}
+\usepackage{pdfpages}
+\usepackage{graphicx}
+\usepackage{caption}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% A3 Fold-out Settings
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% A3 Landscape = 420mm × 297mm
+
+\newlength{\AThreeBindingMargin}
+\setlength{\AThreeBindingMargin}{30mm}
+
+\newlength{\AThreeOuterMargin}
+\setlength{\AThreeOuterMargin}{30mm}
+
+\newlength{\AThreeTopMargin}
+\setlength{\AThreeTopMargin}{20mm}
+
+\newlength{\AThreeBottomMargin}
+\setlength{\AThreeBottomMargin}{20mm}
+
+% Compute suitable width
+
+\newlength{\AThreePrintableWidth}
+
+\setlength{\AThreePrintableWidth}{420mm}
+\addtolength{\AThreePrintableWidth}{-\AThreeBindingMargin}
+\addtolength{\AThreePrintableWidth}{-\AThreeOuterMargin}
+
+\newenvironment{a3diagram}
+{
+	\clearpage
+	
+	\newgeometry{
+		paperwidth=420mm,
+		paperheight=297mm,
+		left=\AThreeBindingMargin,
+		right=\AThreeOuterMargin,
+		top=\AThreeTopMargin,
+		bottom=\AThreeBottomMargin
+	}
+	
+	\thispagestyle{empty}
+	
+	\begin{center}
+	}
+	{
+	\end{center}
+	
+	\restoregeometry
+	
+	\clearpage
+}
+
