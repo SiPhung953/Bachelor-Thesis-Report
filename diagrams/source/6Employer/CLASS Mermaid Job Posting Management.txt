@@ -1,0 +1,97 @@
+%%{init: {
+  "theme": "default",
+  "htmlLabels": false,
+  "themeVariables": {
+    "fontFamily": "Times New Roman, serif",
+    "fontSize": "14px"
+  },
+  "class": {
+    "diagramPaddingX": 15,
+    "diagramPaddingY": 15,
+    "nodeSpacing": 40,
+    "rankSpacing": 50,
+    "hideEmptyMembersBox": true
+  }
+}}%%
+
+classDiagram
+direction LR
+
+  %% ==========================================
+  %% 1. PRESENTATION LAYER (Controllers)
+  %% ==========================================
+  class JobManagementController {
+    <<Controller>>
+    +createJob(CurrentUser, CreateJobRequest) JobResponse
+    +getEmployerJobs(CurrentUser) EmployerJobListResponse[]
+    +getEmployerJob(CurrentUser, jobId) JobResponse
+    +updateJob(CurrentUser, jobId, UpdateJobRequest) JobResponse
+    +closeJob(CurrentUser, jobId) JobResponse
+    +deleteJob(CurrentUser, jobId) MessageResponse
+  }
+
+  %% ==========================================
+  %% 2. APPLICATION LAYER (Services)
+  %% ==========================================
+  class JobManagementService {
+    <<Service>>
+    +createJob(userId, CreateJobRequest) Job
+    +getEmployerJobsByUserId(userId) Job[]
+    +getEmployerJobByJobId(jobId) Job
+    +updateJob(jobId, UpdateJobRequest) Job
+    +closeJob(jobId) boolean
+    +deleteJob(jobId) boolean
+  }
+
+  %% ==========================================
+  %% 3. INFRASTRUCTURE & UTILITY LAYER
+  %% ==========================================
+  class PrismaClient {
+    <<Utility>>
+    +job
+    +company
+    +user
+  }
+
+  %% ==========================================
+  %% 4. DOMAIN LAYER (Entities)
+  %% ==========================================
+  class User {
+    <<Entity>>
+    +UUID id
+    +String email
+    +Integer roleId
+    +UserStatus status [ACTIVE|BANNED]
+  }
+
+  class Company {
+    <<Entity>>
+    +UUID id
+    +String name
+  }
+
+  class Job {
+    <<Entity>>
+    +UUID id
+    +String title
+    +String description
+    +String requirement
+    +EmploymentType type [ON_SITE|REMOTE|HYBRID]
+    +String location
+    +DateTime deadline
+    +JobStatus status [PENDING_APPROVAL|ACTIVE|REJECTED|CLOSED|EXPIRED|DELETED]
+  }
+
+  %% ==========================================
+  %% RELATIONSHIPS (Flows Left-To-Right)
+  %% ==========================================
+  
+  %% Presentation to Application
+  JobManagementController --> JobManagementService : delegates to
+
+  %% Service Dependencies
+  JobManagementService --> PrismaClient : queries
+
+  %% Entity Domain Relationships (Right Anchor Group)
+  User "1" --> "0..1" Company : owns
+  Company "1" --> "0..*" Job : posts

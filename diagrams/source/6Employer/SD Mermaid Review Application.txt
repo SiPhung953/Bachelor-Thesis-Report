@@ -1,0 +1,83 @@
+%%{init: {
+	"theme": "redux",
+	"themeVariables": {
+		"fontFamily": "Times New Roman, serif"
+},
+	"sequence": {
+		"wrap": true,
+		"width": 200,
+		"height": 65,
+		"actorMargin": 100,
+		"messageFontSize": 22,
+		"actorFontSize": 16,
+		"noteFontSize": 16,
+		"messageMargin": 50,
+		"activationWidth": 12,
+		"diagramMarginX": 30,
+		"diagramMarginY": 30,
+		"useMaxWidth": true
+	}
+}}%%
+
+sequenceDiagram
+    actor Employer as Employer
+    participant FrontendUI as «boundary»<br/>Frontend UI
+    participant JwtAuthentication as «security»<br/>JWTAuthentication
+    participant EmployerApplicationController as «control»<br/>EmployerApplicationController
+    participant EmployerApplicationService as «service»<br/>EmployerApplicationService
+    participant PrismaClient as «persistence»<br/>PrismaClient
+    participant Database as «database»<br/>Database
+
+    Employer->>+FrontendUI: 1 : Select job posting and request application list
+    FrontendUI->>+JwtAuthentication: 2 : getApplications(jobId)
+
+    JwtAuthentication->>JwtAuthentication: 3 : verifyAccessToken(accessToken)
+
+    %% GUARD 1: Authentication Break
+    break User is not authenticated
+        JwtAuthentication-->>FrontendUI: 4a : HTTP 401 Unauthorized
+        FrontendUI-->>Employer: 5a : Redirect to Login page
+    end
+
+    JwtAuthentication->>JwtAuthentication: 4 : verifyRole(EMPLOYER)
+
+    %% GUARD 2: Role Authorization Break
+    break User does not have Employer role
+        JwtAuthentication-->>FrontendUI: 5b : HTTP 403 Forbidden
+        FrontendUI-->>Employer: 6b : Display role restriction warning
+    end
+
+    JwtAuthentication->>+EmployerApplicationController: 5 : getApplications(user, jobId)
+    deactivate JwtAuthentication
+    EmployerApplicationController->>+EmployerApplicationService: 6 : getApplications(userId, jobId)
+
+    %% Retrieve Target Job Record
+    EmployerApplicationService->>+PrismaClient: 7 : findJobById(jobId)
+    PrismaClient->>+Database: 8 : fetchJobRecord(jobId)
+    Database-->>-PrismaClient: 9 : jobData
+    PrismaClient-->>-EmployerApplicationService: 10 : job
+
+    %% GUARD 3: Existence Break
+    break Job record does not exist
+        EmployerApplicationService-->>EmployerApplicationController: 11a : jobNotFoundError
+        EmployerApplicationController-->>FrontendUI: 12a : HTTP 404 Not Found
+        FrontendUI-->>Employer: 13a : Display job not found message
+    end
+
+    %% GUARD 4: Ownership Break
+    EmployerApplicationService->>JobManagementService: verifyJobOwnership(userId, job)
+    break Employer does not own the job
+        EmployerApplicationService-->>EmployerApplicationController: 11b : ownershipError
+        EmployerApplicationController-->>FrontendUI: 12b : HTTP 403 Forbidden
+        FrontendUI-->>Employer: 13b : Display ownership violation warning
+    end
+
+    %% Retrieve Application Submissions
+    EmployerApplicationService->>+PrismaClient: 11 : findApplicationsByJobId(jobId)
+    PrismaClient->>+Database: 12 : fetchApplicationsByJobId(jobId)
+    Database-->>-PrismaClient: 13 : applicationRecords
+    PrismaClient-->>-EmployerApplicationService: 14 : applicationList
+
+    EmployerApplicationService-->>-EmployerApplicationController: 15 : EmployerApplicationListResponse
+    EmployerApplicationController-->>-FrontendUI: 16 : HTTP 200 OK<br/>EmployerApplicationListResponse
+    FrontendUI-->>-Employer: 17 : Display application list

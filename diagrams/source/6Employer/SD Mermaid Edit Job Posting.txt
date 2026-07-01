@@ -1,0 +1,89 @@
+%%{init: {
+	"theme": "redux",
+	"themeVariables": {
+		"fontFamily": "Times New Roman, serif"
+},
+	"sequence": {
+		"wrap": true,
+		"width": 200,
+		"height": 65,
+		"actorMargin": 100,
+		"messageFontSize": 22,
+		"actorFontSize": 16,
+		"noteFontSize": 16,
+		"messageMargin": 50,
+		"activationWidth": 12,
+		"diagramMarginX": 30,
+		"diagramMarginY": 30,
+		"useMaxWidth": true
+	}
+}}%%
+
+sequenceDiagram
+    actor Employer as Employer
+    participant FrontendUI as «boundary»<br/>Frontend UI
+    participant JwtAuthentication as «security»<br/>JWTAuthentication
+    participant JobManagementController as «control»<br/>JobManagementController
+    participant JobManagementService as «service»<br/>JobManagementService
+    participant PrismaClient as «persistence»<br/>PrismaClient
+    participant Database as «database»<br/>Database
+
+    Employer->>+FrontendUI: 1 : Modify details and click save
+    FrontendUI->>+JwtAuthentication: 2 : updateJob(jobId, jobPayload)
+
+    JwtAuthentication->>JwtAuthentication: 3 : verifyAccessToken(accessToken)
+
+    %% GUARD 1: Authentication Break
+    break User is not authenticated
+        JwtAuthentication-->>FrontendUI: 4a : HTTP 401 Unauthorized
+        FrontendUI-->>Employer: 5a : Redirect to Login page
+    end
+
+    JwtAuthentication->>JwtAuthentication: 4 : verifyRole(EMPLOYER)
+
+    %% GUARD 2: Role Authorization Break
+    break User does not have Employer role
+        JwtAuthentication-->>FrontendUI: 5b : HTTP 403 Forbidden
+        FrontendUI-->>Employer: 6b : Display role restriction warning
+    end
+
+    JwtAuthentication->>+JobManagementController: 5 : updateJob(jobId, jobPayload)
+    deactivate JwtAuthentication
+    JobManagementController->>+JobManagementService: 6 : updateJob(userId, jobId, jobPayload)
+
+    %% Retrieve baseline record
+    JobManagementService->>+PrismaClient: 7 : findJobById(jobId)
+    PrismaClient->>+Database: 8 : fetchJobRecord(jobId)
+    Database-->>-PrismaClient: 9 : jobData
+    PrismaClient-->>-JobManagementService: 10 : job
+
+    %% GUARD 3: Existence Break
+    break Job record does not exist
+        JobManagementService-->>JobManagementController: 11a : jobNotFoundError
+        JobManagementController-->>FrontendUI: 12a : HTTP 404 Not Found
+        FrontendUI-->>Employer: 13a : Display job not found message
+    end
+
+    %% GUARD 4: Ownership Break
+    break Employer does not own the job
+        JobManagementService-->>JobManagementController: 11b : ownershipError
+        JobManagementController-->>FrontendUI: 12b : HTTP 403 Forbidden
+        FrontendUI-->>Employer: 13b : Display ownership violation warning
+    end
+
+    %% GUARD 5: Deleted Lifecycle State Break
+    break Job is deleted
+        JobManagementService-->>JobManagementController: 11c : jobDeletedError
+        JobManagementController-->>FrontendUI: 12c : HTTP 409 Conflict
+        FrontendUI-->>Employer: 13c : Display job unavailable message
+    end
+
+    %% Core Mutation Execution
+    JobManagementService->>+PrismaClient: 11 : updateJob(jobId, jobPayload)
+    PrismaClient->>+Database: 12 : saveJobUpdates(jobId, jobPayload)
+    Database-->>-PrismaClient: 13 : updatedJobData
+    PrismaClient-->>-JobManagementService: 14 : updatedJob
+
+    JobManagementService-->>-JobManagementController: 15 : JobResponse
+    JobManagementController-->>-FrontendUI: 16 : HTTP 200 OK<br/>JobResponse
+    FrontendUI-->>-Employer: 17 : Display updated job details

@@ -1,0 +1,74 @@
+%%{init: {
+	"theme": "redux",
+	"themeVariables": {
+		"fontFamily": "Times New Roman, serif"
+},
+	"sequence": {
+		"wrap": true,
+		"width": 200,
+		"height": 65,
+		"actorMargin": 100,
+		"messageFontSize": 22,
+		"actorFontSize": 16,
+		"noteFontSize": 16,
+		"messageMargin": 50,
+		"activationWidth": 12,
+		"diagramMarginX": 30,
+		"diagramMarginY": 30,
+		"useMaxWidth": true
+	}
+}}%%
+
+sequenceDiagram
+    actor Employer as Employer
+    participant FrontendUI as «boundary»<br/>Frontend UI
+    participant JwtAuthentication as «security»<br/>JWTAuthentication
+    participant JobManagementController as «control»<br/>JobManagementController
+    participant JobManagementService as «service»<br/>JobManagementService
+    participant PrismaClient as «persistence»<br/>PrismaClient
+    participant Database as «database»<br/>Database
+	
+    Employer->>+FrontendUI: 1 : Fill job details and click publish
+    FrontendUI->>+JwtAuthentication: 2 : createJob(jobPayload)
+    JwtAuthentication->>JwtAuthentication: 3 : verifyAccessToken(accessToken)
+
+    %% GUARD 1: Authentication Break
+    break User is not authenticated
+        JwtAuthentication-->>FrontendUI: 4a : HTTP 401 Unauthorized
+        FrontendUI-->>Employer: 5a : Redirect to Login page
+    end
+	
+    JwtAuthentication->>JwtAuthentication: 4 : verifyRole(roleName)
+    
+    %% GUARD 2: Role Authorization Break
+    break User does not have Employer role
+        JwtAuthentication-->>FrontendUI: 5b : HTTP 403 Forbidden
+        FrontendUI-->>Employer: 6b : Display access denied message
+    end
+	
+    JwtAuthentication->>+JobManagementController: 5 : createJob(userId, jobPayload)
+    deactivate JwtAuthentication
+    JobManagementController->>+JobManagementService: 6 : createJob(userId, jobPayload)
+	
+    %% Fetch Associated corporate entity
+    JobManagementService->>+PrismaClient: 7 : findCompanyByEmployerId(userId)
+    PrismaClient->>+Database: 8 : fetchEmployerCompanyRecord(userId)
+    Database-->>-PrismaClient: 9 : companyData
+    PrismaClient-->>-JobManagementService: 10 : company
+
+    %% GUARD 3: Corporate Association Break
+    break User is not associated with a company
+        JobManagementService-->>JobManagementController: 11a : companyAssociationError
+        JobManagementController-->>FrontendUI: 12a : HTTP 403 Forbidden
+        FrontendUI-->>Employer: 13a : Display company registration prompt
+    end
+	
+    %% Core Mutation Execution
+    JobManagementService->>+PrismaClient: 11 : createJob(companyId, jobPayload)
+    PrismaClient->>+Database: 12 : insertJobRecord(jobPayload)
+    Database-->>-PrismaClient: 13 : createdJobData
+    PrismaClient-->>-JobManagementService: 14 : jobInstance
+    
+    JobManagementService-->>-JobManagementController: 15 : JobResponse
+    JobManagementController-->>-FrontendUI: 16 : HTTP 201 Created<br/>JobResponse
+    FrontendUI-->>-Employer: 17 : Display newly published job view
