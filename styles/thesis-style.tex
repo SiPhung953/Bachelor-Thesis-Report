@@ -1,0 +1,61 @@
+\documentclass[
+english,
+12pt,
+a4paper,
+oneside
+]{report}
+
+% PACKAGES
+\usepackage[utf8]{inputenc}
+
+% Margin and layout
+\usepackage[
+	a4paper, 
+	left=3cm, 
+	right=2.5cm, 
+	top=2.5cm, 
+	bottom=2.5cm
+]{geometry}
+
+% Header and Footer
+\usepackage{fancyhdr}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[R]{\thepage}
+\renewcommand{\headrulewidth}{0pt}  % Without this, every page in a chapter have a horizontal line at the top
+\renewcommand{\footrulewidth}{0pt}
+
+% Font encoding
+\usepackage[T1]{fontenc}
+
+% Diagrams
+\usepackage{graphicx}
+\usepackage{float}
+\graphicspath{{diagrams/exported/}{figures/screenshots/}{figures/ui/}}
+
+% Tables
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+
+% Colors (for reference, header, etc.)
+\usepackage{xcolor}
+
+% Mutilingual environment
+\usepackage{babel}
+
+% Reference
+\usepackage{hyperref}
+
+% Captions
+\usepackage{caption}
+\usepackage{subcaption}
+
+% Caption for table at the top
+\captionsetup[table]{position=top}
+
+% PDF stuff
+\usepackage{afterpage}
+\usepackage{pdfpages}
