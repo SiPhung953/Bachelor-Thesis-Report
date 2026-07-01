@@ -1,28 +1,3 @@
-
-
-
-% A3 landscape page for oversized diagrams
-\usepackage{pdflscape}   % marks the PDF page as landscape for on-screen viewing
-\newenvironment{a3figure}[1][]
-{
-	\clearpage
-	\begin{landscape}
-	\newgeometry{paperwidth=42cm, paperheight=29.7cm, margin=1.5cm}
-	\pdfpagewidth=42cm
-	\pdfpageheight=29.7cm
-	\thispagestyle{empty}
-	\begin{figure}[H]
-	\centering
-}
-{
-	\end{figure}
-	\end{landscape}
-	\pdfpagewidth=21cm
-	\pdfpageheight=29.7cm
-	\restoregeometry
-	\clearpage
-}
-
 \input{styles/thesis-style.tex}
 \input{styles/a3foldout.tex}
 
