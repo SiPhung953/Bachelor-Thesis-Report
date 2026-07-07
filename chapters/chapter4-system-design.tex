@@ -136,7 +136,7 @@ All business components interact with the PostgreSQL database through the shared
 The database design defines how the system's persistent data is organized and managed. It identifies the main business entities, their relationships, and the constraints that ensure data consistency. The design follows the principles introduced in Section~\ref{c4:section:design-overview}, particularly data integrity, by using a normalized relational schema with clearly defined primary and foreign key relationships.
 
 \subsection{Entity Relationship Diagram}
-Figure~\ref{diagram:erd-overview} presents an overview of the database schema used by the Online Recruitment Platform. To improve readability, the overview diagram includes the primary entities, key attributes, and relationships while omitting system-generated fields such as timestamps and audit metadata. The complete schema is organized into five functional groups, each corresponding to a major business domain and discussed in the following subsections.
+Figure~\ref{diagram:erd-overview} presents an overview of the database schema used by the Online Recruitment Platform. To improve readability, the overview diagram includes the primary entities, key attributes, and relationships while omitting system-generated fields such as timestamps and audit metadata. 
 
 \begin{figure}[H]
 	\centering
@@ -145,8 +145,323 @@ Figure~\ref{diagram:erd-overview} presents an overview of the database schema us
 	\label{diagram:erd-overview}
 \end{figure}
 
+The complete schema is organized into five functional groups, each corresponding to a major business domain and discussed in the following subsections.
+
+\subsubsection{Auth and Account}
+Figure~\ref{diagram:erd-auth-account} details the entities involved in authentication and account recovery.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.32\linewidth]{diagrams/exported/ERD/Auth-and-Account-ERD-crop.pdf}
+	\caption{Auth and Account Entity Relationship Diagram.}
+	\label{diagram:erd-auth-account}
+\end{figure}
+
+Each role may be assigned to any number of users, while every user is assigned exactly one role. A user may request multiple password reset tokens over time, but each token belongs to exactly one user.
+
+\subsubsection{Profile and CV Management}
+Figure~\ref{diagram:erd-profile-cv} details the entities involved in managing a user's profile, job preferences, and resumes.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{diagrams/exported/ERD/Profile-and-CV-Management-ERD-crop.pdf}
+	\caption{Profile and CV Management Entity Relationship Diagram.}
+	\label{diagram:erd-profile-cv}
+\end{figure}
+
+Each user has at most one profile and at most one job preference record, both enforced through a unique foreign key, forming one-to-one relationships. A user may upload multiple resumes, but each resume belongs to exactly one user.
+
+\subsubsection{Company and Job Posting}
+Figure~\ref{diagram:erd-company-job} details the entities involved in company and job posting management.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{diagrams/exported/ERD/Company-and-Job-Posting-ERD-crop.pdf}
+	\caption{Company and Job Posting Entity Relationship Diagram.}
+	\label{diagram:erd-company-job}
+\end{figure}
+
+An employer may own multiple companies, but each company belongs to exactly one employer. Similarly, an employer may create multiple job postings, but each job posting is created by exactly one employer. Each job posting belongs to exactly one company, while a company may publish any number of job postings.
+
+\subsubsection{Job Application}
+Figure~\ref{diagram:erd-job-application} details the entities involved in the job application workflow.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{diagrams/exported/ERD/Job-Application-ERD-crop.pdf}
+	\caption{Job Application Entity Relationship Diagram.}
+	\label{diagram:erd-job-application}
+\end{figure}
+
+A job seeker may upload multiple resumes and submit multiple applications, but each resume and each application belongs to exactly one job seeker. Each application is submitted for exactly one job posting, while a job posting may receive any number of applications. A resume may be attached to multiple applications, but each application references exactly one resume.
+
+\subsubsection{Administration and Audit}
+Figure~\ref{diagram:erd-admin-audit} details the entities involved in role assignment and system activity logging.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{diagrams/exported/ERD/Administration-and-Audit-ERD-crop.pdf}
+	\caption{Administration and Audit Entity Relationship Diagram.}
+	\label{diagram:erd-admin-audit}
+\end{figure}
+
+As with the Auth and Account group, each role may be assigned to any number of users, while every user is assigned exactly one role. A user may perform any number of logged actions, and each log entry optionally references the user who performed it, since some actions may be attributed to the system itself rather than a specific user.
+
+
 \section{Backend Design}
 \label{c4:section:backend-design}
+This section details the internal design of the Backend API container introduced in Section~\ref{c4:section:system-architecture}. It first describes the project structure and shared infrastructure common to all modules, then presents each business module following the same template: an introduction, a class diagram, and a design explanation.
+
+\subsection{Backend Project Structure}
+\label{c4:subsection:backend-structure}
+The backend source code is organized as follows:
+
+\dirtree{%
+	.1 src.
+	.2 api-external.
+	.2 api-shared.
+	.2 api-internal.
+	.2 generated.
+	.2 lib.
+	.2 middlewares.
+	.2 utils.
+}
+
+Table~\ref{tab:backend-folders} summarizes the purpose of each top-level folder.
+
+\begin{table}[H]
+	\centering
+	\caption{Backend Project Structure.}
+	\label{tab:backend-folders}
+	\begin{tabular}{|p{2.8cm}|p{11.2cm}|}
+		\hline
+		\textbf{Folder} & \textbf{Purpose} \\
+		\hline
+		
+		api-external &
+		Implements business modules that expose application functionality to external users through RESTful APIs. \\
+		\hline
+		
+		api-internal &
+		Implements internal modules that support administrative and platform management operations. \\
+		\hline
+		
+		api-shared &
+		Provides reusable modules and services shared across multiple business domains to reduce duplication and improve maintainability. \\
+		\hline
+		
+		generated &
+		Contains source files automatically generated during the build process and should not be modified manually. \\
+		\hline
+		
+		lib &
+		Maintains shared library instances and application-wide configurations used by multiple modules. \\
+		\hline
+		
+		middlewares &
+		Implements request-processing components that perform cross-cutting concerns such as authentication and validation before controller execution. \\
+		\hline
+		
+		utils &
+		Provides general-purpose utility classes and helper functions used throughout the backend application. \\
+		\hline
+		
+	\end{tabular}
+\end{table}
+
+\subsection{Shared Backend Components}
+\label{c4:subsection:shared-backend-components}
+A small set of reusable infrastructure components is shared across all business modules, avoiding duplication and ensuring consistent behavior.
+
+\begin{itemize}
+	\item JWT Authentication: issues and verifies signed JSON Web Tokens carrying the user's identifier and role, and is enforced through an Express middleware on protected routes.
+	\item Email Service: wraps NodeMailer to send transactional emails, such as password reset notifications.
+	\item PasswordHasher: wraps BCrypt to hash and compare passwords consistently wherever credentials are handled.
+	\item ResetTokenUtils: generates password reset tokens, hashes them before storage, and validates expiration on use.
+	\item Prisma Client: the generated ORM client, instantiated once and imported by services for all database access.
+	\item File Storage: abstracts file persistence behind a common interface, used for avatar and resume uploads.
+\end{itemize}
+
+\subsection{Authentication Module}
+\label{c4:subsection:auth-module}
+\subsubsection{Introduction}
+The Authentication Module implements user registration, login, logout, and password recovery. It resides in \texttt{api-external}, since these operations are invoked directly by external clients, and is one of the shared backend components other modules depend on for issuing and validating access tokens.
+
+\subsubsection{Class Diagram}
+Figure~\ref{diagram:class-auth} presents the class diagram of the Authentication Module.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{diagrams/exported/2Auth/Auth-Class-Diagram.pdf}
+	\caption{Authentication Module Class Diagram.}
+	\label{diagram:class-auth}
+\end{figure}
+
+\subsubsection{Design Explanation}
+Following the thin controller, rich service principle from Section~\ref{c4:section:design-overview}, AuthController exposes six REST endpoints and delegates each directly to a matching method on AuthService, without containing business logic itself. AuthService depends on four shared utility components, described in Section~\ref{c4:subsection:shared-backend-components}: PasswordHasher, ResetTokenUtils, EmailService, and PrismaClient, the last of which queries and updates the User, PasswordResetToken, and Role entities whose relationships are detailed in Figure~\ref{diagram:erd-auth-account}.
+
+Each AuthService method implements one authentication use case:
+
+\begin{itemize}
+	\item register validates that the email is not already in use, assigns the default JOB\_SEEKER role by looking it up by name rather than a hardcoded identifier, and stores the hashed password.
+	\item login verifies the submitted password against the stored hash, rejects banned accounts, and issues a signed JWT containing the user's identifier and role.
+	\item logout returns a simple confirmation message, since JWTs are stateless and the actual token discarding is handled by the frontend.
+	\item requestPasswordReset issues a hashed, time-limited reset token and emails the corresponding raw token to the user. To avoid revealing whether an email is registered, the same response message is returned regardless of whether the account exists.
+	\item resetPassword validates the submitted token against the stored hash and expiration, then updates the user's password and marks the token as used within a single database transaction, ensuring both changes succeed or fail together.
+	\item validateResetToken allows the frontend to check whether a reset token is still valid before rendering the reset password form, without exposing whether that check has consumed the token.
+\end{itemize}
+
+\subsection{Profile Management Module}
+\label{c4:subsection:profile-module}
+\subsubsection{Introduction}
+The Profile Management Module lets authenticated users view and update their personal profile, job search preferences, avatar, and account password. It resides in \texttt{api-external} and depends on the Authentication Module's JWT middleware to identify the requesting user on every operation.
+
+\subsubsection{Class Diagram}
+Figure~\ref{diagram:class-profile} presents the class diagram of the Profile Management Module.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{diagrams/exported/3Profile/Profile-Class-Diagram.pdf}
+	\caption{Profile Management Module Class Diagram.}
+	\label{diagram:class-profile}
+\end{figure}
+
+\subsubsection{Design Explanation}
+As with the Authentication Module, ProfileController delegates each of its six endpoints directly to a matching method on ProfileService, with no business logic in the controller itself. ProfileService depends on three shared utility components, described in Section~\ref{c4:subsection:shared-backend-components}: PasswordHasher, FileStorageService, and PrismaClient, the last of which reads and writes the User, UserProfile, and UserJobPreference entities whose relationships are detailed in Figure~\ref{diagram:erd-profile-cv}.
+
+Each ProfileService method implements one profile management use case:
+
+\begin{itemize}
+	\item getMyProfile and getJobPreference return the authenticated user's profile and job preference records respectively, selecting only fields safe for display; both may be empty if the user has not yet filled them in.
+	\item updatePersonalInformation and updateJobPreference use an upsert operation, creating the record on first use and updating it thereafter, so the client does not need to know in advance whether a profile already exists.
+	\item updateJobPreference additionally distinguishes between an omitted field, which is left unchanged, and a field explicitly set to null, which clears it, by checking each field against undefined before including it in the update. This allows partial updates without unintentionally overwriting fields the client did not intend to modify.
+	\item changeAvatar validates the uploaded file's type and size before storing it, rejecting formats other than JPG, JPEG, or PNG and files larger than 3 MB, then updates the user's avatar URL.
+	\item changePassword verifies the submitted current password, rejects the request if the new password is identical to the old one, and otherwise hashes and stores the new password.
+\end{itemize}
+
+Across all methods, only the fields explicitly listed in each Prisma \texttt{select} clause are returned or made editable; protected fields such as role, account status, and password hash are never exposed through this module, consistent with the requirement that users may modify only their own non-protected profile data.
+
+\subsection{Resume Management Module}
+\label{c4:subsection:resume-module}
+\subsubsection{Introduction}
+The Resume Management Module lets job seekers list, upload, and delete their resumes, which are later selected when submitting job applications. It resides in \texttt{api-external} and depends on the Authentication Module's JWT middleware to identify the requesting user on every operation.
+
+\subsubsection{Class Diagram}
+Figure~\ref{diagram:class-resume} presents the class diagram of the Resume Management Module.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{diagrams/exported/4Resume/Resume-Class-Diagram.pdf}
+	\caption{Resume Management Module Class Diagram.}
+	\label{diagram:class-resume}
+\end{figure}
+
+\subsubsection{Design Explanation}
+As with the previous modules, ResumeController delegates each of its three endpoints directly to a matching method on ResumeService, with no business logic in the controller itself. ResumeService depends on two shared utility components, described in Section~\ref{c4:subsection:shared-backend-components}: FileStorageService and PrismaClient, the latter of which reads and writes the User and Resume entities, whose relationship is detailed in Figure~\ref{diagram:erd-profile-cv}.
+
+Each ResumeService method implements one resume management use case:
+
+\begin{itemize}
+	\item getMyResumes returns the authenticated user's non-deleted resumes, ordered from newest to oldest.
+	\item uploadResume validates that a title and file are provided, rejects files larger than 5 MB or of an unsupported type, accepting only PDF, DOC, and DOCX, then stores the file through FileStorageService before creating the resume record.
+	\item deleteResume verifies that the resume exists, is not already deleted, and belongs to the requesting user, then checks whether it is referenced by any application. If it is, the resume is soft-deleted, marked with a deletion timestamp but kept in the database, so that existing applications retain a valid reference. Otherwise, it is hard-deleted from both the database and file storage.
+\end{itemize}
+
+\subsection{Job Discovery Module}
+\label{c4:subsection:job-discovery-module}
+\subsubsection{Introduction}
+The Job Discovery Module lets guests and authenticated users search active job postings and view their details. Unlike the previous modules, its endpoints are not protected by the JWT middleware, since job browsing is a public capability. It resides in \texttt{api-external}.
+
+\subsubsection{Class Diagram}
+Figure~\ref{diagram:class-job-discovery} presents the class diagram covering the Public actor's capabilities, job discovery and company profile viewing. This section discusses only JobDiscoveryController and JobDiscoveryService; CompanyController and CompanyService are discussed in Section~\ref{c4:subsection:employer-job-module} alongside the rest of the system's company-related design.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{diagrams/exported/1Public/Public-Class-Diagram.pdf}
+	\caption{Public Class Diagram.}
+	\label{diagram:class-job-discovery}
+\end{figure}
+
+\subsubsection{Design Explanation}
+As with the previous modules, JobDiscoveryController delegates each of its two endpoints directly to a matching method on JobDiscoveryService, with no business logic in the controller itself. JobDiscoveryService depends on the shared PrismaClient, described in Section~\ref{c4:subsection:shared-backend-components}, which queries the Job and Company entities, whose relationship is detailed in Figure~\ref{diagram:erd-company-job}.\\
+
+Each JobDiscoveryService method implements one job discovery use case:
+
+\begin{itemize}
+	\item searchJobs restricts results to ACTIVE jobs and accepts an optional keyword and location, either of which may be provided independently or together. An empty string is treated as not provided, and each value is capped at 255 characters. When given, the keyword matches against the job title or company name, and the location matches against the job's own location field or the company's city and district, all case-insensitively. When both are provided, a job must satisfy both conditions to be returned. If neither is provided, all ACTIVE jobs are returned, and a query that matches nothing returns an empty list rather than an error.
+	\item getJobDetail returns the full detail of a single job by identifier, restricted to ACTIVE jobs, and returns a 404 error if the job does not exist or is not currently active.
+\end{itemize}
+
+\subsection{Job Application Module}
+\label{c4:subsection:job-application-module}
+\subsubsection{Introduction}
+The Job Application Module lets job seekers apply to active job postings using one of their resumes, view their own submitted applications, and withdraw an application while it is still eligible. It resides in \texttt{api-external}, and every endpoint requires both a valid JWT and the JOB\_SEEKER role.
+
+\subsubsection{Class Diagram}
+Figure~\ref{diagram:class-job-application} presents the class diagram of the Job Application Module.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{diagrams/exported/5JobSeeker/JobApplication-Class-Diagram.pdf}
+	\caption{Job Application Module Class Diagram.}
+	\label{diagram:class-job-application}
+\end{figure}
+
+\subsubsection{Design Explanation}
+As with the previous modules, ApplicationController delegates each of its three endpoints directly to a matching method on ApplicationService, with no business logic in the controller itself. ApplicationService depends on the shared PrismaClient, described in Section~\ref{c4:subsection:shared-backend-components}, which queries the User, Job, Resume, and Application entities, whose relationships are detailed in Figure~\ref{diagram:erd-job-application}.
+
+Every ApplicationService method begins with the same guard: the caller must hold the JOB\_SEEKER role and must not be banned, otherwise the request is rejected. Beyond this shared guard, each method implements one job application use case:
+
+\begin{itemize}
+	\item applyJob verifies that the referenced job exists and is ACTIVE, that the referenced resume exists and belongs to the caller, and that no prior application exists for the same job and user pair, before creating the application with an initial status of SUBMITTED.
+	\item getMyApplications returns all applications submitted by the caller, joining through the related job and company to return a flattened summary alongside each application's status and submission date.
+	\item withdrawApplication verifies that the application belongs to the caller and is still in SUBMITTED status, rejecting the request once it has moved further along the review process, then updates its status to WITHDRAWN and records the withdrawal timestamp.
+\end{itemize}
+
+\subsection{Employer Job Management Module}
+\label{c4:subsection:employer-job-module}
+\subsubsection{Introduction}
+The Employer Job Management Module covers the three capabilities exposed to Employers: managing their company profile, managing the lifecycle of their job postings, and reviewing submitted applications. It also includes the public-facing company profile and active job listing endpoints introduced in Section~\ref{c4:subsection:job-discovery-module}, since they operate on the same Company data. Implementation of this module is still in progress at the time of writing; the design below reflects the structure defined by the class diagrams and will be finalized once implementation is complete.
+
+\subsubsection{Class Diagram}
+Figures~\ref{diagram:class-company-profile}, \ref{diagram:class-job-posting}, and \ref{diagram:class-employer-application} present the class diagrams of the Employer Job Management Module.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{diagrams/exported/6Employer/CompanyProfileCreation-Class-Diagram.pdf}
+	\caption{Company Profile Management Class Diagram.}
+	\label{diagram:class-company-profile}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{diagrams/exported/6Employer/JobPostingManagement-Class-Diagram.pdf}
+	\caption{Job Posting Management Class Diagram.}
+	\label{diagram:class-job-posting}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{diagrams/exported/6Employer/EmployerApplicationManagement-Class-Diagram.pdf}
+	\caption{Employer Application Management Class Diagram.}
+	\label{diagram:class-employer-application}
+\end{figure}
+
+\subsubsection{Design Explanation}
+Across all three diagrams, each Controller delegates directly to a matching Service method, with no business logic in the controller itself, and each Service depends on the shared PrismaClient described in Section~\ref{c4:subsection:shared-backend-components}.
+
+\paragraph{Company Profile Management:}
+EmployerCompanyController exposes createCompany, getCompany, and updateCompany, delegated to EmployerCompanyService. As shown in Figure~\ref{diagram:class-company-profile}, an employer owns at most one company, so none of these operations take a company identifier; the owning employer is instead resolved from the authenticated user.
+
+\paragraph{Company Profile Viewing:}
+The public-facing counterpart, CompanyController and CompanyService, was introduced alongside the Job Discovery Module in Figure~\ref{diagram:class-job-discovery}. getCompanyProfile returns a company's public details, and getActiveJobs lists its ACTIVE job postings, letting guests and job seekers view a company without requiring authentication.
+
+\paragraph{Job Posting Management:}
+JobManagementController exposes the full lifecycle of a job posting: createJob, getEmployerJobs, getEmployerJob, updateJob, closeJob, and deleteJob, delegated to JobManagementService. As shown in Figure~\ref{diagram:class-job-posting}, the Job status attribute includes PENDING\_APPROVAL and REJECTED, in addition to the statuses used elsewhere in the system, reflecting that newly created and edited postings are subject to administrator moderation, detailed in Section~\ref{c4:subsection:admin-module}, before becoming publicly visible.
+
+\paragraph{Application Review:}
+EmployerApplicationController exposes getApplications, which lists the applications submitted to a given job, and updateApplicationStatus, which transitions an application through the reviewing pipeline, delegated to EmployerApplicationService. As shown in Figure~\ref{diagram:class-employer-application}, this complements the SUBMITTED and WITHDRAWN transitions initiated by the job seeker in Section~\ref{c4:subsection:job-application-module}: here, the employer moves an application through the remaining REVIEWING, SHORTLISTED, REJECTED, and ACCEPTED statuses.
+
 
 \section{Frontend Design}
 \label{c4:section:frontend-design}
