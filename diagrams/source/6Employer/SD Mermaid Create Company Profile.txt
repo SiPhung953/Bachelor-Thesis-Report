@@ -1,0 +1,75 @@
+%%{init: {
+	"theme": "redux",
+	"themeVariables": {
+		"fontFamily": "Times New Roman, serif"
+},
+	"sequence": {
+		"wrap": true,
+		"width": 200,
+		"height": 65,
+		"actorMargin": 100,
+		"messageFontSize": 22,
+		"actorFontSize": 16,
+		"noteFontSize": 16,
+		"messageMargin": 50,
+		"activationWidth": 12,
+		"diagramMarginX": 30,
+		"diagramMarginY": 30,
+		"useMaxWidth": true
+	}
+}}%%
+
+sequenceDiagram
+    actor Employer as Employer
+    participant FrontendUI as «boundary»<br/>Frontend UI
+    participant JwtAuthentication as «security»<br/>JWTAuthentication
+    participant EmployerCompanyController as «control»<br/>EmployerCompanyController
+    participant EmployerCompanyService as «service»<br/>EmployerCompanyService
+    participant PrismaClient as «persistence»<br/>PrismaClient
+    participant Database as «database»<br/>Database
+
+    Employer->>+FrontendUI: 1 : Fill company information and click Create
+    FrontendUI->>+JwtAuthentication: 2 : createCompany(companyPayload)
+
+    JwtAuthentication->>JwtAuthentication: 3 : verifyAccessToken(accessToken)
+
+    %% GUARD 1: Authentication Break
+    break User is not authenticated
+        JwtAuthentication-->>FrontendUI: 4a : HTTP 401 Unauthorized
+        FrontendUI-->>Employer: 5a : Redirect to Login page
+    end
+
+    JwtAuthentication->>JwtAuthentication: 4 : verifyRole(EMPLOYER)
+
+    %% GUARD 2: Role Authorization Break
+    break User does not have Employer role
+        JwtAuthentication-->>FrontendUI: 5b : HTTP 403 Forbidden
+        FrontendUI-->>Employer: 6b : Display role restriction warning
+    end
+
+    JwtAuthentication->>+EmployerCompanyController: 5 : createCompany(user, companyPayload)
+    deactivate JwtAuthentication
+    EmployerCompanyController->>+EmployerCompanyService: 6 : createCompany(userId, companyPayload)
+
+    %% Verify employer has no existing company profile
+    EmployerCompanyService->>+PrismaClient: 7 : findCompanyByOwnerId(userId)
+    PrismaClient->>+Database: 8 : fetchCompanyByOwnerId(userId)
+    Database-->>-PrismaClient: 9 : companyData
+    PrismaClient-->>-EmployerCompanyService: 10 : company
+
+    %% GUARD 3: Profile Duplication Break (1-to-1 Relationship Constraint)
+    break Employer already owns an established company
+        EmployerCompanyService-->>EmployerCompanyController: 11a : companyAlreadyExistsError
+        EmployerCompanyController-->>FrontendUI: 12a : HTTP 409 Conflict
+        FrontendUI-->>Employer: 13a : Display company registration duplication warning
+    end
+
+    %% Core Mutation Execution
+    EmployerCompanyService->>+PrismaClient: 11 : createCompany(userId, companyPayload)
+    PrismaClient->>+Database: 12 : insertCompanyRecord(userId, companyPayload)
+    Database-->>-PrismaClient: 13 : createdCompanyData
+    PrismaClient-->>-EmployerCompanyService: 14 : companyInstance
+
+    EmployerCompanyService-->>-EmployerCompanyController: 15 : CompanyResponse
+    EmployerCompanyController-->>-FrontendUI: 16 : HTTP 201 Created<br/>CompanyResponse
+    FrontendUI-->>-Employer: 17 : Display company profile dashboard

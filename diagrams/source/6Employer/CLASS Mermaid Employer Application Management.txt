@@ -1,0 +1,94 @@
+%%{init: {
+  "theme": "default",
+  "htmlLabels": false,
+  "themeVariables": {
+    "fontFamily": "Times New Roman, serif",
+    "fontSize": "14px"
+  },
+  "class": {
+    "diagramPaddingX": 15,
+    "diagramPaddingY": 15,
+    "nodeSpacing": 40,
+    "rankSpacing": 50,
+    "hideEmptyMembersBox": true
+  }
+}}%%
+
+classDiagram
+direction LR
+
+  %% ==========================================
+  %% 1. PRESENTATION LAYER (Controllers)
+  %% ==========================================
+  class EmployerApplicationController {
+    <<Controller>>
+    +getApplications(CurrentUser, jobId) EmployerApplicationListResponse[]
+    +updateApplicationStatus(CurrentUser, applicationId, UpdateApplicationStatusRequest) EmployerApplicationResponse
+  }
+
+  %% ==========================================
+  %% 2. APPLICATION LAYER (Services)
+  %% ==========================================
+  class EmployerApplicationService {
+    <<Service>>
+    +getApplicationsByJobId(userId, jobId) JobApplication[]
+    +updateApplicationStatus(userId, applicationId, UpdateApplicationStatusRequest) JobApplication
+  }
+
+  %% ==========================================
+  %% 3. INFRASTRUCTURE & UTILITY LAYER
+  %% ==========================================
+  class PrismaClient {
+    <<Utility>>
+    +jobApplication
+    +job
+    +resume
+    +user
+  }
+
+  %% ==========================================
+  %% 4. DOMAIN LAYER (Entities)
+  %% ==========================================
+  class User {
+    <<Entity>>
+    +UUID id
+    +String email
+    +Integer roleId
+    +UserStatus status [ACTIVE|BANNED]
+  }
+
+  class Job {
+    <<Entity>>
+    +UUID id
+    +String title
+    +JobStatus status [ACTIVE|CLOSED|EXPIRED]
+  }
+
+  class Resume {
+    <<Entity>>
+    +UUID id
+    +String headline
+    +ResumeStatus status [PUBLIC|PRIVATE]
+  }
+
+  class JobApplication {
+    <<Entity>>
+    +UUID id
+    +ApplicationStatus status [PENDING|REVIEWING|SHORTLISTED|REJECTED|ACCEPTED|WITHDRAWN]
+    +DateTime appliedAt
+  }
+
+  %% ==========================================
+  %% RELATIONSHIPS (Flows Left-To-Right)
+  %% ==========================================
+  
+  %% Presentation to Application
+  EmployerApplicationController --> EmployerApplicationService : delegates to
+
+  %% Service Dependencies
+  EmployerApplicationService --> PrismaClient : queries
+
+  %% Entity Domain Relationships (Right Anchor Group)
+  Job "1" --> "0..*" JobApplication : receives
+  User "1" --> "0..*" JobApplication : submits
+  JobApplication "0..*" --> "1" Resume : references

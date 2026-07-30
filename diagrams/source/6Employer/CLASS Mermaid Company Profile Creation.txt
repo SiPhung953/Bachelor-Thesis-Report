@@ -1,0 +1,83 @@
+%%{init: {
+  "theme": "default",
+  "htmlLabels": false,
+  "themeVariables": {
+    "fontFamily": "Times New Roman, serif",
+    "fontSize": "14px"
+  },
+  "class": {
+    "diagramPaddingX": 15,
+    "diagramPaddingY": 15,
+    "nodeSpacing": 40,
+    "rankSpacing": 50,
+    "hideEmptyMembersBox": true
+  }
+}}%%
+
+classDiagram
+direction LR
+
+  %% ==========================================
+  %% 1. PRESENTATION LAYER (Controllers)
+  %% ==========================================
+  class EmployerCompanyController {
+    <<Controller>>
+    +createCompany(CurrentUser, CreateCompanyRequest) CompanyResponse
+    +getCompany(CurrentUser) CompanyResponse
+    +updateCompany(CurrentUser, UpdateCompanyRequest) CompanyResponse
+  }
+
+  %% ==========================================
+  %% 2. APPLICATION LAYER (Services)
+  %% ==========================================
+  class EmployerCompanyService {
+    <<Service>>
+    +createCompany(userId, CreateCompanyRequest) CompanyResponse
+    +getCompany(userId) CompanyResponse
+    +updateCompany(userId, UpdateCompanyRequest) CompanyResponse
+  }
+
+  %% ==========================================
+  %% 3. INFRASTRUCTURE & UTILITY LAYER
+  %% ==========================================
+  class PrismaClient {
+    <<Utility>>
+    +company
+    +user
+  }
+
+  %% ==========================================
+  %% 4. DOMAIN LAYER (Entities)
+  %% ==========================================
+  class User {
+    <<Entity>>
+    +UUID id
+    +String email
+    +Integer roleId
+    +UserStatus status [ACTIVE|BANNED]
+  }
+
+  class Company {
+    <<Entity>>
+    +UUID id
+    +UUID ownerEmployerId
+    +String name
+    +String city
+    +String district
+    +String description
+    +DateTime createdAt
+    +DateTime updatedAt
+  }
+
+  %% ==========================================
+  %% RELATIONSHIPS (Flows Left-To-Right)
+  %% ==========================================
+  
+  %% Presentation to Application
+  EmployerCompanyController --> EmployerCompanyService : delegates to
+
+  %% Service Dependencies
+  EmployerCompanyService --> PrismaClient : queries
+
+  %% Entity Domain Relationships (Right Anchor Group)
+  User "1" --> "0..1" Company : owns

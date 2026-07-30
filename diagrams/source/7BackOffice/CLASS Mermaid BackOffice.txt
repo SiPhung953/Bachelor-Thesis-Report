@@ -1,0 +1,135 @@
+%%{init: {
+  "theme": "default",
+  "htmlLabels": false,
+  "themeVariables": {
+    "fontFamily": "Times New Roman, serif",
+    "fontSize": "14px"
+  },
+  "class": {
+    "diagramPaddingX": 15,
+    "diagramPaddingY": 15,
+    "nodeSpacing": 40,
+    "rankSpacing": 50,
+    "hideEmptyMembersBox": true
+  }
+}}%%
+
+classDiagram
+direction LR
+
+  %% ==========================================
+  %% 1. PRESENTATION LAYER (Controllers)
+  %% ==========================================
+  class JobModerationController {
+    <<Controller>>
+    +approveJob(CurrentUser, jobId) MessageResponse
+    +deleteJob(CurrentUser, jobId) MessageResponse
+  }
+
+  class UserManagementController {
+    <<Controller>>
+    +getUsers(CurrentUser) UserListResponse[]
+    +banUser(CurrentUser, userId) MessageResponse
+    +unbanUser(CurrentUser, userId) MessageResponse
+  }
+
+  class AuditLogController {
+    <<Controller>>
+    +getLogs(CurrentUser) LogListResponse[]
+  }
+
+  %% ==========================================
+  %% 2. APPLICATION LAYER (Services)
+  %% ==========================================
+  class JobModerationService {
+    <<Service>>
+    +approveJob(adminId, jobId) boolean
+    +deleteJob(adminId, jobId) boolean
+  }
+
+  class UserManagementService {
+    <<Service>>
+    +getUsers() User[]
+    +banUser(adminId, userId) boolean
+    +unbanUser(adminId, userId) boolean
+  }
+
+  class AuditLogService {
+    <<Service>>
+    +getLogs() Log[]
+  }
+
+  %% ==========================================
+  %% 3. INFRASTRUCTURE & UTILITY LAYER
+  %% ==========================================
+  class AuthorizationService {
+    <<Utility>>
+    +requireAdmin(CurrentUser) void
+  }
+
+  class AuditLogger {
+    <<Utility>>
+    +log(adminId, LogAction, targetId, String) void
+  }
+
+  class PrismaClient {
+    <<Utility>>
+    +user
+    +jobPosting
+    +log
+  }
+
+  %% ==========================================
+  %% 4. DOMAIN LAYER (Entities)
+  %% ==========================================
+  class User {
+    <<Entity>>
+    +UUID id
+    +String email
+    +Int roleId
+    +UserStatus status [ACTIVE|BANNED]
+  }
+
+  class JobPosting {
+    <<Entity>>
+    +UUID id
+    +String title
+    +UUID companyId
+    +JobStatus status [PENDING_APPROVAL|ACTIVE|REJECTED|CLOSED|EXPIRED|DELETED]
+  }
+
+  class Log {
+    <<Entity>>
+    +UUID id
+    +UUID actorId
+    +LogAction action
+    +LogTargetType targetType [USER|JOB]
+    +UUID targetId
+    +LogLevel level [USER, JOB, APPLICATION, RESUME, COMPANY, AUTH, SYSTEM]
+    +String message
+    +DateTime createdAt
+  }
+
+  %% ==========================================
+  %% RELATIONSHIPS (Flows Left-To-Right)
+  %% ==========================================
+  
+  %% Presentation to Application
+  JobModerationController --> JobModerationService : delegates to
+  UserManagementController --> UserManagementService : delegates to
+  AuditLogController --> AuditLogService : delegates to
+
+  %% Cross-Cutting Security & Utility Dependencies
+  JobModerationService --> AuthorizationService : secures via
+  UserManagementService --> AuthorizationService : secures via
+  JobModerationService --> AuditLogger : records via
+  UserManagementService --> AuditLogger : records via
+
+  %% Service to Database Layer
+  JobModerationService --> PrismaClient : queries
+  UserManagementService --> PrismaClient : queries
+  AuditLogService --> PrismaClient : queries
+
+  %% Entity Domain Relationships (Right Anchor Group)
+  User "1" --> "0..*" Log : actor
+  JobPosting "1" --> "0..*" Log : target

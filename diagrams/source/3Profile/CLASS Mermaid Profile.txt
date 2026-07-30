@@ -58,6 +58,12 @@ direction LR
     +userJobPreference
   }
 
+    class FileStorageService {
+    <<Utility>>
+    +saveAvatar(avatar) String
+    +deleteFile(fileUrl) void
+  }
+
   %% ==========================================
   %% 4. DOMAIN LAYER (Entities)
   %% ==========================================
@@ -96,6 +102,7 @@ direction LR
   %% Service Dependencies
   ProfileService --> PasswordHasher : uses
   ProfileService --> PrismaClient : queries
+  ProfileService --> FileStorageService: stores avatar file
 
   %% Entity Domain Relationships (Right Anchor)
   User "1" --> "0..1" UserProfile : owns
