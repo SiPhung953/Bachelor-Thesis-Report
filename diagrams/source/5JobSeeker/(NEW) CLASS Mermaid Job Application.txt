@@ -1,0 +1,57 @@
+%%{init: {
+  "theme": "default",
+  "htmlLabels": false,
+  "themeVariables": {
+    "fontFamily": "Times New Roman",
+    "fontSize": "20px"
+  },
+  "class": {
+    "diagramPadding": 8,
+    "nodeSpacing": 40,
+    "rankSpacing": 50,
+    "hideEmptyMembersBox": true
+  }
+}}%%
+
+classDiagram
+direction LR
+
+  %% ==========================================
+  %% 1. PRESENTATION LAYER (Controllers)
+  %% ==========================================
+  class ApplicationController {
+    <<Controller>>
+    +applyJobs()
+    +getMyApplications()
+    +withdrawApplication()
+  }
+
+  %% ==========================================
+  %% 2. APPLICATION LAYER (Services)
+  %% ==========================================
+  class ApplicationService {
+    <<Service>>
+    +applyJobs()
+    +getMyApplications()
+    +withdrawApplication()
+  }
+  %% ==========================================
+  %% 3. INFRASTRUCTURE & UTILITY LAYER
+  %% ==========================================
+  class PrismaClient {
+    <<Utility>>
+    +application
+    +user
+    +job
+    +resume
+  }
+
+  %% ==========================================
+  %% RELATIONSHIPS (Flows Left-To-Right)
+  %% ==========================================
+  
+  %% Presentation to Application
+  ApplicationController --> ApplicationService : delegates to
+
+  %% Service Dependencies
+  ApplicationService --> PrismaClient : queries

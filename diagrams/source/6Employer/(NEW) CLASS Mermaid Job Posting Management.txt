@@ -1,0 +1,66 @@
+%%{init: {
+  "theme": "default",
+  "htmlLabels": false,
+  "themeVariables": {
+    "fontFamily": "Times New Roman, serif",
+    "fontSize": "20px"
+  },
+  "class": {
+    "diagramPaddingX": 15,
+    "diagramPaddingY": 15,
+    "nodeSpacing": 40,
+    "rankSpacing": 50,
+    "hideEmptyMembersBox": true
+  }
+}}%%
+
+classDiagram
+direction LR
+
+  %% ==========================================
+  %% 1. PRESENTATION LAYER (Controllers)
+  %% ==========================================
+  class JobManagementController {
+    <<Controller>>
+    +createJobPosting()
+    +getMyJobs()
+    +getMyJobDetail()
+    +updateJobPosting()
+    +closeJobPosting()
+    +reopenJobPosting()
+    +deleteJobPosting()
+  }
+
+  %% ==========================================
+  %% 2. APPLICATION LAYER (Services)
+  %% ==========================================
+  class JobManagementService {
+    <<Service>>
+    +createJobPosting()
+    +getMyJobs()
+    +getMyJobDetail()
+    +updateJobPosting()
+    +closeJobPosting()
+    +reopenJobPosting()
+    +deleteJobPosting()
+  }
+
+  %% ==========================================
+  %% 3. INFRASTRUCTURE & UTILITY LAYER
+  %% ==========================================
+  class PrismaClient {
+    <<Utility>>
+    +job
+    +company
+    +user
+  }
+
+  %% ==========================================
+  %% RELATIONSHIPS (Flows Left-To-Right)
+  %% ==========================================
+  
+  %% Presentation to Application
+  JobManagementController --> JobManagementService : delegates to
+
+  %% Service Dependencies
+  JobManagementService --> PrismaClient : queries

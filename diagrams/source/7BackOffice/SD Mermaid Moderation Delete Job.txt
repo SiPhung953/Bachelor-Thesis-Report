@@ -1,0 +1,97 @@
+%%{init: {
+  "theme": "redux",
+  "themeVariables": {
+    "fontFamily": "Times New Roman, serif"
+  },
+  "sequence": {
+    "wrap": true,
+    "width": 200,
+    "height": 65,
+    "actorMargin": 100,
+    "messageFontSize": 22,
+    "actorFontSize": 16,
+    "noteFontSize": 16,
+    "messageMargin": 50,
+    "activationWidth": 12,
+    "diagramMarginX": 30,
+    "diagramMarginY": 30,
+    "useMaxWidth": true
+  }
+}}%%
+
+sequenceDiagram
+    actor BackOfficeWorker as Back-Office Worker
+    participant FrontendUI as «boundary»<br/>Frontend UI
+    participant JwtAuthentication as «security»<br/>JWTAuthentication
+    participant JobModerationController as «control»<br/>JobModerationController
+    participant JobModerationService as «service»<br/>JobModerationService
+    participant PrismaClient as «persistence»<br/>PrismaClient
+    participant AuditLogger as «utility»<br/>AuditLogger
+    participant Database as «database»<br/>Database
+
+    BackOfficeWorker->>+FrontendUI: 1 : Select job posting and click Delete
+    FrontendUI->>+JwtAuthentication: 2 : deleteJob(accessToken, jobId)
+
+    JwtAuthentication->>JwtAuthentication: 3 : verifyAccessToken(accessToken)
+
+    %% GUARD 1: Authentication Break
+    break User is not authenticated
+        JwtAuthentication-->>FrontendUI: 4a : HTTP 401 Unauthorized
+        FrontendUI-->>BackOfficeWorker: 5a : Redirect to Login page
+    end
+
+    JwtAuthentication->>JwtAuthentication: 4 : assertAdmin()
+
+    %% GUARD 2: Role Authorization Break
+    break User does not have Admin role
+        JwtAuthentication-->>FrontendUI: 5b : HTTP 403 Forbidden
+        FrontendUI-->>BackOfficeWorker: 6b : Display role restriction warning
+    end
+
+    JwtAuthentication->>+JobModerationController: 5 : deleteJob(jobId)
+    deactivate JwtAuthentication
+
+    JobModerationController->>+JobModerationService: 6 : deleteJob(jobId, currentUser)
+
+    %% Retrieve Job Posting
+    JobModerationService->>+PrismaClient: 7 : findJobPostingById(jobId)
+    PrismaClient->>+Database: 8 : fetchJobPosting(jobId)
+    Database-->>-PrismaClient: 9 : jobData
+    PrismaClient-->>-JobModerationService: 10 : job
+
+    %% Validate Job Posting
+    break Job Posting not found
+        JobModerationService-->>JobModerationController: 11a : JobNotFoundError
+        JobModerationController-->>FrontendUI: 12a : HTTP 404 Not Found
+        FrontendUI-->>BackOfficeWorker: 13a : Display job not found message
+    end
+
+    break Job Posting is already DELETED
+        JobModerationService-->>JobModerationController: 11b : InvalidJobStatusError
+        JobModerationController-->>FrontendUI: 12b : HTTP 409 Conflict
+        FrontendUI-->>BackOfficeWorker: 13b : Display invalid job status message
+    end
+
+    break Job Posting is PENDING_APPROVAL, not deletable at this status
+	JobModerationService-->>JobModerationController: 11c : InvalidJobStatusError
+        JobModerationController-->>FrontendUI: 12c : HTTP 400 Bad Request
+        FrontendUI-->>BackOfficeWorker: 13c : Display not deletable message
+    end
+
+    %% Delete Job Posting
+    JobModerationService->>+PrismaClient: 11c : updateJobStatus(jobId, DELETED, deletedAt)
+    PrismaClient->>+Database: 12c : update jobs
+    Database-->>-PrismaClient: 13c : updatedJob
+    PrismaClient-->>-JobModerationService: 14c : updatedJob
+
+    %% Audit Log
+    JobModerationService->>+AuditLogger: 15c : log(JOB_DELETED, jobId, currentUser)
+    AuditLogger->>+PrismaClient: 16c : createLog()
+    PrismaClient->>+Database: 17c : insert audit log
+    Database-->>-PrismaClient: 18c : logRecord
+    PrismaClient-->>-AuditLogger: 19c : logRecord
+    AuditLogger-->>-JobModerationService: 20c : void
+
+    JobModerationService-->>-JobModerationController: 21c : JobResponse
+    JobModerationController-->>-FrontendUI: 22c : HTTP 200 OK + JobResponse
+    FrontendUI-->>-BackOfficeWorker: 23c : Display deletion success message

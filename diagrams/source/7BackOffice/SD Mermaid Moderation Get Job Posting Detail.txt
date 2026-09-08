@@ -1,0 +1,70 @@
+%%{init: {
+  "theme": "redux",
+  "themeVariables": {
+    "fontFamily": "Times New Roman, serif"
+  },
+  "sequence": {
+    "wrap": true,
+    "width": 200,
+    "height": 65,
+    "actorMargin": 100,
+    "messageFontSize": 22,
+    "actorFontSize": 16,
+    "noteFontSize": 16,
+    "messageMargin": 50,
+    "activationWidth": 12,
+    "diagramMarginX": 30,
+    "diagramMarginY": 30,
+    "useMaxWidth": true
+  }
+}}%%
+
+sequenceDiagram
+    actor BackOfficeWorker as Back-Office Worker
+    participant FrontendUI as «boundary»<br/>Frontend UI
+    participant JwtAuthentication as «security»<br/>JWTAuthentication
+    participant JobModerationController as «control»<br/>JobModerationController
+    participant JobModerationService as «service»<br/>JobModerationService
+    participant PrismaClient as «persistence»<br/>PrismaClient
+    participant Database as «database»<br/>Database
+
+    BackOfficeWorker->>+FrontendUI: 1 : Select job posting
+    FrontendUI->>+JwtAuthentication: 2 : getJobDetail(accessToken, jobId)
+
+    JwtAuthentication->>JwtAuthentication: 3 : verifyAccessToken(accessToken)
+
+    %% GUARD 1: Authentication Break
+    break User is not authenticated
+        JwtAuthentication-->>FrontendUI: 4a : HTTP 401 Unauthorized
+        FrontendUI-->>BackOfficeWorker: 5a : Redirect to Login page
+    end
+
+    JwtAuthentication->>JwtAuthentication: 4 : assertAdmin()
+
+    %% GUARD 2: Role Authorization Break
+    break User does not have Admin role
+        JwtAuthentication-->>FrontendUI: 5b : HTTP 403 Forbidden
+        FrontendUI-->>BackOfficeWorker: 6b : Display role restriction warning
+    end
+
+    JwtAuthentication->>+JobModerationController: 5 : getJobDetail(jobId)
+    deactivate JwtAuthentication
+
+    JobModerationController->>+JobModerationService: 6 : getJobDetail(jobId)
+
+    %% Retrieve Job Posting Detail
+    JobModerationService->>+PrismaClient: 7 : findJobPostingById(jobId)
+    PrismaClient->>+Database: 8 : fetchJobPosting(jobId)
+    Database-->>-PrismaClient: 9 : jobData
+    PrismaClient-->>-JobModerationService: 10 : job
+
+    %% Job Posting Not Found
+    break Job Posting not found
+        JobModerationService-->>JobModerationController: 11a : JobNotFoundError
+        JobModerationController-->>FrontendUI: 12a : HTTP 404 Not Found
+        FrontendUI-->>BackOfficeWorker: 13a : Display job not found message
+    end
+
+    JobModerationService-->>-JobModerationController: 11b : JobDetailResponse
+    JobModerationController-->>FrontendUI: 12b : HTTP 200 OK + JobDetailResponse
+    FrontendUI-->>BackOfficeWorker: 13b : Display job posting details

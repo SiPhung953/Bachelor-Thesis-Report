@@ -1,0 +1,83 @@
+%%{init: {
+  "theme": "default",
+  "htmlLabels": false,
+  "themeVariables": {
+    "fontFamily": "Times New Roman",
+    "fontSize": "20px"
+  },
+  "class": {
+    "diagramPadding": 8,
+    "nodeSpacing": 40,
+    "rankSpacing": 50,
+    "hideEmptyMembersBox": true
+  }
+}}%%
+
+classDiagram
+direction LR
+
+  %% ==========================================
+  %% 1. PRESENTATION LAYER (Controllers)
+  %% ==========================================
+  class AuthController {
+    <<Controller>>
+    +register()
+    +login()
+    +logout()
+    +requestPasswordReset()
+    +resetPassword()
+    +validateResetToken()
+  }
+
+  %% ==========================================
+  %% 2. APPLICATION LAYER (Services)
+  %% ==========================================
+  class AuthService {
+    <<Service>>
+    +register()
+    +login()
+    +logout()
+    +requestPasswordReset()
+    +resetPassword()
+    +validateResetToken()
+  }
+
+  %% ==========================================
+  %% 3. INFRASTRUCTURE & UTILITY LAYER
+  %% ==========================================
+  class PasswordHasher {
+    <<Utility>>
+    +hash()
+    +compare()
+  }
+
+  class ResetTokenUtils {
+    <<Utility>>
+    +generateToken()
+    +hashToken()
+  }
+
+  class EmailService {
+    <<Utility>>
+    +sendPasswordResetEmail()
+  }
+
+  class PrismaClient {
+    <<Utility>>
+    +user
+    +passwordResetToken
+    +role
+  }
+
+  %% ==========================================
+  %% RELATIONSHIPS (Flows Left-To-Right)
+  %% ==========================================
+  
+  %% Presentation to Application
+  AuthController --> AuthService : delegates to
+
+  %% Service Dependencies
+  AuthService --> PasswordHasher : uses
+  AuthService --> ResetTokenUtils : uses
+  AuthService --> EmailService : uses
+  AuthService --> PrismaClient : queries

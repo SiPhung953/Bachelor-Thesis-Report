@@ -1,0 +1,78 @@
+%%{init: {
+  "theme": "default",
+  "htmlLabels": false,
+  "themeVariables": {
+    "fontFamily": "Times New Roman",
+    "fontSize": "20px"
+  },
+  "class": {
+    "diagramPadding": 8,
+    "nodeSpacing": 40,
+    "rankSpacing": 50,
+    "hideEmptyMembersBox": true
+  }
+}}%%
+
+classDiagram
+direction LR
+
+  %% ==========================================
+  %% 1. PRESENTATION LAYER (Controllers)
+  %% ==========================================
+  class ProfileController {
+    <<Controller>>
+    +getMyProfile()
+    +updatePersonalInformation()
+    +getJobPreference()
+    +updateJobPreferences()
+    +changeAvatar()
+    +changePassword()
+  }
+
+  %% ==========================================
+  %% 2. APPLICATION LAYER (Services)
+  %% ==========================================
+  class ProfileService {
+    <<Service>>
+    +getMyProfile()
+    +updatePersonalInformation()
+    +getJobPreference() 
+    +updateJobPreferences() 
+    +changeAvatar()
+    +changePassword()
+  }
+
+  %% ==========================================
+  %% 3. INFRASTRUCTURE & UTILITY LAYER
+  %% ==========================================
+  class PasswordHasher {
+    <<Utility>>
+    +hash()
+    +compare()
+  }
+
+  class PrismaClient {
+    <<Utility>>
+    +user
+    +userProfile
+    +userJobPreference
+  }
+
+    class FileStorageService {
+    <<Utility>>
+    +saveCv()
+    +saveAvatar()
+    +deleteFile()
+  }
+
+  %% ==========================================
+  %% RELATIONSHIPS (Flows Left-To-Right)
+  %% ==========================================
+  
+  %% Presentation to Application
+  ProfileController --> ProfileService : delegates to
+
+  %% Service Dependencies
+  ProfileService --> PasswordHasher : uses
+  ProfileService --> PrismaClient : queries
+  ProfileService --> FileStorageService: stores avatar file

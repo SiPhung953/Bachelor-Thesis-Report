@@ -22,8 +22,10 @@ direction LR
   %% ==========================================
   class JobModerationController {
     <<Controller>>
+    +getJobs()
+    +getJobDetail()
     +approveJob()
-    +deleteJob()
+    +rejectJob()
     +deleteJob()
   }
 
@@ -44,7 +46,10 @@ direction LR
   %% ==========================================
   class JobModerationService {
     <<Service>>
+    +getJobs()
+    +getJobDetail()
     +approveJob()
+    +rejectJob()
     +deleteJob()
   }
 
@@ -76,39 +81,8 @@ direction LR
   class PrismaClient {
     <<Utility>>
     +user
-    +jobPosting
+    +job
     +log
-  }
-
-  %% ==========================================
-  %% 4. DOMAIN LAYER (Entities)
-  %% ==========================================
-  class User {
-    <<Entity>>
-    +UUID id
-    +String email
-    +Int roleId
-    +UserStatus status
-  }
-
-  class JobPosting {
-    <<Entity>>
-    +UUID id
-    +String title
-    +UUID companyId
-    +JobStatus status
-  }
-
-  class Log {
-    <<Entity>>
-    +UUID id
-    +UUID actorId
-    +LogAction action
-    +LogTargetType targetType
-    +UUID targetId
-    +LogLevel level
-    +String message
-    +DateTime createdAt
   }
 
   %% ==========================================
@@ -121,8 +95,8 @@ direction LR
   AuditLogController --> AuditLogService : delegates to
 
   %% Cross-Cutting Security & Utility Dependencies
-  JobModerationService --> AuthorizationService : secures via
-  UserManagementService --> AuthorizationService : secures via
+  %%JobModerationService --> AuthorizationService : secures via
+  %%UserManagementService --> AuthorizationService : secures via
   JobModerationService --> AuditLogger : records via
   UserManagementService --> AuditLogger : records via
 
@@ -130,7 +104,3 @@ direction LR
   JobModerationService --> PrismaClient : queries
   UserManagementService --> PrismaClient : queries
   AuditLogService --> PrismaClient : queries
-
-  %% Entity Domain Relationships (Right Anchor Group)
-  User --> Log : actor
-  JobPosting --> Log : target

@@ -1,0 +1,63 @@
+%%{init: {
+  "theme": "default",
+  "htmlLabels": false,
+  "themeVariables": {
+    "fontFamily": "Times New Roman",
+    "fontSize": "20px"
+  },
+  "class": {
+    "diagramPadding": 8,
+    "nodeSpacing": 40,
+    "rankSpacing": 50,
+    "hideEmptyMembersBox": true
+  }
+}}%%
+
+classDiagram
+direction LR
+
+  %% ==========================================
+  %% 1. PRESENTATION LAYER (Controllers)
+  %% ==========================================
+  class ResumeController {
+    <<Controller>>
+    +getMyResume()
+    +uploadResume()
+    +deleteResume()
+  }
+
+  %% ==========================================
+  %% 2. APPLICATION LAYER (Services)
+  %% ==========================================
+  class ResumeService {
+    <<Service>>
+    +getMyResume()
+    +uploadResume()
+    +deleteResume()
+  }
+
+  %% ==========================================
+  %% 3. INFRASTRUCTURE & UTILITY LAYER
+  %% ==========================================
+  class FileStorageService {
+    <<Utility>>
+    +saveCv()
+    +deleteFile()
+  }
+
+  class PrismaClient {
+    <<Utility>>
+    +user
+    +resume
+  }
+
+  %% ==========================================
+  %% RELATIONSHIPS (Flows Left-To-Right)
+  %% ==========================================
+  
+  %% Presentation to Application
+  ResumeController --> ResumeService : delegates to
+
+  %% Service Dependencies
+  ResumeService --> FileStorageService : uses
+  ResumeService --> PrismaClient : queries

@@ -1,0 +1,57 @@
+%%{init: {
+  "theme": "default",
+  "htmlLabels": false,
+  "themeVariables": {
+    "fontFamily": "Times New Roman, serif",
+    "fontSize": "20px"
+  },
+  "class": {
+    "diagramPaddingX": 15,
+    "diagramPaddingY": 15,
+    "nodeSpacing": 40,
+    "rankSpacing": 50,
+    "hideEmptyMembersBox": true
+  }
+}}%%
+
+classDiagram
+direction LR
+
+  %% ==========================================
+  %% 1. PRESENTATION LAYER (Controllers)
+  %% ==========================================
+  class EmployerCompanyController {
+    <<Controller>>
+    +createCompany()
+    +getCompany()
+    +updateCompany()
+  }
+
+  %% ==========================================
+  %% 2. APPLICATION LAYER (Services)
+  %% ==========================================
+  class EmployerCompanyService {
+    <<Service>>
+    +createCompany()
+    +getCompany()
+    +updateCompany()
+  }
+
+  %% ==========================================
+  %% 3. INFRASTRUCTURE & UTILITY LAYER
+  %% ==========================================
+  class PrismaClient {
+    <<Utility>>
+    +company
+    +user
+  }
+  
+  %% ==========================================
+  %% RELATIONSHIPS (Flows Left-To-Right)
+  %% ==========================================
+  
+  %% Presentation to Application
+  EmployerCompanyController --> EmployerCompanyService : delegates to
+
+  %% Service Dependencies
+  EmployerCompanyService --> PrismaClient : queries

@@ -1,0 +1,66 @@
+%%{init: {
+  "theme": "default",
+  "htmlLabels": false,
+  "themeVariables": {
+    "fontFamily": "Times New Roman",
+    "fontSize": "20px"
+  },
+  "class": {
+    "diagramPadding": 8,
+    "nodeSpacing": 40,
+    "rankSpacing": 50,
+    "hideEmptyMembersBox": true
+  }
+}}%%
+
+classDiagram
+direction LR
+
+  %% ==========================================
+  %% 1. PRESENTATION LAYER (Controllers)
+  %% ==========================================
+  class JobDiscoveryController {
+    <<Controller>>
+    +searchJobs() 
+    +getJobDetail() 
+  }
+
+  class CompanyProfileController {
+    <<Controller>>
+    +getCompanyProfile() 
+  }
+
+  %% ==========================================
+  %% 2. APPLICATION LAYER (Services)
+  %% ==========================================
+  class JobDiscoveryService {
+    <<Service>>
+    +searchJobs() 
+    +getJobDetail() 
+  }
+
+  class CompanyProfileService {
+    <<Service>>
+    +getCompanyProfile() 
+  }
+
+  %% ==========================================
+  %% 3. INFRASTRUCTURE LAYER (Utilities)
+  %% ==========================================
+  class PrismaClient {
+    <<Utility>>
+    +job
+    +company
+  }
+
+  %% ==========================================
+  %% RELATIONSHIPS (Clean LR Pipeline)
+  %% ==========================================
+  
+  %% Controllers to Services
+  JobDiscoveryController --> JobDiscoveryService : delegates to
+  CompanyProfileController --> CompanyProfileService : delegates to
+
+  %% Services to ORM Data Access
+  JobDiscoveryService --> PrismaClient : queries data
+  CompanyProfileService --> PrismaClient : queries data
