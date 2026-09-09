@@ -8,16 +8,30 @@
 \chapter{System Analysis}
 \label{chapter:system-analysis}
 
-\section{Problem Statement}
-The rapid growth of Internet technologies has significantly transformed the recruitment process. Traditional methods, such as submitting printed resumes directly to companies, have gradually been replaced by online recruitment platforms that enable employers to publish vacancies and job seekers to submit applications electronically. This digital transformation has reduced geographical barriers and accelerated communication between employers and candidates.\\
-However, the increasing number of online recruitment services has also introduced new challenges for job seekers. While online platforms provide greater access to employment opportunities, users often need to navigate different interface designs, search mechanisms, and application workflows across multiple websites. This fragmentation may increase the learning curve for new users and require them to maintain personal profiles and resumes records across multiple recruitment platforms, making the job search process less efficient.\\
-Employers face similar challenges when managing recruitment activities across numerous candidates. Recruitment involves publishing job vacancies, reviewing applications, communicating hiring decisions, and maintaining up-to-date recruitment records. Performing these tasks efficiently becomes increasingly difficult without a centralized platform that organizes recruitment information and supports interactions between employers and job seekers.\\
-These challenges motivate the development of a centralized recruitment platform. A web-based recruitment platform provides a centralized environment where job seekers can search for employment opportunities, maintain professional profiles, upload resumes, and track submitted applications. At the same time, employers can manage company information, publish job postings, and review applications through a unified interface.\\
-Since the proposed system stores sensitive personal information and supports operations that modify data, authentication is required to verify user identity before granting access to protected resources. After authentication, users can securely update their personal profiles, resumes, job applications, or company information according to their permissions.\\
-Furthermore, different categories of users require different system capabilities. The system adopts role-based access control to ensure that each user can only access functions relevant to their responsibilities. Job Seekers are responsible for maintaining personal profiles and applying for jobs. Employers manage company profiles, publish job postings, and review applications. Administrators supervise the platform by managing user accounts and moderating job postings. Separating permissions according to user roles improves both system security and usability.
+\section{Proposed System}
+\label{c3:section:proposed-system}
+
+The challenges described in Chapter \ref{chapter:introduction} motivate a centralized online recruitment platform. In this system, a job seeker can search for jobs, keep a personal profile, upload resumes, submit applications, and follow their progress. An employer can register a company, publish job postings, and review applicants. A back-office role moderates content and manages accounts. Putting these operations in one system replaces the fragmented workflow of the current market with a single consistent interface.
+
+The system's functionality is split into clear modules by business responsibility:
+
+\begin{itemize}
+	\item \textbf{Job Discovery} allows guests to search active job postings and view company profiles.
+	\item \textbf{Authentication} covers registration, login, logout, and password recovery.
+	\item \textbf{Profile Management} lets users maintain personal information, job preferences, avatar, and account password.
+	\item \textbf{Resume Management} lets job seekers upload and delete resumes used in applications.
+	\item \textbf{Job Application} lets a job seeker apply to an active posting, track submitted applications, and withdraw them while still eligible.
+	\item \textbf{Employer Job Management} lets an employer manage a company profile, run the full lifecycle of a job posting, and review the applications a posting receives.
+	\item \textbf{Administration} supports moderating job postings and managing users and logs.
+\end{itemize}
+
+Because the platform stores personal data and lets users modify shared records, access is controlled. Registration and login protect each user's account, and role-based permissions decide what each user may do. A job seeker manages their own profile and applications; an employer manages only their own company, postings, and candidates; a back-office worker moderates platform content.
+
+This thesis develops the platform in full but examines two flows in depth: the \textbf{Job Application} flow on the job seeker's side and the \textbf{Employer Job Management} flow on the employer's side. These two flows form the round trip of a recruitment event — a job seeker submits an application, and an employer reviews it — and are therefore used to illustrate the analysis, design, and implementation in the remaining chapters.
 
 \section{Functional Requirement}
-Functional requirements define the core functionalities that the proposed recruitment platform must provide in order to satisfy the needs of its stakeholders. These requirements describe the services and operations that the system is expected to perform for different categories of users. For clarity and readability, the functional requirements are organized into major functional modules based on their business responsibilities, as summarized in Table~\ref{tab:functional-requirements}.\\
+
+Functional requirements define what the platform must do for its stakeholders. They are organized into modules based on business responsibility, as summarized in Table~\ref{tab:functional-requirements}.
 
 \begin{table}[H]
 	\centering
@@ -63,10 +77,9 @@ Functional requirements define the core functionalities that the proposed recrui
 	\end{tabular}
 \end{table}
 
-The proposed recruitment platform is organized into eight major functional modules that collectively support the complete recruitment workflow. These modules cover the essential operations required by job seekers, employers, and administrators, while providing a clear separation of responsibilities within the system.
-
 \section{Non-Functional Requirement}
-Non-functional requirements define the quality attributes and operational constraints that influence how the proposed recruitment platform performs its functions. These requirements focus on aspects such as security, performance, usability, reliability, maintainability, and compatibility. The major non-functional requirements considered during the system design are summarized in Table~\ref{tab:non-functional-requirements}.
+
+Non-functional requirements describe the quality attributes the platform must satisfy, such as security, performance, usability, reliability, maintainability, and compatibility. Table~\ref{tab:non-functional-requirements} summarizes the main ones considered during design.
 
 \begin{table}[H]
 	\centering
@@ -104,15 +117,13 @@ Non-functional requirements define the quality attributes and operational constr
 	\end{tabular}
 \end{table}
 
-The non-functional requirements establish the quality objectives of the proposed system and serve as guiding principles throughout the system design and implementation. Satisfying these requirements helps ensure that the platform is secure, reliable, maintainable, and capable of providing a consistent user experience.
-
 \section{Use Case Analysis}
-Use case analysis identifies the interactions between system users and the proposed recruitment platform. By modeling these interactions, the functional scope of the system can be clearly illustrated from the perspective of different user roles. This section first presents the shared use cases that are common across multiple actors before discussing the specialized use cases associated with each primary user role.\\
 
-The proposed recruitment platform supports three primary user roles: Job Seeker, Employer, and Administrator. Each role performs different business functions and therefore interacts with a different subset of the system.\\
+Use case analysis models how users interact with the platform and shows the functional scope from each user role's perspective. The platform serves three primary roles: Job Seeker, Employer, and Administrator. Each role performs different functions and uses a different subset of the system.
 
 \subsection{Shared Use Cases}
-To simplify the Use Case Model, the actors are organized using UML actor generalization. Users who have successfully signed in are represented by the generalized actor Authenticated User, while unauthenticated visitors are represented by the Guest actor.\\
+
+To keep the model compact, the actors are organized with UML generalization. Signed-in users are represented by the generalized \textbf{Authenticated User} actor, and visitors are represented by the \textbf{Guest} actor.
 
 \begin{figure}[H]
 	\centering
@@ -121,7 +132,7 @@ To simplify the Use Case Model, the actors are organized using UML actor general
 	\label{diagram:uc-guest}
 \end{figure}
 
-As illustrated in Figure \ref{diagram:uc-guest}, Guest users are limited to publicly accessible functions such as browsing available job postings, viewing company information, and creating a new account. These use cases provide basic system accessibility without requiring authentication while encouraging users to register before accessing personalized recruitment features.
+As shown in Figure \ref{diagram:uc-guest}, guests can browse job postings, view company information, and register. These public functions give visitors access to the platform without requiring an account.
 
 \begin{figure}[H]
 	\centering
@@ -130,13 +141,15 @@ As illustrated in Figure \ref{diagram:uc-guest}, Guest users are limited to publ
 	\label{diagram:uc-authenticated}
 \end{figure}
 
-Figure \ref{diagram:uc-authenticated} illustrates the common functionalities available to all authenticated users regardless of their assigned role. These shared use cases include authentication-related operations such as updating account information, changing passwords, and logging out. Additional business-specific functions are introduced through the specialized actors discussed in the following sections.
+Figure \ref{diagram:uc-authenticated} covers the functions common to all signed-in users: managing account information, changing the password, and logging out. Business-specific functions are introduced through the specialized actors in the next section.
 
 \subsection{Specialized Use Cases}
-The following subsections present the business-specific use cases associated with each primary user role.
+
+The following subsections present the role-specific use cases. In line with the scope defined in Section \ref{c3:section:proposed-system}, the Job Seeker and Employer roles are examined in detail as the two featured modules of this thesis; the Back Office Worker use cases are presented in Appendix \ref{appendix:back-office-use-cases}.
 
 \subsubsection{Job Seeker Use Cases}
-The Job Seeker represents the primary user of the recruitment platform. This actor is responsible for searching employment opportunities, maintaining personal information, and participating in the recruitment process through job applications.
+
+The Job Seeker is the main user on the demand side of the platform: this actor looks for jobs, keeps a profile, and takes part in recruitment through job applications.
 
 \begin{figure}[H]
 	\centering
@@ -145,10 +158,11 @@ The Job Seeker represents the primary user of the recruitment platform. This act
 	\label{diagram:uc-job_seeker}
 \end{figure}
 
-As shown in Figure \ref{diagram:uc-job_seeker}, the Job Seeker interacts with the system through two major functional areas: profile and job application management.
+Figure \ref{diagram:uc-job_seeker} shows the Job Seeker's capabilities. Personal profile maintenance is part of the authenticated account functions; the recruitment-specific behavior of this actor is the \textbf{Job Application} flow: applying to an active posting with an uploaded resume, tracking submitted applications, and withdrawing an application while it is still in its initial state.
 
 \subsubsection{Employer Use Cases}
-The Employer actor represents organizations or recruiters responsible for publishing job postings and evaluating applicants.
+
+The Employer represents the organizations and recruiters who publish job postings and evaluate applicants.
 
 \begin{figure}[H]
 	\centering
@@ -157,156 +171,11 @@ The Employer actor represents organizations or recruiters responsible for publis
 	\label{diagram:uc-employer}
 \end{figure}
 
-Illustrated in Figure \ref{diagram:uc-employer}, the Employer's use cases focus on company management, job posting management, and recruitment management. Together, these functions support the complete recruitment lifecycle, from creating a company profile to reviewing applications and updating recruitment status.
-
-\subsubsection{Back Office Worker Use Cases}
-The Back Office Worker represents internal personnel responsible for maintaining platform integrity and ensuring that the recruitment platform operates correctly.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\linewidth]{diagrams/exported/Use Case/Use-Case-Back Office-crop.pdf}
-	\caption{Back Office Worker Use Case Diagram.}
-	\label{diagram:uc-back_office}
-\end{figure}
-
-Unlike Job Seekers and Employers, the Back Office Workers primarily performs supervisory tasks highlighted in Figure \ref{diagram:uc-back_office}. These include user management, moderation of job postings, and maintaining the overall quality and security of the platform.
+Figure \ref{diagram:uc-employer} shows the \textbf{Employer Job Management} module, which covers the complete recruitment lifecycle on the employer's side: creating a company profile, publishing and managing job postings (edit, close, re-open, delete), listing applications received for a posting, and moving each application through review until it is accepted or rejected.
 
 \section{Use Case Specification}
-The Use Case Diagrams presented in the previous section provide an overview of the functional scope of the proposed recruitment platform. This section further illustrates the system behavior by presenting detailed specifications for selected use cases that represent the primary functionalities performed by different user roles. 
 
-\newpage
-\subsection{Guest: Login}
-
-\begin{usecasespectable}
-	{Use Case Specification: Login.}
-	{tab:ucs-login}
-	
-	Use Case ID & UC-AUTH-02 \\ \hline
-	
-	Use Case Name & Login \\ \hline
-	
-	Primary Actor & Guest \\ \hline
-	
-	Description &
-	Allows a guest to authenticate using registered credentials and become an authenticated user.
-	\\ \hline
-	
-	Goal & 
-	Authenticate a registered user and grant access to protected system functions.
-	\\ \hline
-	
-	Preconditions &
-	\begin{itemize}
-		\item The user has a registered account.
-		\item The user is not currently authenticated.
-	\end{itemize}
-	\\ \hline
-	
-	Trigger &
-	The user clicks "Log In" button from the website's header
-	\\ \hline
-	
-	Main Success Scenario &
-	\begin{enumerate}
-		\item Guest selects "Login"
-		\item System displays the login form.
-		\item Guest enters email and password.
-		\item Guest submits the login form.
-		\item System validates the submitted credentials.
-		\item System authenticates the user.
-		\item System establishes an authenticated session.
-		\item System redirects the user to the authenticated homepage.
-		\item System displays a successful login message.
-	\end{enumerate}
-	\\ \hline
-	
-	Alternative Flows &
-	\textbf{A1. Invalid credentialsd}
-	\begin{enumerate}
-		\item The system reports the error "Invalid email or password".
-	\end{enumerate}
-	
-	\textbf{A2. Invalid email address}
-	\begin{enumerate}
-		\item The system reports the error "Invalid email".
-	\end{enumerate}
-	
-	\textbf{A3. Missing required input fields}
-	\begin{enumerate}
-		\item The system reports the error "Please fill out required fields".
-	\end{enumerate}
-	
-	\textbf{A4. Account is suspended}
-	\begin{enumerate}
-		\item System denies authentication.
-		\item System informs the user that the account has been suspended.
-	\end{enumerate}
-	\\ \hline
-	
-	Postconditions &
-	\begin{itemize}
-		\item The user is successfully authenticated.
-		\item The user gains access to functions available to authenticated users.
-	\end{itemize}
-	\\ \hline
-	
-\end{usecasespectable}
-
-\newpage
-\subsection{Authenticated User: Update Personal Information}
-
-\begin{usecasespectable}
-	{Use Case Specification: Update Personal Information.}
-	{tab:ucs-update_personal_information}
-
-	Use Case ID & UC-PROFILE-01 \\ \hline
-	
-	Use Case Name & Update Personal Information \\ \hline
-	
-	Primary Actor & Authenticated User \\ \hline
-	
-	Goal & Maintain accurate personal information within the platform. \\ \hline
-	
-	Description &
-	Allows an authenticated user to update personal profile information.
-	\\ \hline
-	
-	Preconditions &
-	\begin{itemize}
-		\item User is authenticated.
-	\end{itemize}
-	\\ \hline
-	
-	Trigger &
-	The user selects the Profile page.
-	\\ \hline
-	
-	Main Success Scenario &
-	\begin{enumerate}
-		\item User opens the profile page.
-		\item System displays current profile information.
-		\item User edits profile information.
-		\item User submits the changes.
-		\item System validates the submitted information.
-		\item System updates the profile.
-		\item System confirms the successful update.
-	\end{enumerate}
-	\\ \hline
-	
-	Alternative Flows &
-	\textbf{A1. Invalid input}
-	\begin{enumerate}
-		\item System highlights invalid fields.
-		\item User corrects the information.
-	\end{enumerate}
-	\\ \hline
-	
-	Postconditions &
-	\begin{itemize}
-		\item Updated profile information is stored.
-	\end{itemize}
-	\\ \hline
-\end{usecasespectable}
+The use case diagrams above give an overview of the system's functional scope. This section specifies the main use cases of the two featured modules in detail. Specifications for the remaining modules are provided in the appendix.
 
 \newpage
 \subsection{Job Seeker: Apply for Job}
@@ -314,63 +183,69 @@ The Use Case Diagrams presented in the previous section provide an overview of t
 \begin{usecasespectable}
 	{Use Case Specification: Apply for Job.}
 	{tab:ucs-apply_for_job}
-	
+
 	Use Case ID & UC-JS-01 \\ \hline
-	
+
 	Use Case Name & Apply for Job \\ \hline
-	
+
 	Primary Actor & Job Seeker \\ \hline
-	
+
 	Goal & Submit a job application to an employer. \\ \hline
-	
+
 	Description &
 	Allows a Job Seeker to submit an application for a published job posting.
 	\\ \hline
-	
+
 	Preconditions &
 	\begin{itemize}
 		\item Job Seeker is authenticated.
-		\item Job posting is open for applications.
+		\item The job posting is open for applications.
 		\item Job Seeker has an uploaded resume.
 	\end{itemize}
 	\\ \hline
-	
+
 	Trigger &
 	The Job Seeker selects the \textbf{Apply} option on a job posting.
 	\\ \hline
-	
+
 	Main Success Scenario &
 	\begin{enumerate}
-		\item Job Seeker views a job posting.
+		\item Job Seeker views the job posting.
 		\item Job Seeker selects Apply.
-		\item System displays the application form.
+		\item System displays the application form and the job summary.
 		\item Job Seeker selects a resume.
 		\item Job Seeker submits the application.
-		\item System validates the submission.
-		\item System records the application.
-		\item System confirms successful submission.
+		\item System validates that the job is active, the resume belongs to the user, and no duplicate application exists.
+		\item System records the application as \texttt{SUBMITTED}.
+		\item System confirms the submission.
 	\end{enumerate}
 	\\ \hline
-	
+
 	Alternative Flows &
-	\textbf{A1. Resume unavailable}
+	\textbf{A1. No resume uploaded}
 	\begin{enumerate}
-		\item System requests the Job Seeker to upload a resume.
+		\item System asks the Job Seeker to upload a resume first.
 	\end{enumerate}
-	
+
 	\textbf{A2. Already applied}
 	\begin{enumerate}
 		\item System rejects the submission.
 		\item System informs the Job Seeker that an application already exists.
 	\end{enumerate}
+
+	\textbf{A3. Posting no longer active}
+	\begin{enumerate}
+		\item System rejects the submission.
+		\item System informs the Job Seeker that the posting is no longer available.
+	\end{enumerate}
 	\\ \hline
-	
+
 	Postconditions &
 	\begin{itemize}
-		\item A new job application is created.
+		\item A new application with status \texttt{SUBMITTED} is created.
 	\end{itemize}
 	\\ \hline
-	
+
 \end{usecasespectable}
 
 \newpage
@@ -378,109 +253,126 @@ The Use Case Diagrams presented in the previous section provide an overview of t
 
 \begin{usecasespectable}
 	{Use Case Specification: Publish Job Posting.}
-	{ucs-publish_job_posting}
-	
+	{tab:ucs-publish_job_posting}
+
 	Use Case ID & UC-EMP-01 \\ \hline
-	
+
 	Use Case Name & Publish Job Posting \\ \hline
-	
+
 	Primary Actor & Employer \\ \hline
-	
+
 	Goal & Publish a job posting for potential applicants. \\ \hline
-	
+
 	Description &
 	Allows an Employer to create and publish a new job posting.
 	\\ \hline
-	
+
 	Preconditions &
 	\begin{itemize}
 		\item Employer is authenticated.
 		\item Employer has a registered company profile.
 	\end{itemize}
 	\\ \hline
-	
+
 	Trigger &
-	Employer selects the Create Job Posting function.
+	Employer selects the \textbf{Post a Job} function.
 	\\ \hline
-	
+
 	Main Success Scenario &
 	\begin{enumerate}
-		\item Employer enters job information.
-		\item Employer submits the job posting.
-		\item System validates the submitted information.
-		\item System creates the job posting.
-		\item System publishes the job posting.
-		\item System confirms successful publication.
+		\item Employer fills in the job title, description, requirements, location, employment type, and deadline.
+		\item Employer submits the posting.
+		\item System validates the input and checks that the deadline is in the future.
+		\item System assigns the employer's company to the posting.
+		\item System creates the posting with status \texttt{PENDING\_APPROVAL}.
+		\item System confirms the creation and shows the posting in the employer's list.
 	\end{enumerate}
 	\\ \hline
-	
+
 	Alternative Flows &
-	\textbf{A1. Invalid job information}
+	\textbf{A1. No company profile}
 	\begin{enumerate}
-		\item System identifies invalid fields.
-		\item Employer updates the information.
+		\item System requires the Employer to create a company profile first.
+	\end{enumerate}
+
+	\textbf{A2. Invalid input}
+	\begin{enumerate}
+		\item System identifies the invalid fields.
+		\item Employer corrects and resubmits.
 	\end{enumerate}
 	\\ \hline
-	
+
 	Postconditions &
 	\begin{itemize}
-		\item Job posting becomes visible to Job Seekers.
+		\item A job posting with status \texttt{PENDING\_APPROVAL} is stored.
+		\item The posting is hidden from public search until approved.
 	\end{itemize}
 	\\ \hline
+
 \end{usecasespectable}
 
 \newpage
-\subsection{Back Office Worker: Approve Job Posting}
+\subsection{Employer: Review Application}
 
 \begin{usecasespectable}
-	{Use Case Specification: Approve Job Posting.}
-	{ucs-approve_job_posting}
-	
-	Use Case ID & UC-ADMIN-01 \\ \hline
-	
-	Use Case Name & Approve Job Posting \\ \hline
-	
-	Primary Actor & Back Office Worker \\ \hline
-	
-	Goal & Review and approve job postings before they become publicly available. \\ \hline
-	
+	{Use Case Specification: Review Application.}
+	{tab:ucs-review_application}
+
+	Use Case ID & UC-EMP-06, UC-EMP-07, UC-EMP-08 \\ \hline
+
+	Use Case Name & Review Application \\ \hline
+
+	Primary Actor & Employer \\ \hline
+
+	Goal & Review the applications a posting received and update their status. \\ \hline
+
 	Description &
-	Allows an Back Office Worker to review submitted job postings and determine whether they comply with platform policies.
+	Allows an Employer to view the applications submitted to a posting and move each one through the review pipeline.
 	\\ \hline
-	
+
 	Preconditions &
 	\begin{itemize}
-		\item Back Office Worker is authenticated.
-		\item A job posting is awaiting approval.
+		\item Employer is authenticated.
+		\item The posting belongs to the employer's company.
 	\end{itemize}
 	\\ \hline
-	
+
 	Trigger &
-	Administrator opens the pending job posting list.
+	Employer opens the application list of a job posting.
 	\\ \hline
-	
+
 	Main Success Scenario &
 	\begin{enumerate}
-		\item Back Office Worker reviews the job posting.
-		\item Back Office Worker verifies the submitted information.
-		\item Back Office Worker approves the posting.
-		\item System updates the posting status.
-		\item System makes the job posting publicly available.
+		\item Employer selects a job posting.
+		\item System lists the applications with candidate name, resume, and status.
+		\item Employer opens an application's detail.
+		\item Employer marks the application \texttt{UNDER\_REVIEW}.
+		\item Employer decides to accept or reject the application, with an optional reason on rejection.
+		\item System updates the application to \texttt{ACCEPTED} or \texttt{REJECTED} and records the decision time.
 	\end{enumerate}
 	\\ \hline
-	
+
 	Alternative Flows &
-	\textbf{A1. Job posting rejected}
+	\textbf{A1. Application withdrawn}
 	\begin{enumerate}
-		\item Administrator rejects the posting.
-		\item System records the decision.
-		\item System notifies the Employer.
+		\item System blocks further processing of the application.
+	\end{enumerate}
+
+	\textbf{A2. Application already decided}
+	\begin{enumerate}
+		\item System rejects the status change.
+	\end{enumerate}
+
+	\textbf{A3. Application not under review}
+	\begin{enumerate}
+		\item System only allows accept or reject on applications that are \texttt{UNDER\_REVIEW}.
 	\end{enumerate}
 	\\ \hline
-	
+
 	Postconditions &
 	\begin{itemize}
-		\item The job posting is approved or rejected.
+		\item The application is \texttt{ACCEPTED} or \texttt{REJECTED}, with the decision time recorded.
 	\end{itemize}
 	\\ \hline
+
 \end{usecasespectable}

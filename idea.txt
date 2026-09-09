@@ -1,0 +1,44 @@
+# Idea / Notes
+
+## 1. The "2-module rule" — two scenarios to confirm with supervisor
+
+The thesis focuses on 2 modules in depth:
+- Module 1: **Job Application** (Job Seeker side: apply, track, withdraw)
+- Module 2: **Employer Job Management** (posting lifecycle + employer application review)
+
+Question to supervisor: where does this rule apply?
+
+**Scenario S1 — apply everywhere.**
+The 2-module rule applies to every chapter. The Functional Requirements table is trimmed to the 2 modules; description of other modules (Authentication, Profile, Resume, Job Discovery, Administration) moves to the appendix along with their class/sequence diagrams and use-case specs. Main body only keeps enough of the other modules to preserve a coherent narrative.
+
+**Scenario S2 — exception for Functional Requirements.**
+Keep the full Functional Requirements table (all 8 modules) in the main body, because it is the concise summary of what the whole system does and is easy to read. The 2-module rule then applies only to the detailed sections: Use Case Analysis (specialized), Use Case Specification, System Design (Database + Backend + Frontend), and Implementation.
+
+## 2. C4 diagram redraw
+
+When drawing the C4 **Component view**, draw only the component being described.
+Drawing Persons or unrelated Containers into the view:
+- adds vertical space, hurting readability when printed on paper;
+- includes information that is not relevant to that component.
+Keep Person/Container context to the Context (C1) and Container (C2) diagrams only.
+→ Task: re-export the FE and BE component diagrams without the surrounding actors/containers.
+
+## 3. ERD redraw
+
+Re-draw the ERD figures so they are **less wide horizontally**.
+Current overview/full schema diagrams are too wide/flat; prefer a more vertical or grouped layout that fits a portrait page nicely.
+→ Task: re-export the ERD figures (including the Overview ERD) with a more compact layout.
+
+## 4. Back Office / moderation state (constrains what can be featured)
+
+In the project (as of writing):
+- `api-internal/` holds `job-moderation` (approve/reject/delete) but `approveJob` is **not wired yet**, so a job cannot actually reach `ACTIVE` through the API.
+- `audit-log/` and `user-management/` are empty.
+- There is **no `ui-internal/` frontend** — the Back Office UI is not implemented.
+- The backend `middlewares/` directory exists but is **empty and unused** — the thesis design chapter must not describe it as a component; JWT auth lives in `authentication.ts` (expressAuthentication) instead.
+→ Back Office cannot be one of the two featured modules.
+
+## 5. Employer Application Review UI
+
+`employer-application-management` is fully implemented in the backend but the frontend UI is not built yet.
+The Implementation chapter covers it at the backend level; the frontend subsection notes "UI is still in progress, will write later." (Student is implementing the UI soon.)
