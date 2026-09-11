@@ -29,7 +29,7 @@ sequenceDiagram
     participant Database as «database»<br/>Database
 
     BackOfficeWorker->>+FrontendUI: 1 : Open job moderation page
-    FrontendUI->>+JwtAuthentication: 2 : getJobs(accessToken)
+    FrontendUI->>+JwtAuthentication: 2 : getJobs(accessToken, statusFilter)
 
     JwtAuthentication->>JwtAuthentication: 3 : verifyAccessToken(accessToken)
 
@@ -39,30 +39,41 @@ sequenceDiagram
         FrontendUI-->>BackOfficeWorker: 5a : Redirect to Login page
     end
 
-    JwtAuthentication->>JwtAuthentication: 4 : assertAdmin()
+    JwtAuthentication->>JwtAuthentication: 4 : verifyScopes(ADMIN)
 
-    %% GUARD 2: Role Authorization Break
-    break User does not have Admin role
+    %% GUARD 2: Token Scope Break
+    break Token scope does not include ADMIN
         JwtAuthentication-->>FrontendUI: 5b : HTTP 403 Forbidden
         FrontendUI-->>BackOfficeWorker: 6b : Display role restriction warning
     end
 
-    JwtAuthentication->>+JobModerationController: 5 : getJobs()
+    JwtAuthentication->>+JobModerationController: 5 : getJobs(statusFilter)
     deactivate JwtAuthentication
 
-    JobModerationController->>+JobModerationService: 6 : getJobs()
+    JobModerationController->>+JobModerationService: 6 : getJobs(statusFilter, currentUser)
+
+    JobModerationService->>JobModerationService: 7 : assertAdmin(currentUser)
+
+    %% GUARD 3: Service-Level Role Break (defence in depth)
+    break User does not have Admin role
+        JobModerationService-->>JobModerationController: 8a : ForbiddenRoleError
+        JobModerationController-->>FrontendUI: 9a : HTTP 403 Forbidden
+        FrontendUI-->>BackOfficeWorker: 10a : Display role restriction warning
+    end
 
     %% Retrieve Job Postings
-    JobModerationService->>+PrismaClient: 7 : findManyJobPostings()
-    PrismaClient->>+Database: 8 : fetchJobPostings()
-    Database-->>-PrismaClient: 9 : jobData[]
-    PrismaClient-->>-JobModerationService: 10 : jobs[]
+    JobModerationService->>+PrismaClient: 8 : findManyJobPostings(statusFilter)
+    PrismaClient->>+Database: 9 : fetchJobPostings(statusFilter)
+    Database-->>-PrismaClient: 10 : jobData[]
+    PrismaClient-->>-JobModerationService: 11 : jobs[]
 
     %% Empty Result or not, the flow goes the same
-    JobModerationService-->>-JobModerationController: 11 : JobResponse[]
-    JobModerationController-->>FrontendUI: 12 : HTTP 200 OK + JobResponse[]
+    JobModerationService-->>-JobModerationController: 12 : JobListResponse
+    JobModerationController-->>-FrontendUI: 13 : HTTP 200 OK + JobListResponse
+
     alt response is empty
-	FrontendUI-->>BackOfficeWorker: 13a : Display empty state
+        FrontendUI-->>BackOfficeWorker: 14a : Display empty state
     else response is not empty
-    	FrontendUI-->>BackOfficeWorker: 13b : Display job posting list
+        FrontendUI-->>BackOfficeWorker: 14b : Display job posting list
     end
+    deactivate FrontendUI

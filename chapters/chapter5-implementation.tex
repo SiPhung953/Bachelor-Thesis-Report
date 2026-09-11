@@ -161,7 +161,7 @@ The application list and the detail both verify that the application belongs to 
 
 \subsection{Remaining Modules}
 
-The remaining modules follow the same controller--service pattern, but are covered here briefly.
+The remaining modules follow the same controller - service pattern, but are covered here briefly.
 
 \paragraph{Authentication}
 \texttt{AuthService} implements registration, login, logout, password reset requests, and password reset. Passwords are hashed with BCrypt before storage and compared at login; a banned account is rejected at login and by the JWT middleware on every protected request. Password reset tokens are hashed before being stored, carry an expiration, and are single-use; the reset email is sent through the email service.
@@ -180,9 +180,9 @@ The \texttt{api-internal/job-moderation/} module implements the moderation opera
 
 \section{Frontend Implementation}
 
-This section describes how the two featured modules are realized in the React frontend. The Employer Application Review use case does not have a user interface yet -- it is implemented at the API level as described above, and its UI will be written later.
+This section describes how the two featured modules are realized in the React frontend. %%The Employer Application Review use case does not have a user interface yet -- it is implemented at the API level as described above, and its UI will be written later.
 
-Pages and components live in feature folders that mirror the backend, and each route group is wrapped with \texttt{RequireAuth} so that Job Seeker-only and Employer-only areas render only for the matching role. The API client is generated from the backend's OpenAPI spec, so calls such as \texttt{getMyApplications(...)} or \texttt{applyJobs(...)} are typed end to end, and the shared \texttt{apiClient} attaches the stored access token and redirects to login on a \texttt{401}.
+%%Pages and components live in feature folders that mirror the backend, and each route group is wrapped with \texttt{RequireAuth} so that Job Seeker-only and Employer-only areas render only for the matching role. The API client is generated from the backend's OpenAPI spec, so calls such as \texttt{getMyApplications(...)} or \texttt{applyJobs(...)} are typed end to end, and the shared \texttt{apiClient} attaches the stored access token and redirects to login on a \texttt{401}.
 
 \subsection{Job Application UI}
 
@@ -200,10 +200,10 @@ Pages and components live in feature folders that mirror the backend, and each r
 \paragraph{My job postings}
 \texttt{MyJobPostingsPage} (\texttt{/employer/jobs}) lists the employer's postings from newest to oldest through \texttt{JobPostingCard}, which shows the summary fields and a \texttt{JobStatusBadge}. The close, re-open, and delete actions each require confirmation in a \texttt{ConfirmationDialog} with copy that reflects the real consequence of the action; on success the list is refreshed so the card reflects the new status.
 
-\subsection{Remaining Pages}
+%%\subsection{Remaining Pages}
 
-The remaining pages follow the same conventions: the auth pages (login, register, forgot/reset password), the landing and job discovery pages (job search, job detail, company profile), the profile page for personal information and resume upload, and the employer company page. Each keeps to the reach -- call the generated API client -- render the result -- handle the error pattern used in the featured modules.
+%%The remaining pages follow the same conventions: the auth pages (login, register, forgot/reset password), the landing and job discovery pages (job search, job detail, company profile), the profile page for personal information and resume upload, and the employer company page. Each keeps to the reach -- call the generated API client -- render the result -- handle the error pattern used in the featured modules.
 
 \section{Summary}
 
-The platform was implemented as a two-application monorepo. The backend follows the controller--service architecture established in the design chapter: tsoa provides routing and the OpenAPI contract, services own all business rules, and Prisma provides typed database access. The two featured modules were implemented in full -- the job seeker can apply, track, and withdraw applications, while the employer can manage a company, run the lifecycle of a job posting, and review its applications -- and the remaining modules follow the same pattern, with the moderation backend complete and its interface still under development. The frontend mirrors the backend with role-guarded pages and a generated, typed API client.
+The platform was implemented as a two-application monorepo. The backend follows the controller-service architecture established in the design chapter: tsoa provides routing and the OpenAPI contract, services own all business rules, and Prisma provides typed database access. The two featured modules were implemented in full - the job seeker can apply, track, and withdraw applications, while the employer can manage a company, run the lifecycle of a job posting, and review its applications - and the remaining modules follow the same pattern, with the moderation backend complete and its interface still under development. The frontend mirrors the backend with role-guarded pages and a generated, typed API client.

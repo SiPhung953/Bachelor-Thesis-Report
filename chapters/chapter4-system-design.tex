@@ -145,7 +145,7 @@ Figure~\ref{diagram:erd-overview} presents an overview of the complete database 
 	\label{diagram:erd-overview}
 \end{figure}
 
-The remainder of this section details the entity groups that back the two featured modules — the company and job posting domain and the job application domain. The entities supporting the remaining modules are described in the appendix.
+The remainder of this section details the entity groups that back the two featured modules - the company and job posting domain and the job application domain. The entities supporting the remaining modules are described in the appendix.
 
 \subsection{Company and Job Posting}
 Figure~\ref{diagram:erd-company-job} details the entities involved in company and job posting management.
@@ -157,7 +157,7 @@ Figure~\ref{diagram:erd-company-job} details the entities involved in company an
 	\label{diagram:erd-company-job}
 \end{figure}
 
-An employer may own multiple companies, but each company belongs to exactly one employer. Similarly, an employer may create multiple job postings, but each job posting is created by exactly one employer. Each job posting belongs to exactly one company, while a company may publish any number of job postings. The status attribute of a job posting tracks its lifecycle — \texttt{PENDING\_APPROVAL}, \texttt{ACTIVE}, \texttt{REJECTED}, \texttt{CLOSED}, \texttt{EXPIRED}, and \texttt{DELETED} — which is the backbone of the Employer Job Management module.
+An employer may own multiple companies, but each company belongs to exactly one employer. Similarly, an employer may create multiple job postings, but each job posting is created by exactly one employer. Each job posting belongs to exactly one company, while a company may publish any number of job postings. The status attribute of a job posting tracks its lifecycle - \texttt{PENDING\_APPROVAL}, \texttt{ACTIVE}, \texttt{REJECTED}, \texttt{CLOSED}, \texttt{EXPIRED}, and \texttt{DELETED} - which is the backbone of the Employer Job Management module.
 
 \subsection{Job Application}
 Figure~\ref{diagram:erd-job-application} details the entities involved in the job application workflow.
@@ -169,7 +169,7 @@ Figure~\ref{diagram:erd-job-application} details the entities involved in the jo
 	\label{diagram:erd-job-application}
 \end{figure}
 
-A job seeker may upload multiple resumes and submit multiple applications, but each resume and each application belongs to exactly one job seeker. Each application is submitted for exactly one job posting, while a job posting may receive any number of applications. A resume may be attached to multiple applications, but each application references exactly one resume. The application's status attribute — \texttt{SUBMITTED}, \texttt{UNDER\_REVIEW}, \texttt{ACCEPTED}, \texttt{REJECTED}, and \texttt{WITHDRAWN} — records where the application stands in the review process, and a unique constraint on the user-job pair prevents a candidate from applying to the same posting twice.
+A job seeker may upload multiple resumes and submit multiple applications, but each resume and each application belongs to exactly one job seeker. Each application is submitted for exactly one job posting, while a job posting may receive any number of applications. A resume may be attached to multiple applications, but each application references exactly one resume. The application's status attribute - \texttt{SUBMITTED}, \texttt{UNDER\_REVIEW}, \texttt{ACCEPTED}, \texttt{REJECTED}, and \texttt{WITHDRAWN} - records where the application stands in the review process, and a unique constraint on the user-job pair prevents a candidate from applying to the same posting twice.
 
 
 \section{Backend Design}
@@ -265,7 +265,6 @@ A small set of reusable infrastructure components is shared across all business 
 
 \subsection{Job Application Module}
 \label{c4:subsection:job-application-module}
-\subsubsection{Introduction}
 The Job Application Module lets job seekers apply to active job postings using one of their resumes, view their own submitted applications, and withdraw an application while it is still eligible. It resides in \texttt{api-external}, and every endpoint requires both a valid JWT and the \texttt{JOB\_SEEKER} role.
 
 \subsubsection{Class Diagram}
@@ -291,7 +290,6 @@ Every ApplicationService method begins with the same guard: the caller must hold
 
 \subsection{Employer Job Management Module}
 \label{c4:subsection:employer-job-module}
-\subsubsection{Introduction}
 The Employer Job Management Module covers the capabilities exposed to employers: managing their company profile, managing the lifecycle of their job postings, and reviewing submitted applications. Together with the Job Application Module, it forms the complete round trip of a recruitment event studied in this thesis.
 
 \subsubsection{Class Diagram}
@@ -334,7 +332,7 @@ EmployerApplicationController exposes getJobApplications, getJobApplicationDetai
 \section{Frontend Design}
 \label{c4:section:frontend-design}
 
-The frontend is a React single-page application. Pages are grouped in feature folders that mirror the backend module structure, so a feature can be traced end to end: \texttt{ui-external/applications/} mirrors \texttt{api-external/job-application/}, and \texttt{ui-external/employer-job-management/} mirrors \texttt{api-external/employer-job-management/}. Reusable UI is separated into \texttt{ui-shared/}. Routing is role-based: \texttt{RequireAuth} guards wrap route groups so that a Job Seeker-only area and an Employer-only area are rendered only for the matching role. All API calls go through a client generated from the backend's OpenAPI specification, so the request and response types used by the pages always match the backend contract.
+The frontend is a React single-page application. Pages are grouped in feature folders that mirror the backend module structure, so a feature can be traced end to end. Reusable UI is separated into \texttt{ui-shared/}. Routing is role-based: \texttt{RequireAuth} guards wrap route groups so that a Job Seeker-only area and an Employer-only area are rendered only for the matching role. All API calls go through a client generated from the backend's OpenAPI specification, so the request and response types used by the pages always match the backend contract.
 
 \subsection{Job Application UI}
 The Job Application UI consists of two pages. The apply page, \texttt{ApplyJobPage} at \texttt{/jobs/:jobId/apply}, loads the chosen posting and the user's resumes, presents the job summary together with a \texttt{ResumeSelector}, and submits the selected resume. The submit errors are handled by HTTP status: a \texttt{409} reports that the user already applied, a \texttt{401} prompts re-login, and a \texttt{403} reports that only job seekers can apply. The tracking page, \texttt{MyApplicationsPage} at \texttt{/applications}, lists the user's applications through \texttt{ApplicationCard} components that show the posting, company, status badge, and submission date. Withdrawing an application is confirmed through a shared \texttt{ConfirmationDialog}; on success the card status is updated locally to \texttt{WITHDRAWN}.

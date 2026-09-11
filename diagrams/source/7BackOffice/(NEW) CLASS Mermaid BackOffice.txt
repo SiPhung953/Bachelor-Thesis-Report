@@ -95,8 +95,8 @@ direction LR
   AuditLogController --> AuditLogService : delegates to
 
   %% Cross-Cutting Security & Utility Dependencies
-  %%JobModerationService --> AuthorizationService : secures via
-  %%UserManagementService --> AuthorizationService : secures via
+  JobModerationService --> AssertRole : authorizes via
+  UserManagementService --> AssertRole : authorizes via
   JobModerationService --> AuditLogger : records via
   UserManagementService --> AuditLogger : records via
 

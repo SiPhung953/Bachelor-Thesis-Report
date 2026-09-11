@@ -19,6 +19,7 @@
   }
 }}%%
 
+
 sequenceDiagram
     actor BackOfficeWorker as Back-Office Worker
     participant FrontendUI as «boundary»<br/>Frontend UI
@@ -40,10 +41,10 @@ sequenceDiagram
         FrontendUI-->>BackOfficeWorker: 5a : Redirect to Login page
     end
 
-    JwtAuthentication->>JwtAuthentication: 4 : assertAdmin()
+    JwtAuthentication->>JwtAuthentication: 4 : verifyScopes(ADMIN)
 
-    %% GUARD 2: Role Authorization Break
-    break User does not have Admin role
+    %% GUARD 2: Token Scope Break
+    break Token scope does not include ADMIN
         JwtAuthentication-->>FrontendUI: 5b : HTTP 403 Forbidden
         FrontendUI-->>BackOfficeWorker: 6b : Display role restriction warning
     end
@@ -53,51 +54,65 @@ sequenceDiagram
 
     JobModerationController->>+JobModerationService: 6 : approveJob(jobId, currentUser)
 
+    JobModerationService->>JobModerationService: 7 : assertAdmin(currentUser)
+
+    %% GUARD 3: Service-Level Role Break (defence in depth)
+    break User does not have Admin role
+        JobModerationService-->>JobModerationController: 8a : ForbiddenRoleError
+        JobModerationController-->>FrontendUI: 9a : HTTP 403 Forbidden
+        FrontendUI-->>BackOfficeWorker: 10a : Display role restriction warning
+    end
+
     %% Retrieve Job Posting
-    JobModerationService->>+PrismaClient: 7 : findJobPostingById(jobId)
-    PrismaClient->>+Database: 8 : fetchJobPosting(jobId)
-    Database-->>-PrismaClient: 9 : jobData
-    PrismaClient-->>-JobModerationService: 10 : job
+    JobModerationService->>+PrismaClient: 8 : findJobPostingById(jobId)
+    PrismaClient->>+Database: 9 : fetchJobPosting(jobId)
+    Database-->>-PrismaClient: 10 : jobData
+    PrismaClient-->>-JobModerationService: 11 : job
 
-    %% Validate Job Posting
+    %% GUARD 4: Job Existence Break
     break Job Posting not found
-        JobModerationService-->>JobModerationController: 11a : JobNotFoundError
-        JobModerationController-->>FrontendUI: 12a : HTTP 404 Not Found
-        FrontendUI-->>BackOfficeWorker: 13a : Display job not found message
+        JobModerationService-->>JobModerationController: 12a : JobNotFoundError
+        JobModerationController-->>FrontendUI: 13a : HTTP 404 Not Found
+        FrontendUI-->>BackOfficeWorker: 14a : Display job not found message
     end
 
+    %% GUARD 5: Idempotency Break
     break Job Posting is already ACTIVE
-	JobModerationService-->>JobModerationController: 11b : InvalidJobStatusError
-        JobModerationController-->>FrontendUI: 12b : HTTP 409 Conflict
-        FrontendUI-->>BackOfficeWorker: 13b : Display already approved message
+        JobModerationService-->>JobModerationController: 12b : InvalidJobStatusError
+        JobModerationController-->>FrontendUI: 13b : HTTP 409 Conflict
+        FrontendUI-->>BackOfficeWorker: 14b : Display already approved message
     end
 
+    %% GUARD 6: Illegal State Transition Break
     break Job Posting is not PENDING_APPROVAL
-        JobModerationService-->>JobModerationController: 11c : InvalidJobStatusError
-        JobModerationController-->>FrontendUI: 12c : HTTP 400 Bad Request
-        FrontendUI-->>BackOfficeWorker: 13c : Display invalid job status message
+        JobModerationService-->>JobModerationController: 12c : InvalidJobStatusError
+        JobModerationController-->>FrontendUI: 13c : HTTP 400 Bad Request
+        FrontendUI-->>BackOfficeWorker: 14c : Display invalid job status message
     end
 
+    %% GUARD 7: Deadline Break
     break Deadline has already passed
-	JobModerationService-->>JobModerationController: 11d : InvalidDeadlineError
-        JobModerationController-->>FrontendUI: 12d : HTTP 400 Bad Request
-        FrontendUI-->>BackOfficeWorker: 13d : Display expired deadline message
+        JobModerationService-->>JobModerationController: 12d : InvalidDeadlineError
+        JobModerationController-->>FrontendUI: 13d : HTTP 400 Bad Request
+        FrontendUI-->>BackOfficeWorker: 14d : Display expired deadline message
     end
 
-    %% Approve Job Posting
-    JobModerationService->>+PrismaClient: 11c : updateJobStatus(jobId, ACTIVE, approvedAt)
-    PrismaClient->>+Database: 12c : update jobs
-    Database-->>-PrismaClient: 13c : updatedJob
-    PrismaClient-->>-JobModerationService: 14c : updatedJob
+    %% Approve Job Posting and record the audit trail atomically
+    rect rgb(240, 240, 240)
+        note over JobModerationService, Database: Single transaction — an approval without<br/>its audit record is rolled back
+        JobModerationService->>+PrismaClient: 12 : updateJobStatus(jobId, ACTIVE, approvedAt)
+        PrismaClient->>+Database: 13 : update jobs
+        Database-->>-PrismaClient: 14 : updatedJob
+        PrismaClient-->>-JobModerationService: 15 : updatedJob
 
-    %% Audit Log
-    JobModerationService->>+AuditLogger: 15c : log(JOB_APPROVED, jobId, currentUser)
-    AuditLogger->>+PrismaClient: 16c : createLog()
-    PrismaClient->>+Database: 17c : insert audit log
-    Database-->>-PrismaClient: 18c : logRecord
-    PrismaClient-->>-AuditLogger: 19c : logRecord
-    AuditLogger-->>-JobModerationService: 20c : void
+        JobModerationService->>+AuditLogger: 16 : log(JOB_APPROVED, jobId, currentUser)
+        AuditLogger->>+PrismaClient: 17 : createLog()
+        PrismaClient->>+Database: 18 : insert audit log
+        Database-->>-PrismaClient: 19 : logRecord
+        PrismaClient-->>-AuditLogger: 20 : logRecord
+        AuditLogger-->>-JobModerationService: 21 : void
+    end
 
-    JobModerationService-->>-JobModerationController: 21c : JobResponse
-    JobModerationController-->>-FrontendUI: 22c : HTTP 200 OK + JobResponse
-    FrontendUI-->>-BackOfficeWorker: 23c : Display approval success message
+    JobModerationService-->>-JobModerationController: 22 : ApproveJobResponse
+    JobModerationController-->>-FrontendUI: 23 : HTTP 200 OK + ApproveJobResponse
+    FrontendUI-->>-BackOfficeWorker: 24 : Display approval success message

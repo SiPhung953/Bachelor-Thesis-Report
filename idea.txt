@@ -32,7 +32,7 @@ Current overview/full schema diagrams are too wide/flat; prefer a more vertical 
 ## 4. Back Office / moderation state (constrains what can be featured)
 
 In the project (as of writing):
-- `api-internal/` holds `job-moderation` (approve/reject/delete) but `approveJob` is **not wired yet**, so a job cannot actually reach `ACTIVE` through the API.
+- `api-internal/job-moderation/` is **complete**: `JobModerationController` at `/admin/jobs` (ADMIN scope) implements list, detail, approve, reject, delete.
 - `audit-log/` and `user-management/` are empty.
 - There is **no `ui-internal/` frontend** — the Back Office UI is not implemented.
 - The backend `middlewares/` directory exists but is **empty and unused** — the thesis design chapter must not describe it as a component; JWT auth lives in `authentication.ts` (expressAuthentication) instead.
