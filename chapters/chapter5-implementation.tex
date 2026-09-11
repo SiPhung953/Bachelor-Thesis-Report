@@ -78,37 +78,15 @@ The module lives in \texttt{api-external/job-application/} and exposes the endpo
 \end{table}
 
 \paragraph{applyJob}
-The core of the module is the \texttt{applyJob} method, which guards every business rule from the use case specification before any row is written. The checks run in order: the caller must be a job seeker; the referenced job must exist and be \texttt{ACTIVE}, otherwise the posting is unreachable; the chosen resume must exist, be not deleted, and belong to the caller; and no application may already exist for the same user and job pair. Only when all checks pass is an \texttt{Application} row created with the initial status \texttt{SUBMITTED}. The following excerpt shows the early guard sequence.
+The core of the module is the \texttt{applyJob} method, which guards every business rule from the use case specification before any row is written. 
 
-\begin{verbatim}
-assertJobSeeker(currentUser);
-
-const job = await prisma.job.findUnique({
-  where: { id: requestBody.jobId },
-  select: { id: true, status: true },
-});
-if (!job)                    throw new HttpError(404, "Job not found.");
-if (job.status !== "ACTIVE") throw new HttpError(400,
-  "Job posting is no longer available.");
-
-const resume = await prisma.resume.findFirst({
-  where: { id: requestBody.resumeId, deletedAt: null },
-});
-if (!resume)                 throw new HttpError(404, "Resume not found.");
-if (resume.userId !== currentUser.id)
-  throw new HttpError(403, "You do not own this resume.");
-
-const application = await prisma.application.findUnique({
-  where: { userId_jobId: { userId: currentUser.id, jobId: job.id } },
-});
-if (application) throw new HttpError(409,
-  "You have already applied for this job.");
-\end{verbatim}
+\textbf{SEQUENCE DIAGRAM HERE}
 
 The duplicate check relies on the composite unique constraint \texttt{userId\_jobId} defined on the \texttt{Application} table, which makes the one-application-per-job rule enforceable at the database level as well as in the service.
 
 \paragraph{getMyApplications}
-This method returns only the caller's applications. Because an application relates to a job, and a job relates to its company, a single Prisma query joins those relations and maps each row to a flattened list item carrying the application status and submission date together with the job and company summary -- the fields the tracking page displays.
+This method returns only the caller's applications.
+%%Because an application relates to a job, and a job relates to its company, a single Prisma query joins those relations and maps each row to a flattened list item carrying the application status and submission date together with the job and company summary -- the fields the tracking page displays.
 
 \paragraph{withdrawApplication}
 Withdrawal verifies ownership and then checks that the application is still in \texttt{SUBMITTED} status. An application that has moved into review, been decided, or already been withdrawn cannot be withdrawn again. On success the status is set to \texttt{WITHDRAWN} and the \texttt{withdrawnAt} timestamp is recorded; the row itself is kept for the job seeker's history.
@@ -198,7 +176,7 @@ The remaining modules follow the same controller--service pattern, but are cover
 \texttt{JobDiscoveryService} powers public job search and job detail. Search restricts results to \texttt{ACTIVE} postings and matches an optional keyword against the job title or company name and an optional location against the job location or company city and district; the public company profile endpoints expose company details and their active postings.
 
 \paragraph{Back Office Moderation}
-The \texttt{api-internal/job-moderation/} module defines the approval, rejection, and deletion operations for moderators. At the time of writing its frontend is not yet implemented and the approval operation is still being wired, so job postings reach \texttt{ACTIVE} through moderation only partially; this is noted as in-progress work rather than covered as a finished feature.
+The \texttt{api-internal/job-moderation/} module implements the moderation operations for administrators as part of the internal API. \texttt{JobModerationController} is mounted at \texttt{/admin/jobs} and protected with the \texttt{ADMIN} scope; it lists and inspects pending postings, approves a posting so it becomes \texttt{ACTIVE}, rejects it with an optional reason, and deletes it. The user interface of the internal application is still under development.
 
 \section{Frontend Implementation}
 
@@ -228,4 +206,4 @@ The remaining pages follow the same conventions: the auth pages (login, register
 
 \section{Summary}
 
-The platform was implemented as a two-application monorepo. The backend follows the controller--service architecture established in the design chapter: tsoa provides routing and the OpenAPI contract, services own all business rules, and Prisma provides typed database access. The two featured modules were implemented in full -- the job seeker can apply, track, and withdraw applications, while the employer can manage a company, run the lifecycle of a job posting, and review its applications -- and the remaining modules follow the same pattern with the moderation work still in progress. The frontend mirrors the backend with role-guarded pages and a generated, typed API client.
+The platform was implemented as a two-application monorepo. The backend follows the controller--service architecture established in the design chapter: tsoa provides routing and the OpenAPI contract, services own all business rules, and Prisma provides typed database access. The two featured modules were implemented in full -- the job seeker can apply, track, and withdraw applications, while the employer can manage a company, run the lifecycle of a job posting, and review its applications -- and the remaining modules follow the same pattern, with the moderation backend complete and its interface still under development. The frontend mirrors the backend with role-guarded pages and a generated, typed API client.
