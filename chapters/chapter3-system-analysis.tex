@@ -11,18 +11,17 @@
 \section{Proposed System}
 \label{c3:section:proposed-system}
 
-The challenges described in Chapter \ref{chapter:introduction} motivate a centralized online recruitment platform. In this system, a job seeker can search for jobs, keep a personal profile, upload resumes, submit applications, and follow their progress. An employer can register a company, publish job postings, and review applicants. A back-office role moderates content and manages accounts. Putting these operations in one system replaces the fragmented workflow of the current market with a single consistent interface.
-
+The challenges described in Chapter \ref{chapter:introduction} motivate a centralized online recruitment platform. In this system, a job seeker can search for jobs, keep a personal profile, upload resumes, submit applications, and follow their progress. An employer can register a company, publish job postings, and review applicants. A back-office role moderates content and manages accounts. Putting these operations in one system replaces the fragmented workflow of the current market with a single consistent interface.\\
 The system's functionality is split into clear modules by business responsibility:
 
 \begin{itemize}
-	\item \textbf{Job Discovery} allows guests to search active job postings and view company profiles.
-	\item \textbf{Authentication} covers registration, login, logout, and password recovery.
-	\item \textbf{Profile Management} lets users maintain personal information, job preferences, avatar, and account password.
-	\item \textbf{Resume Management} lets job seekers upload and delete resumes used in applications.
-	\item \textbf{Job Application} lets a job seeker apply to an active posting, track submitted applications, and withdraw them while still eligible.
-	\item \textbf{Employer Job Management} lets an employer manage a company profile, run the full lifecycle of a job posting, and review the applications a posting receives.
-	\item \textbf{Administration} supports moderating job postings and managing users and logs.
+	\item Job Discovery: allows guests to search active job postings and view company profiles.
+	\item Authentication: covers registration, login, logout, and password recovery.
+	\item Profile Management: lets users maintain personal information, job preferences, avatar, and account password.
+	\item Resume Management: lets job seekers upload and delete resumes used in applications.
+	\item Job Application: lets a job seeker apply to an active posting, track submitted applications, and withdraw them while still eligible.
+	\item Employer Job Management: lets an employer manage a company profile, run the full lifecycle of a job posting, and review the applications a posting receives.
+	\item Administration: supports moderating job postings and managing users and logs.
 \end{itemize}
 
 Because the platform stores personal data and lets users modify shared records, access is controlled. Registration and login protect each user's account, and role-based permissions decide what each user may do. A job seeker manages their own profile and applications; an employer manages only their own company, postings, and candidates; a back-office worker moderates platform content.
