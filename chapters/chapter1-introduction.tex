@@ -8,12 +8,34 @@
 \chapter{Introduction}
 \label{chapter:introduction}
 
-\section{Problem Statement}
+\section{Background}
 
-Hiring used to run on paper. Job seekers printed resumes and delivered them in person or by post, and employers advertised openings in newspapers and reviewed applications by hand. Online recruitment platforms have changed this: employers now publish vacancies and candidates apply electronically, so distance and response time no longer decide how fast a role is filled.
+Hiring used to run on paper. Job seekers printed resumes and delivered them in person or by post, and employers advertised openings in newspapers and reviewed applications by hand. Online recruitment platforms changed this: employers now publish vacancies and candidates apply electronically. Distance and response time no longer decide how fast a role is filled, and a single posting can reach candidates who would never have seen a printed ad.
+
+\section{Problem Statement}
 
 The new approach brings its own friction. Each recruitment site has its own search interface, its own resume format, and its own application flow. A candidate who wants to reach more than one pool of jobs must recreate essentially the same profile and resume on every platform, then visit each one separately to check whether an application has progressed. The more platforms a job seeker uses, the more duplicated effort the search costs.
 
 Employers face a similar mess in reverse. Publishing a posting is only the first step; they still have to collect applications, read resumes, record decisions, and keep those records straight. Without a single place that ties postings, applications, and decisions together, the employer ends up stitching information across tools — recreating the inefficiency the platform was supposed to remove.
 
-These problems motivate a centralized system: one platform where job seekers search jobs, maintain a profile, upload a resume, apply, and track their applications, and where employers manage company information, publish postings, and review applicants through one interface. Because such a system stores personal data and lets users modify shared records, access must be controlled. Registration and login protect each user's data, and role-based permissions decide what each user may do: job seekers manage their profiles and applications, employers manage postings and candidates, and a back-office role keeps platform content in check. This thesis designs and implements that system, focusing on two central flows — applying for jobs on the job seeker's side, and managing postings and their applicants on the employer's side.
+\section{Aim, Objectives and Scope}
+
+This thesis designs and implements one such centralized system: a platform where job seekers search jobs, maintain a profile, upload a resume, apply, and track their applications, and where employers manage company information, publish postings, and review applicants through one interface. Because the system stores personal data and lets users modify shared records, access is controlled. Registration and login protect each user's data, and role-based permissions decide what each user may do.
+
+The work is organized around these objectives:
+
+\begin{itemize}
+	\item \textbf{Job Application}: a job seeker can apply for an active posting using one of their resumes, track the status of each application through its lifecycle, and withdraw an application that has not yet been decided.
+	\item \textbf{Employer Job Management}: an employer can manage a company profile, create and maintain job postings through their lifecycle, and review the applications each posting receives until a decision is recorded.
+	\item \textbf{Supporting modules}: authentication with role-based access control, personal profile and resume management for job seekers, public job search and company browsing, and back-office moderation of postings.
+\end{itemize}
+
+The thesis presents the Job Application and Employer Job Management modules in full detail — analysis, design, and implementation. The supporting modules are built and described, but only briefly.
+
+\section{Methodology}
+
+Development was driven by use case documentation rather than a single fixed process. Work was decomposed into use case groups — profile, resume, job application, employer, and so on — and each group passed through the same small loop. First the use cases of the group were documented with their specifications and diagrams. Then the grouping was implemented, backend first and frontend after. Wherever implementation surfaced a use case that had not been anticipated in the documentation, the loop ran again: the new use case was implemented if it was needed immediately, and was always written back into the documentation so that the analysis in Chapter \ref{chapter:system-analysis} and the implementation in Chapter \ref{chapter:implementation} would stay consistent with each other.
+
+\section{Thesis Organization}
+
+The remainder of the thesis follows the loop above. Chapter \ref{chapter:system-analysis} analyzes the requirements: actors, the functional and non-functional requirements, and the use cases of the featured modules. Chapter \ref{chapter:system-design} turns those requirements into design, covering the system architecture, the database schema, and the module-level design. Chapter \ref{chapter:implementation} describes how the design was implemented, and Chapter \ref{chapter:testing} summarizes verification. Chapter \ref{chapter:conclusion} closes with the results and limitations of the project.
