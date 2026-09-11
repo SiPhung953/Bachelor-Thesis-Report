@@ -7,3 +7,31 @@
 
 \chapter{Conclusion}
 \label{chapter:conclusion}
+
+\section{Summary}
+
+This thesis designed and implemented an online recruitment platform that brings job seeking and hiring into a single system. The work centered on two flows. On the job seeker's side, the Job Application module lets a candidate apply for an active posting using one of their resumes, track each application through its lifecycle, and withdraw an application that has not yet been decided. On the employer's side, the Employer Job Management module lets an employer maintain a company profile, publish and manage job postings through their lifecycle, and review the applications each posting receives until a decision is recorded. Around these, the platform provides authentication with role-based access control, personal profiles and resume management, public job search, and back-office moderation.
+
+The system was built as a pnpm monorepo with two applications. The backend, \texttt{apps/api}, is an Express service written in TypeScript: tsoa generates the OpenAPI contract and the route handlers from annotated controllers, services own every business rule, and Prisma provides typed database access. The frontend, \texttt{apps/web}, is a React application whose typed API client is generated from that same contract, so the two sides can never drift in the shape of the data they exchange. The two featured modules are described in full, and all supporting modules follow the same controller--service pattern.
+
+The project met its stated objectives. The iterative loop described in the introduction kept the documentation honest: every use case that surfaced during implementation was written back into the analysis, so the design and the code never fell out of step.
+
+\section{Limitations}
+
+Due to time and knowledge constraints, the final product presents several limitations:
+
+\begin{itemize}
+	\item The platform is a prototype run as two local applications. It has not been deployed, and it has not been exercised under real-scale traffic or by real users.
+	\item The thesis details two of the modules; the remaining modules are built and described, but only briefly.
+\end{itemize}
+
+\section{Future Work}
+
+The limitations above point to the most natural directions for future work:
+
+\begin{itemize}
+	\item Notify users when something changes - job seekers when an application status updates, employers when a posting is moderated.
+	\item Add a direct communication channel between employers and applicants inside the platform.
+	\item Prepare the platform for deployment and scale: containerization, load balancing, and caching of search results.
+	\item Build a mobile application.
+\end{itemize}
