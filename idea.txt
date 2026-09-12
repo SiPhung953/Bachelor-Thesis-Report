@@ -14,6 +14,8 @@ The 2-module rule applies to every chapter. The Functional Requirements table is
 **Scenario S2 — exception for Functional Requirements.**
 Keep the full Functional Requirements table (all 8 modules) in the main body, because it is the concise summary of what the whole system does and is easy to read. The 2-module rule then applies only to the detailed sections: Use Case Analysis (specialized), Use Case Specification, System Design (Database + Backend + Frontend), and Implementation.
 
+**✅ RESOLVED (supervisor confirmed): Scenario S2.** Keep the full FR table for **all 8 modules** in the main body (ch3, `tab:functional-requirements`). Do NOT trim it.
+
 ## 2. C4 diagram redraw
 
 When drawing the C4 **Component view**, draw only the component being described.
@@ -42,3 +44,38 @@ In the project (as of writing):
 
 `employer-application-management` is fully implemented in the backend but the frontend UI is not built yet.
 The Implementation chapter covers it at the backend level; the frontend subsection notes "UI is still in progress, will write later." (Student is implementing the UI soon.)
+
+## 6. Appendix strategy (supervisor tips)
+
+- The appendix may be **printed 2-sided**, so dump everything non-essential there: use-case specs of non-featured modules, ERD groups, class diagrams, sequence diagrams, back-office use cases. It is currently **enabled** in `main.tex` (`\appendix` + `\input{backmatter/appendix}`); content lives in `backmatter/appendix.tex`.
+- After any section where the "2-module rule" was applied (e.g. Use Case Specification), add a closing sentence of the form:
+  "Other use case specifications are shown/discussed/mentioned in the Annex/Appendix."
+  → Appendices to reference: `appendix:back-office-use-cases`, `appendix:supplementary-usecase-specs`, `appendix:supplementary-erd`, `appendix:supplementary-design`, `appendix:sequence-diagrams`.
+- Page-count implication: 2-sided printing => annex sheets count half; supervisor implied annex is acceptable for page budget.
+
+## 7. "Scary" statistics for the Introduction (supervisor tip)
+
+Goal: open Background/Problem Statement with real numbers that make the reader feel the pain of paper/hand-rolled recruiting — both from the job seeker's and the employer's side.
+
+### Job seeker side (Vietnam-specific data)
+- Vietnam labor force 2024: **≈ 52.9–53 million** (participation rate 68.9%, ~51.9M employed) — GSO Labor Force Survey 2024.
+- Unemployment ~2.2%, **but youth (15–24) unemployment ~8.2–9%**, ~3–4× the national average (ILO article 2025 / JobOKO report).
+- **35% of Vietnamese workers actively seeking a new job** right now; another 21% plan to start hunting within 6 months (Michael Page Vietnam Talent Trends 2023, n=996). 54% more likely to job-hunt when the economy weakens.
+- 71.4% of workers are untrained / hold no recognized certification (GSO, via Vietnam Briefing 2025).
+- Gen Z ≈ 17% of the workforce; 41% say they would reject a well-paid, qualified offer if the company values don't align (ManpowerGroup).
+- Scale of online recruiting in Vietnam (motivates the platform's relevance): TopCV alone reports ~8–10 million candidate profiles and ~540,000 employers.
+
+### Employer side (manual / paper recruiting cost) — mostly global proxies, label as such
+- Global average **time-to-hire ~44 days** (AMS + Josh Bersin Q1 2023); easy roles ~14 days, many sit **2–3 months+**; technical roles median ~40–48 days.
+- Time from posting to accepted offer averaged **63.5 days** in 2025 (HR Dive / Employ).
+- Each hire consumes **~291 applications** on average (Ashby 2024–25 data).
+- Recruiters spend **~7 seconds** on an initial resume screen (Ladders eye-tracking 2018; ResumeGo 2024 survey: majority < 1 min).
+- Average cost-per-hire ≈ **$5,475** (non-executive, SHRM).
+
+### How to use (draft argument)
+"A Vietnamese job seeker today competes in a market where ~35% of workers are job-hunting at the same time; a single opening can draw hundreds of applications that a recruiter glances at for seconds. With a global average of ~44 days from application to offer — longer for difficult roles — the manual, paper round-trip between candidates and employers is exactly the bottleneck a centralized platform removes."
+
+### Caveats
+- Only the GSO/Michael Page/TopCV numbers are Vietnam-specific. Time-to-hire (44 days), applications-per-hire (~291), and resume screen (~7 s) are **global** surveys — attribute honestly ("a global survey of recruiters found...").
+- Did not find a direct "paper CV by hand vs online, in Vietnam" time-to-hire study. Use the global proxies + the Vietnam seeker/employer supply-demand mismatch instead.
+- TODO before writing into ch1: add `\cite` entries to `references.bib` for: GSO LFS 2024, Michael Page Vietnam Talent Trends 2023, ILO Youth employment VN, AMS/Josh Bersin Global Talent Climate 2023, Ladders eye-tracking 2018, Ashby talent trends, SHRM cost-per-hire.
