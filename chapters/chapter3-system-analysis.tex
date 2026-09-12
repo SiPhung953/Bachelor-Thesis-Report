@@ -116,11 +116,15 @@ Non-functional requirements describe the quality attributes the platform must sa
 
 \section{Use Case Analysis}
 
-Use case analysis models how users interact with the platform and shows the functional scope from each user role's perspective. The platform serves three primary roles: Job Seeker, Employer, and Administrator. Each role performs different functions and uses a different subset of the system.
+Use case analysis models how users interact with the platform and shows the functional scope from each user role's perspective.
 
 \subsection{Shared Use Cases}
 
-To keep the model compact, the actors are organized with UML generalization. Signed-in users are represented by the generalized \textbf{Authenticated User} actor, and visitors are represented by the \textbf{Guest} actor.
+To keep the model compact, the actors are organized with UML generalization. Visitors and signed-in users are represented by the Guest actor and Authenticated User actor respectively.
+
+\subsubsection{Guest Use Cases}
+
+As shown in Figure \ref{diagram:uc-guest}, guests can browse job postings, view company information, and register. These public functions give visitors access to the platform without requiring an account.
 
 \begin{figure}[H]
 	\centering
@@ -129,7 +133,9 @@ To keep the model compact, the actors are organized with UML generalization. Sig
 	\label{diagram:uc-guest}
 \end{figure}
 
-As shown in Figure \ref{diagram:uc-guest}, guests can browse job postings, view company information, and register. These public functions give visitors access to the platform without requiring an account.
+\subsubsection{Authenticated User Use Cases}
+
+Figure \ref{diagram:uc-authenticated} covers the functions common to all signed-in users: managing account information, changing the password, and logging out. Business-specific functions are introduced through the specialized actors in the next section.
 
 \begin{figure}[H]
 	\centering
@@ -138,15 +144,13 @@ As shown in Figure \ref{diagram:uc-guest}, guests can browse job postings, view 
 	\label{diagram:uc-authenticated}
 \end{figure}
 
-Figure \ref{diagram:uc-authenticated} covers the functions common to all signed-in users: managing account information, changing the password, and logging out. Business-specific functions are introduced through the specialized actors in the next section.
-
 \subsection{Specialized Use Cases}
 
-The following subsections present the role-specific use cases. In line with the scope defined in Section \ref{c3:section:proposed-system}, the Job Seeker and Employer roles are examined in detail as the two featured modules of this thesis, and the Back Office Worker role is presented as the moderation-supporting role.
+The following subsections describe the use cases associated with each specialized actor. The Job Seeker and Employer actors correspond to the two modules examined in detail in this thesis, while the Back Office Worker supports the platform's administrative and moderation functions.
 
 \subsubsection{Job Seeker Use Cases}
 
-The Job Seeker is the main user on the demand side of the platform: this actor looks for jobs, keeps a profile, and takes part in recruitment through job applications.
+The Job Seeker is the main user on the demand side of the platform: this actor looks for jobs, manages their resume, and participates in recruitment through job applications.
 
 \begin{figure}[H]
 	\centering
@@ -155,7 +159,7 @@ The Job Seeker is the main user on the demand side of the platform: this actor l
 	\label{diagram:uc-job_seeker}
 \end{figure}
 
-Figure \ref{diagram:uc-job_seeker} shows the Job Seeker's capabilities. Personal profile maintenance is part of the authenticated account functions; the recruitment-specific behavior of this actor is the \textbf{Job Application} flow: applying to an active posting with an uploaded resume, tracking submitted applications, and withdrawing an application while it is still in its initial state.
+Figure \ref{diagram:uc-job_seeker} shows the Job Seeker's capabilities, including the CV Management and Application packages. The three application-related use cases: Applying, tracking, and withdrawing form the Job Application functionality examined in this thesis.
 
 \subsubsection{Employer Use Cases}
 
@@ -168,11 +172,11 @@ The Employer represents the organizations and recruiters who publish job posting
 	\label{diagram:uc-employer}
 \end{figure}
 
-Figure \ref{diagram:uc-employer} shows the \textbf{Employer Job Management} module, which covers the complete recruitment lifecycle on the employer's side: creating a company profile, publishing and managing job postings (edit, close, re-open, delete), listing applications received for a posting, and moving each application through review until it is accepted or rejected.
+Figure \ref{diagram:uc-employer} shows the Employer's capabilities, including Company Profile Management, Job Management, and Application Management. These use cases collectively support the complete recruitment lifecycle on the employer's side, from creating a company profile and managing job postings to reviewing and updating the status of received applications. This functionality constitutes the Employer Job Management module examined in this thesis.
 
 \subsubsection{Back Office Worker Use Cases}
 
-The Back Office Worker represents internal personnel responsible for maintaining platform integrity and ensuring that the recruitment platform operates correctly.
+The Back Office Worker, consist of Employer and System Administrator, represents internal personnel responsible for maintaining platform integrity and ensuring that the recruitment platform operates correctly.
 
 \begin{figure}[H]
 	\centering
@@ -181,7 +185,7 @@ The Back Office Worker represents internal personnel responsible for maintaining
 	\label{diagram:uc-back_office}
 \end{figure}
 
-Unlike Job Seekers and Employers, the Back Office Workers primarily performs supervisory tasks highlighted in Figure \ref{diagram:uc-back_office}. These include user management, moderation of job postings, and maintaining the overall quality and security of the platform.
+Figure \ref{diagram:uc-back_office} show the Back Office Worker's capabilities, including Platform Moderation and User Management. These use cases highlight the supervisory tasks of the back office worker, from managing user's status, moderating job postings, and overseeing important system events through logs.
 
 \section{Use Case Specification}
 
