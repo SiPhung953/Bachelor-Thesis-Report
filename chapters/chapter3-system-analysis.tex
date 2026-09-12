@@ -7,11 +7,11 @@
 
 \chapter{System Analysis}
 \label{chapter:system-analysis}
+The challenges described in Chapter \ref{chapter:introduction} motivate a centralized online recruitment platform.
 
 \section{Proposed System}
 \label{c3:section:proposed-system}
 
-The challenges described in Chapter \ref{chapter:introduction} motivate a centralized online recruitment platform. In this system, a job seeker can search for jobs, keep a personal profile, upload resumes, submit applications, and follow their progress. An employer can register a company, publish job postings, and review applicants. A back-office role moderates content and manages accounts. Putting these operations in one system replaces the fragmented workflow of the current market with a single consistent interface.\\
 The system's functionality is split into clear modules by business responsibility:
 
 \begin{itemize}
@@ -23,10 +23,8 @@ The system's functionality is split into clear modules by business responsibilit
 	\item Employer Job Management: lets an employer manage a company profile, run the full lifecycle of a job posting, and review the applications a posting receives.
 	\item Administration: supports moderating job postings and managing users and logs.
 \end{itemize}
-
-Because the platform stores personal data and lets users modify shared records, access is controlled. Registration and login protect each user's account, and role-based permissions decide what each user may do. A job seeker manages their own profile and applications; an employer manages only their own company, postings, and candidates; a back-office worker moderates platform content.
-
-This thesis develops the platform in full but examines two flows in depth: the \textbf{Job Application} flow on the job seeker's side and the \textbf{Employer Job Management} flow on the employer's side. These two flows form the round trip of a recruitment event - a job seeker submits an application, and an employer reviews it - and are therefore used to illustrate the analysis, design, and implementation in the remaining chapters.
+Because the platform stores personal data and lets users modify shared records, access is controlled. Registration and login protect each user's account, and role-based permissions decide what each user may do.\\
+This thesis develops the platform in full but examines two flows in depth: the Job Application flow on the job seeker's side and the Employer Job Management flow on the employer's side. These two flows form the round trip of a recruitment event - a job seeker submits an application, and an employer reviews it - and are therefore used to illustrate the analysis, design, and implementation in the remaining chapters.
 
 \section{Functional Requirement}
 
@@ -126,7 +124,7 @@ To keep the model compact, the actors are organized with UML generalization. Sig
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.5\linewidth]{diagrams/exported/Use Case/Use-Case-Public-crop.pdf}
+	\includegraphics[width=0.5\linewidth]{diagrams/exported/Use Case/Guest Use Case-crop.pdf}
 	\caption{Guest Use Case Diagram.}
 	\label{diagram:uc-guest}
 \end{figure}
@@ -135,7 +133,7 @@ As shown in Figure \ref{diagram:uc-guest}, guests can browse job postings, view 
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{diagrams/exported/Use Case/Use-Case-Authenticated-crop.pdf}
+	\includegraphics[width=\linewidth]{diagrams/exported/Use Case/Authenticated Use Case-crop.pdf}
 	\caption{Authenticated User Use Case Diagram.}
 	\label{diagram:uc-authenticated}
 \end{figure}
@@ -144,7 +142,7 @@ Figure \ref{diagram:uc-authenticated} covers the functions common to all signed-
 
 \subsection{Specialized Use Cases}
 
-The following subsections present the role-specific use cases. In line with the scope defined in Section \ref{c3:section:proposed-system}, the Job Seeker and Employer roles are examined in detail as the two featured modules of this thesis; the Back Office Worker role is covered only briefly, since its moderation interface is still under development.
+The following subsections present the role-specific use cases. In line with the scope defined in Section \ref{c3:section:proposed-system}, the Job Seeker and Employer roles are examined in detail as the two featured modules of this thesis, and the Back Office Worker role is presented as the moderation-supporting role.
 
 \subsubsection{Job Seeker Use Cases}
 
@@ -152,7 +150,7 @@ The Job Seeker is the main user on the demand side of the platform: this actor l
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.7\linewidth]{diagrams/exported/Use Case/Use-Case-Job Seeker-crop.pdf}
+	\includegraphics[width=0.7\linewidth]{diagrams/exported/Use Case/JS Use Case-crop.pdf}
 	\caption{Job Seeker Use Case Diagram.}
 	\label{diagram:uc-job_seeker}
 \end{figure}
@@ -165,12 +163,25 @@ The Employer represents the organizations and recruiters who publish job posting
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{diagrams/exported/Use Case/Use-Case-Employer-crop.pdf}
+	\includegraphics[width=\linewidth]{diagrams/exported/Use Case/Employer Use Case-crop.pdf}
 	\caption{Employer Use Case Diagram.}
 	\label{diagram:uc-employer}
 \end{figure}
 
 Figure \ref{diagram:uc-employer} shows the \textbf{Employer Job Management} module, which covers the complete recruitment lifecycle on the employer's side: creating a company profile, publishing and managing job postings (edit, close, re-open, delete), listing applications received for a posting, and moving each application through review until it is accepted or rejected.
+
+\subsubsection{Back Office Worker Use Cases}
+
+The Back Office Worker represents internal personnel responsible for maintaining platform integrity and ensuring that the recruitment platform operates correctly.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{diagrams/exported/Use Case/Admin Use Case-crop.pdf}
+	\caption{Back Office Worker Use Case Diagram.}
+	\label{diagram:uc-back_office}
+\end{figure}
+
+Unlike Job Seekers and Employers, the Back Office Workers primarily performs supervisory tasks highlighted in Figure \ref{diagram:uc-back_office}. These include user management, moderation of job postings, and maintaining the overall quality and security of the platform.
 
 \section{Use Case Specification}
 
