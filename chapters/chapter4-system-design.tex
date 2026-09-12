@@ -79,9 +79,9 @@ The Container diagram decomposes the system into its major deployable units and 
 As illustrated in Figure~\ref{diagram:c2-container}, the system consists of three containers:
 
 \begin{itemize}
-	\item The \textbf{Frontend Web App} is a React single-page application that renders the user interface.
-	\item The \textbf{Backend API} is a Node.js/Express service, built with TypeScript and Prisma ORM, that implements all business logic and exposes it as a REST API.
-	\item The \textbf{Database} is a PostgreSQL instance that persists user accounts, job postings, applications, and other platform data.
+	\item The Frontend Web App is a React single-page application that renders the user interface.
+	\item The Backend API is a Node.js/Express service, built with TypeScript and Prisma ORM, that implements all business logic and exposes it as a REST API.
+	\item The Database is a PostgreSQL instance that persists user accounts, job postings, applications, and other platform data.
 \end{itemize}
 
 The Frontend communicates with the Backend over HTTPS using JSON, and the Backend communicates with the Database using SQL through Prisma.
@@ -99,11 +99,11 @@ The Frontend component diagram decomposes the Frontend Web App container into it
 As shown in Figure~\ref{diagram:c3-frontend}, the frontend is organized around role-oriented feature components:
 
 \begin{itemize}
-	\item The \textbf{Job Seeker Application UI} supports job application submission and status tracking.
-	\item The \textbf{Profile Management UI} manages personal information, avatar, and resumes.
-	\item The \textbf{Employer Job Management UI} supports company and job posting management.
-	\item The \textbf{Authentication UI} handles login, registration, and role-based redirection.
-	\item The \textbf{Job Discovery UI} supports job browsing and company profile viewing.
+	\item The Job Seeker Application UI supports job application submission and status tracking.
+	\item The Profile Management UI manages personal information, avatar, and resumes.
+	\item The Employer Job Management UI supports company and job posting management.
+	\item The Authentication UI handles login, registration, and role-based redirection.
+	\item The Job Discovery UI supports job browsing and company profile viewing.
 \end{itemize}
 
 All feature components reuse a common Shared UI Components library and communicate with the backend exclusively through a centralized API Client, which handles HTTP requests, authentication tokens, and response parsing.
@@ -121,14 +121,14 @@ The Backend component diagram decomposes the Backend API container into function
 As illustrated in Figure~\ref{diagram:c3-backend}, the backend is organized into role-oriented business components:
 
 \begin{itemize}
-	\item The \textbf{Application Management} components support the job seeker's workflow of applying and tracking.
-	\item The \textbf{Job Posting} and \textbf{Employer Application Management} components provide employers with job publishing and application review capabilities.
-	\item The \textbf{Administration/Moderation} component enables platform administrators to manage users and job postings.
+	\item The Application Management components support the job seeker's workflow of applying and tracking.
+	\item The Job Posting and Employer Application Management components provide employers with job publishing and application review capabilities.
+	\item The Administration/Moderation component enables platform administrators to manage users and job postings.
 \end{itemize}
 
 Common functionality is centralized in shared infrastructure components. The Authentication component manages user registration, login, and authorization using JWT-based authentication, while the Mailing Service handles email notifications. File assets are stored through the File Storage component.
 
-All business components interact with the PostgreSQL database through the shared \textbf{Prisma Client}, ensuring a consistent data access mechanism across the application.
+All business components interact with the PostgreSQL database through the shared Prisma Client, ensuring a consistent data access mechanism across the application.
 
 
 \section{Database Design}
