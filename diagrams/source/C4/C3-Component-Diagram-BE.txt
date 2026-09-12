@@ -1,0 +1,112 @@
+%%{init: {
+  "theme": "default",
+  "themeVariables": {
+    "fontFamily": "Times New Roman",
+    "fontSize": "18px"
+  },
+  "logLevel": "info"
+}}%%
+
+C4Component
+title Component Diagram for the Backend API — C4 Level 3 (target state)
+
+%% Requires Mermaid v10.2.0+ for C4 diagram types.
+%%
+%% Consumers: the Frontend container is omitted; the four actors below are the
+%% entry points (the frontend SPA uses the API container as a whole).
+%% Cross-cutting: every protected endpoint is authenticated by the shared JWT +
+%% role guard; every component reads/writes PostgreSQL through Prisma Client —
+%% there are no direct service-to-service calls in the codebase.
+
+%% ==========================================
+%% 1. ACTORS (People)
+%% ==========================================
+Person(publicUser, "Public User", "Guest browsing the platform without an account")
+Person(jobSeeker, "Job Seeker", "Authenticated user with the JOB_SEEKER role")
+Person(employer, "Employer", "Authenticated user with the EMPLOYER role")
+Person(backOffice, "Back Office Worker", "Authenticated user with the ADMIN role")
+
+%% ==========================================
+%% 2. SUPPORTING ELEMENTS (containers of the same software system)
+%% ==========================================
+ContainerDb(database, "PostgreSQL", "Relational database", "Persists users, companies, jobs, applications, resumes, logs")
+
+%% ==========================================
+%% 3. BACKEND API BOUNDARY + COMPONENTS
+%% ==========================================
+Container_Boundary(backend, "Express API Application", "Node.js + Express + tsoa + Prisma") {
+
+  Component(jobDiscovery, "Job Discovery", "tsoa controller + service", "Public search, browse and filtering of jobs")
+
+  Component(companyPublic, "Company Profile (Public)", "tsoa controller + service", "Read-only public company profile")
+
+  Component(applicationMgmt, "Application Management", "tsoa controller + service", "Job seeker apply/withdraw/track; employer review and status updates")
+
+  Component(resumeCv, "Resume / CV Component", "tsoa controller + service, Multer", "Upload, delete and manage resumes/CVs")
+
+  Component(profile, "Profile", "tsoa controller + service", "User profile information, job preferences, avatar URL, visibility")
+
+  Component(employerCompany, "Employer Company Management", "tsoa controller + service", "Create, view and update the employer's own company")
+
+  Component(employerJobMgmt, "Employer Job Management", "tsoa controller + service", "Create, edit, close, reopen, delete job postings")
+
+  Component(administration, "Administration / Moderation", "tsoa controller + service", "Job moderation, user management, audit-log read")
+
+  Component(auth, "Authentication", "tsoa + JWT + bcrypt", "Registration, login, password recovery; token and role guard")
+
+  Component(mailing, "Mailing Service", "Nodemailer (SMTP)", "Sends transactional emails such as password reset")
+
+  Component(fileStorage, "File Storage", "local disk, fs + express.static", "Persists uploaded resume and avatar files")
+
+  Component(auditLogger, "Audit Logger", "Prisma $transaction writer", "Records a Log row for every system mutation")
+
+  Component(prismaClient, "Prisma Client", "Prisma ORM (shared singleton)", "Shared data-access gateway to PostgreSQL used by every module")
+
+}
+
+%% ==========================================
+%% 4. RELATIONSHIPS
+%% ==========================================
+
+%% --- Actors -> components ---
+Rel(publicUser, jobDiscovery, "Uses — search & browse")
+Rel(publicUser, companyPublic, "Uses — view company profile")
+Rel(jobSeeker, jobDiscovery, "Uses")
+Rel(jobSeeker, applicationMgmt, "Uses — apply, withdraw, track")
+Rel(jobSeeker, resumeCv, "Uses")
+Rel(jobSeeker, profile, "Uses")
+Rel(employer, employerJobMgmt, "Uses")
+Rel(employer, applicationMgmt, "Uses — review applicants, update status")
+Rel(employer, employerCompany, "Uses")
+Rel(backOffice, administration, "Uses")
+
+%% --- Data access (through Prisma Client, never service-to-service) ---
+Rel(jobDiscovery, prismaClient, "Reads jobs")
+Rel(companyPublic, prismaClient, "Reads company")
+Rel(applicationMgmt, prismaClient, "Reads/writes applications, jobs")
+Rel(resumeCv, prismaClient, "Reads/writes resumes")
+Rel(profile, prismaClient, "Reads/writes profile")
+Rel(employerCompany, prismaClient, "Reads/writes company")
+Rel(employerJobMgmt, prismaClient, "Reads/writes postings")
+Rel(administration, prismaClient, "Reads/writes users, jobs, logs")
+Rel(auth, prismaClient, "Reads/writes users, reset tokens")
+Rel(auditLogger, prismaClient, "Writes Log rows")
+
+%% --- Audit logging (cross-cutting) ---
+Rel(auth, auditLogger, "Logs login / reset events")
+Rel(profile, auditLogger, "Logs profile changes")
+Rel(resumeCv, auditLogger, "Logs resume changes")
+Rel(applicationMgmt, auditLogger, "Logs application events")
+Rel(employerJobMgmt, auditLogger, "Logs posting changes")
+Rel(employerCompany, auditLogger, "Logs company changes")
+Rel(administration, auditLogger, "Logs admin actions")
+
+%% --- Resource dependencies ---
+Rel(resumeCv, fileStorage, "Stores resume file")
+Rel(profile, fileStorage, "Stores avatar file")
+Rel(auth, mailing, "Creates password-reset email")
+
+%% --- Out of the container ---
+Rel(prismaClient, database, "Reads/writes application data [SQL]")
+
+UpdateLayoutConfig($c4ShapeInRow = "4", $c4BoundaryInRow = "1")

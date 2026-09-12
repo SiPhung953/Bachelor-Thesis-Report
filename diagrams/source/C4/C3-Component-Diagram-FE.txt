@@ -1,0 +1,92 @@
+%%{init: {
+  "theme": "default",
+  "themeVariables": {
+    "fontFamily": "Times New Roman",
+    "fontSize": "18px"
+  },
+  "logLevel": "info"
+}}%%
+
+C4Component
+title Component Diagram for the Frontend Web Application — C4 Level 3 (target state)
+
+%% Requires Mermaid v10.2.0+ for C4 diagram types.
+
+%% ==========================================
+%% 1. ACTORS (People)
+%% ==========================================
+Person(publicUser, "Public User", "Guest browsing the platform without an account")
+Person(jobSeeker, "Job Seeker", "Authenticated user with the JOB_SEEKER role")
+Person(employer, "Employer", "Authenticated user with the EMPLOYER role")
+Person(backOffice, "Back Office Worker", "Authenticated user with the ADMIN role")
+
+%% ==========================================
+%% 2. SUPPORTING ELEMENTS (containers of the same software system)
+%% ==========================================
+Container(api, "Express API Application", "Node.js + Express + tsoa + Prisma", "REST API exposing controllers and services for every module")
+ContainerDb(database, "PostgreSQL", "Relational database", "Persists users, companies, jobs, applications, resumes, logs")
+
+%% ==========================================
+%% 3. WEB APPLICATION BOUNDARY + COMPONENTS
+%% ==========================================
+Container_Boundary(web, "Web Application", "React 19 SPA, Vite, Tailwind CSS v4") {
+
+  Component(apiClient, "API Client", "hey-api/axios generated SDK", "Typed REST calls, Bearer-token injection, 401 interception, response parsing")
+
+  Component(sharedUi, "Shared UI Kit", "shadcn/ui + Tailwind v4", "Buttons, cards, dialogs, empty/error/loading states, date formatting")
+
+  Component(shell, "Application Shell & Router", "React Router v6", "Page routing, RequireAuth role guards, post-login role redirection")
+
+  Component(authUi, "Authentication & Session UI", "React Context + localStorage", "Login, registration, password recovery; holds access token and role")
+
+  Component(jobDiscovery, "Job Discovery UI", "React 19", "Search and browse jobs, job detail, company profiles (public)")
+
+  Component(applications, "Job Seeker Applications UI", "React 19", "Apply for a job, list and track application status")
+
+  Component(profile, "Profile Management UI", "React 19", "Personal information, avatar, CV upload, job preferences, password")
+
+  Component(jobMgmt, "Employer Job Management UI", "React 19", "Create, edit, close, reopen, delete postings; review applicants")
+
+  Component(company, "Company Profile UI (Employer)", "React 19", "View and edit the employer's own company profile")
+
+  Component(adminConsole, "Admin Console UI", "React 19", "User management, job moderation, system monitoring (planned)")
+
+}
+
+%% ==========================================
+%% 4. RELATIONSHIPS
+%% ==========================================
+
+Rel(publicUser, jobDiscovery, "Uses — search & browse")
+Rel(jobSeeker, jobDiscovery, "Uses")
+Rel(jobSeeker, applications, "Uses")
+Rel(jobSeeker, profile, "Uses")
+Rel(employer, jobMgmt, "Uses")
+Rel(employer, company, "Uses")
+Rel(backOffice, adminConsole, "Uses")
+
+Rel(shell, authUi, "Reads role; redirects to the role home")
+Rel(jobDiscovery, applications, "Navigates to apply")
+
+Rel(authUi, apiClient, "Sends credentials; receives token")
+Rel(apiClient, authUi, "Clears session on 401")
+
+Rel(jobDiscovery, apiClient, "Uses")
+Rel(applications, apiClient, "Uses")
+Rel(profile, apiClient, "Uses")
+Rel(jobMgmt, apiClient, "Uses")
+Rel(company, apiClient, "Uses")
+Rel(adminConsole, apiClient, "Uses")
+
+Rel(jobDiscovery, sharedUi, "Uses")
+Rel(applications, sharedUi, "Uses")
+Rel(profile, sharedUi, "Uses")
+Rel(jobMgmt, sharedUi, "Uses")
+Rel(company, sharedUi, "Uses")
+Rel(adminConsole, sharedUi, "Uses")
+Rel(authUi, sharedUi, "Uses")
+
+Rel(apiClient, api, "REST/JSON over HTTP")
+Rel(api, database, "Reads and writes via Prisma ORM")
+
+UpdateLayoutConfig($c4ShapeInRow = "3", $c4BoundaryInRow = "1")
