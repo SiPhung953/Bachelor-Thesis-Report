@@ -1,0 +1,57 @@
+%%{init: {
+  "theme": "default",
+  "htmlLabels": false,
+  "themeVariables": {
+    "fontFamily": "Times New Roman, serif",
+    "fontSize": "20px"
+  },
+  "class": {
+    "diagramPaddingX": 15,
+    "diagramPaddingY": 15,
+    "nodeSpacing": 40,
+    "rankSpacing": 50,
+    "hideEmptyMembersBox": true
+  }
+}}%%
+
+classDiagram
+direction LR
+
+  class JobModerationController {
+    <<Controller>>
+    +getJobs()
+    +getJobDetail()
+    +approveJob()
+    +rejectJob()
+    +deleteJob()
+  }
+
+  class JobModerationService {
+    <<Service>>
+    +getJobs()
+    +getJobDetail()
+    +approveJob()
+    +rejectJob()
+    +deleteJob()
+  }
+
+  class AssertRole {
+    <<Utility>>
+    +assertAdmin()
+  }
+
+  class AuditLogger {
+    <<Utility>>
+    +log()
+  }
+
+  class PrismaClient {
+    <<Utility>>
+    +jobPosting
+    +log
+  }
+
+  JobModerationController --> JobModerationService : delegates to
+  JobModerationService --> AssertRole : authorizes via
+  JobModerationService --> AuditLogger : records via
+  JobModerationService --> PrismaClient : queries

@@ -3,7 +3,7 @@
   "htmlLabels": false,
   "themeVariables": {
     "fontFamily": "Times New Roman, serif",
-    "fontSize": "20px"
+    "fontSize": "18px"
   },
   "class": {
     "diagramPaddingX": 15,

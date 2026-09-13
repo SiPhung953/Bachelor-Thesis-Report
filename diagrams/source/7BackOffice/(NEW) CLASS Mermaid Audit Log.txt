@@ -1,0 +1,36 @@
+%%{init: {
+  "theme": "default",
+  "htmlLabels": false,
+  "themeVariables": {
+    "fontFamily": "Times New Roman, serif",
+    "fontSize": "20px"
+  },
+  "class": {
+    "diagramPaddingX": 15,
+    "diagramPaddingY": 15,
+    "nodeSpacing": 40,
+    "rankSpacing": 50,
+    "hideEmptyMembersBox": true
+  }
+}}%%
+
+classDiagram
+direction LR
+
+  class AuditLogController {
+    <<Controller>>
+    +getLogs()
+  }
+
+  class AuditLogService {
+    <<Service>>
+    +getLogs()
+  }
+
+  class PrismaClient {
+    <<Utility>>
+    +log
+  }
+
+  AuditLogController --> AuditLogService : delegates to
+  AuditLogService --> PrismaClient : queries
