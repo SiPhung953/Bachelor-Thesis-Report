@@ -2,11 +2,12 @@
   "theme": "default",
   "htmlLabels": false,
   "themeVariables": {
-    "fontFamily": "Times New Roman",
-    "fontSize": "20px"
+    "fontFamily": "Times New Roman, serif",
+    "fontSize": "18px"
   },
   "class": {
-    "diagramPadding": 8,
+    "diagramPaddingX": 15,
+    "diagramPaddingY": 15,
     "nodeSpacing": 40,
     "rankSpacing": 50,
     "hideEmptyMembersBox": true
@@ -21,13 +22,13 @@ direction LR
   %% ==========================================
   class JobDiscoveryController {
     <<Controller>>
-    +searchJobs() 
-    +getJobDetail() 
+    +searchJobs()
+    +getJobDetail()
   }
 
   class CompanyProfileController {
     <<Controller>>
-    +getCompanyProfile() 
+    +getCompanyProfile()
   }
 
   %% ==========================================
@@ -35,20 +36,20 @@ direction LR
   %% ==========================================
   class JobDiscoveryService {
     <<Service>>
-    +searchJobs() 
-    +getJobDetail() 
+    +searchJobs()
+    +getJobDetail()
   }
 
   class CompanyProfileService {
     <<Service>>
-    +getCompanyProfile() 
+    +getCompanyProfile()
   }
 
   %% ==========================================
-  %% 3. INFRASTRUCTURE LAYER (Utilities)
+  %% 3. INFRASTRUCTURE & UTILITY LAYER
   %% ==========================================
   class PrismaClient {
-    <<Utility>>
+    <<Infrastructure>>
     +job
     +company
   }
@@ -56,11 +57,11 @@ direction LR
   %% ==========================================
   %% RELATIONSHIPS (Clean LR Pipeline)
   %% ==========================================
-  
+
   %% Controllers to Services
   JobDiscoveryController --> JobDiscoveryService : delegates to
   CompanyProfileController --> CompanyProfileService : delegates to
 
   %% Services to ORM Data Access
-  JobDiscoveryService --> PrismaClient : queries data
-  CompanyProfileService --> PrismaClient : queries data
+  JobDiscoveryService --> PrismaClient : queries
+  CompanyProfileService --> PrismaClient : queries

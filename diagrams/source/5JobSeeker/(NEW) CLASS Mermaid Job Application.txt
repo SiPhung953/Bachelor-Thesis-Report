@@ -2,11 +2,12 @@
   "theme": "default",
   "htmlLabels": false,
   "themeVariables": {
-    "fontFamily": "Times New Roman",
-    "fontSize": "20px"
+    "fontFamily": "Times New Roman, serif",
+    "fontSize": "18px"
   },
   "class": {
-    "diagramPadding": 8,
+    "diagramPaddingX": 15,
+    "diagramPaddingY": 15,
     "nodeSpacing": 40,
     "rankSpacing": 50,
     "hideEmptyMembersBox": true
@@ -35,11 +36,22 @@ direction LR
     +getMyApplications()
     +withdrawApplication()
   }
+
   %% ==========================================
   %% 3. INFRASTRUCTURE & UTILITY LAYER
   %% ==========================================
-  class PrismaClient {
+  class AssertRole {
     <<Utility>>
+    +assertJobSeeker()
+  }
+
+  class AuditLogger {
+    <<Utility>>
+    +log()
+  }
+
+  class PrismaClient {
+    <<Infrastructure>>
     +application
     +user
     +job
@@ -49,9 +61,11 @@ direction LR
   %% ==========================================
   %% RELATIONSHIPS (Flows Left-To-Right)
   %% ==========================================
-  
+
   %% Presentation to Application
   ApplicationController --> ApplicationService : delegates to
 
   %% Service Dependencies
+  ApplicationService --> AssertRole : authorizes via
+  ApplicationService --> AuditLogger : records via
   ApplicationService --> PrismaClient : queries

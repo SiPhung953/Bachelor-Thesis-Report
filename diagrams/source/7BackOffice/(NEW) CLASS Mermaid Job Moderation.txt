@@ -3,7 +3,7 @@
   "htmlLabels": false,
   "themeVariables": {
     "fontFamily": "Times New Roman, serif",
-    "fontSize": "20px"
+    "fontSize": "18px"
   },
   "class": {
     "diagramPaddingX": 15,
@@ -17,6 +17,9 @@
 classDiagram
 direction LR
 
+  %% ==========================================
+  %% 1. PRESENTATION LAYER (Controllers)
+  %% ==========================================
   class JobModerationController {
     <<Controller>>
     +getJobs()
@@ -26,6 +29,9 @@ direction LR
     +deleteJob()
   }
 
+  %% ==========================================
+  %% 2. APPLICATION LAYER (Services)
+  %% ==========================================
   class JobModerationService {
     <<Service>>
     +getJobs()
@@ -35,6 +41,9 @@ direction LR
     +deleteJob()
   }
 
+  %% ==========================================
+  %% 3. INFRASTRUCTURE & UTILITY LAYER
+  %% ==========================================
   class AssertRole {
     <<Utility>>
     +assertAdmin()
@@ -46,10 +55,14 @@ direction LR
   }
 
   class PrismaClient {
-    <<Utility>>
-    +jobPosting
+    <<Infrastructure>>
+    +job
     +log
   }
+
+  %% ==========================================
+  %% RELATIONSHIPS (Flows Left-To-Right)
+  %% ==========================================
 
   JobModerationController --> JobModerationService : delegates to
   JobModerationService --> AssertRole : authorizes via

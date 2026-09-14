@@ -38,20 +38,32 @@ direction LR
   %% ==========================================
   %% 3. INFRASTRUCTURE & UTILITY LAYER
   %% ==========================================
-  class PrismaClient {
+  class AssertRole {
     <<Utility>>
-    +jobApplication
+    +assertEmployer()
+  }
+
+  class AuditLogger {
+    <<Utility>>
+    +log()
+  }
+
+  class PrismaClient {
+    <<Infrastructure>>
+    +application
     +job
     +resume
     +user
   }
-  
+
   %% ==========================================
   %% RELATIONSHIPS (Flows Left-To-Right)
   %% ==========================================
-  
+
   %% Presentation to Application
   EmployerApplicationController --> EmployerApplicationService : delegates to
 
   %% Service Dependencies
+  EmployerApplicationService --> AssertRole : authorizes via
+  EmployerApplicationService --> AuditLogger : records via
   EmployerApplicationService --> PrismaClient : queries

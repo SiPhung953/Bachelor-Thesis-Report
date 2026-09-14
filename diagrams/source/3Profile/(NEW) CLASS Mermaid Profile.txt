@@ -2,11 +2,12 @@
   "theme": "default",
   "htmlLabels": false,
   "themeVariables": {
-    "fontFamily": "Times New Roman",
-    "fontSize": "20px"
+    "fontFamily": "Times New Roman, serif",
+    "fontSize": "18px"
   },
   "class": {
-    "diagramPadding": 8,
+    "diagramPaddingX": 15,
+    "diagramPaddingY": 15,
     "nodeSpacing": 40,
     "rankSpacing": 50,
     "hideEmptyMembersBox": true
@@ -36,8 +37,8 @@ direction LR
     <<Service>>
     +getMyProfile()
     +updatePersonalInformation()
-    +getJobPreference() 
-    +updateJobPreferences() 
+    +getJobPreference()
+    +updateJobPreferences()
     +changeAvatar()
     +changePassword()
   }
@@ -51,28 +52,34 @@ direction LR
     +compare()
   }
 
-  class PrismaClient {
-    <<Utility>>
-    +user
-    +userProfile
-    +userJobPreference
-  }
-
-    class FileStorageService {
+  class FileStorageService {
     <<Utility>>
     +saveCv()
     +saveAvatar()
     +deleteFile()
   }
 
+  class AuditLogger {
+    <<Utility>>
+    +log()
+  }
+
+  class PrismaClient {
+    <<Infrastructure>>
+    +user
+    +userProfile
+    +userJobPreference
+  }
+
   %% ==========================================
   %% RELATIONSHIPS (Flows Left-To-Right)
   %% ==========================================
-  
+
   %% Presentation to Application
   ProfileController --> ProfileService : delegates to
 
   %% Service Dependencies
   ProfileService --> PasswordHasher : uses
+  ProfileService --> AuditLogger : records via
   ProfileService --> PrismaClient : queries
-  ProfileService --> FileStorageService: stores avatar file
+  ProfileService --> FileStorageService : stores avatar file

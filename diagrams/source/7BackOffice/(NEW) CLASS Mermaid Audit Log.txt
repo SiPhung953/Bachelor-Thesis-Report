@@ -3,7 +3,7 @@
   "htmlLabels": false,
   "themeVariables": {
     "fontFamily": "Times New Roman, serif",
-    "fontSize": "20px"
+    "fontSize": "18px"
   },
   "class": {
     "diagramPaddingX": 15,
@@ -17,20 +17,39 @@
 classDiagram
 direction LR
 
+  %% ==========================================
+  %% 1. PRESENTATION LAYER (Controllers)
+  %% ==========================================
   class AuditLogController {
     <<Controller>>
     +getLogs()
   }
 
+  %% ==========================================
+  %% 2. APPLICATION LAYER (Services)
+  %% ==========================================
   class AuditLogService {
     <<Service>>
     +getLogs()
   }
 
-  class PrismaClient {
+  %% ==========================================
+  %% 3. INFRASTRUCTURE & UTILITY LAYER
+  %% ==========================================
+  class AssertRole {
     <<Utility>>
+    +assertAdmin()
+  }
+
+  class PrismaClient {
+    <<Infrastructure>>
     +log
   }
 
+  %% ==========================================
+  %% RELATIONSHIPS (Flows Left-To-Right)
+  %% ==========================================
+
   AuditLogController --> AuditLogService : delegates to
+  AuditLogService --> AssertRole : authorizes via
   AuditLogService --> PrismaClient : queries
