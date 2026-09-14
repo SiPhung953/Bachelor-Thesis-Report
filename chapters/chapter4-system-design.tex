@@ -156,7 +156,7 @@ Figure~\ref{diagram:erd-company-job} details the entities involved in company an
 	\label{diagram:erd-company-job}
 \end{figure}
 
-An employer may own multiple companies, but each company belongs to exactly one employer. Similarly, an employer may create multiple job postings, but each job posting is created by exactly one employer. Each job posting belongs to exactly one company, while a company may publish any number of job postings. The status attribute of a job posting tracks its lifecycle - \texttt{PENDING\_APPROVAL}, \texttt{ACTIVE}, \texttt{REJECTED}, \texttt{CLOSED}, \texttt{EXPIRED}, and \texttt{DELETED} - which is the backbone of the Employer Job Management module.
+An employer may own multiple companies, but each company belongs to exactly one employer. Similarly, an employer may create multiple job postings, but each job posting is created by exactly one employer. Each job posting belongs to exactly one company, while a company may publish any number of job postings. The texttt{status} attribute represents the current state of a job posting through the \texttt{JobStatus} enumeration.
 
 \subsection{Job Application}
 Figure~\ref{diagram:erd-job-application} details the entities involved in the job application workflow.
@@ -168,7 +168,7 @@ Figure~\ref{diagram:erd-job-application} details the entities involved in the jo
 	\label{diagram:erd-job-application}
 \end{figure}
 
-A job seeker may upload multiple resumes and submit multiple applications, but each resume and each application belongs to exactly one job seeker. Each application is submitted for exactly one job posting, while a job posting may receive any number of applications. A resume may be attached to multiple applications, but each application references exactly one resume. The application's status attribute - \texttt{SUBMITTED}, \texttt{UNDER\_REVIEW}, \texttt{ACCEPTED}, \texttt{REJECTED}, and \texttt{WITHDRAWN} - records where the application stands in the review process, and a unique constraint on the user-job pair prevents a candidate from applying to the same posting twice.
+A job seeker may upload multiple resumes and submit multiple applications, but each resume and each application belongs to exactly one job seeker. Each application is submitted for exactly one job posting, while a job posting may receive any number of applications. A resume may be attached to multiple applications, but each application references exactly one resume. The application's \texttt{status} attribute records where the application stands in the review process through the \texttt{ApplicationStatus} enumeration.
 
 
 \section{Backend Design}
