@@ -22,11 +22,11 @@ direction LR
   %% ==========================================
   class JobModerationController {
     <<Controller>>
-    +getJobs()
-    +getJobDetail()
-    +approveJob()
-    +rejectJob()
-    +deleteJob()
+    +getModerationJobs()
+    +getModerationJobDetail()
+    +approveJobPosting()
+    +rejectJobPosting()
+    +deleteJobPosting()
   }
 
   %% ==========================================
@@ -34,11 +34,11 @@ direction LR
   %% ==========================================
   class JobModerationService {
     <<Service>>
-    +getJobs()
-    +getJobDetail()
-    +approveJob()
-    +rejectJob()
-    +deleteJob()
+    +getModerationJobs()
+    +getModerationJobDetail()
+    +approveJobPosting()
+    +rejectJobPosting()
+    +deleteJobPosting()
   }
 
   %% ==========================================
