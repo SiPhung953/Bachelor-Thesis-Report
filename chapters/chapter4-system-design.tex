@@ -45,7 +45,7 @@ The design follows a small set of guiding principles, each addressing one or mor
 	\end{tabular}
 \end{table}
 
-These principles are applied consistently across all modules of the system. They are illustrated in detail for the two featured modules, Job Application and Employer Job Management; the design of the remaining modules is documented in the appendix.
+These principles are applied consistently across all modules of the system. They are illustrated in detail for the two featured modules, Job Application and Employer Job Management; the design of the remaining modules is documented in Appendix~\ref{appendix:supplementary-design}.
 
 The remainder of this chapter is organized as follows. Section \ref{c4:section:system-architecture} presents the system architecture, including the C4-based container view. Section \ref{c4:section:database-design} details the database design and entity-relationship model for the featured modules. Section \ref{c4:section:backend-design} describes the backend design, including the layered structure and module organization. Section \ref{c4:section:frontend-design} covers the frontend design. Section \ref{c4:section:summary} summarizes the chapter.
 
@@ -58,7 +58,7 @@ The System Context diagram identifies the system's boundary and its interactions
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.85\linewidth]{diagrams/exported/C4/C1-System-Context-Diagram-crop.pdf}
+	\includegraphics[width=0.85\linewidth]{diagrams/exported/C4/(NEW) C1-Context-Diagram-crop.pdf}
 	\caption{System Context Diagram.}
 	\label{diagram:c1-context}
 \end{figure}
@@ -70,7 +70,7 @@ The Container diagram decomposes the system into its major deployable units and 
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.75\linewidth]{diagrams/exported/C4/C2-Container-Diagram-crop.pdf}
+	\includegraphics[width=0.75\linewidth]{diagrams/exported/C4/(NEW) C2-Container-Diagram-crop.pdf}
 	\caption{Container Diagram.}
 	\label{diagram:c2-container}
 \end{figure}
@@ -90,7 +90,7 @@ The Frontend component diagram decomposes the Frontend Web App container into it
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{diagrams/exported/C4/C3-Component-Diagram-(FE)-crop.pdf}
+	\includegraphics[width=\linewidth]{diagrams/exported/C4/(NEW) C3-Component-Diagram-FE-crop.pdf}
 	\caption{Frontend Component Diagram.}
 	\label{diagram:c3-frontend}
 \end{figure}
@@ -112,7 +112,7 @@ The Backend component diagram decomposes the Backend API container into function
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{diagrams/exported/C4/C3-Component-Diagram-(BE)-crop.pdf}
+	\includegraphics[width=\linewidth]{diagrams/exported/C4/(NEW) C3-Component-Diagram-BE-crop.pdf}
 	\caption{Backend Component Diagram.}
 	\label{diagram:c3-backend}
 \end{figure}
@@ -144,7 +144,7 @@ Figure~\ref{diagram:erd-overview} presents an overview of the complete database 
 	\label{diagram:erd-overview}
 \end{figure}
 
-The remainder of this section details the entity groups that back the two featured modules - the company and job posting domain and the job application domain. The entities supporting the remaining modules are described in the appendix.
+The remainder of this section details the entity groups that back the two featured modules - the company and job posting domain and the job application domain. The entities supporting the remaining modules are described in Appendix~\ref{appendix:supplementary-erd}.
 
 \subsection{Company and Job Posting}
 Figure~\ref{diagram:erd-company-job} details the entities involved in company and job posting management.
@@ -156,7 +156,7 @@ Figure~\ref{diagram:erd-company-job} details the entities involved in company an
 	\label{diagram:erd-company-job}
 \end{figure}
 
-An employer may own multiple companies, but each company belongs to exactly one employer. Similarly, an employer may create multiple job postings, but each job posting is created by exactly one employer. Each job posting belongs to exactly one company, while a company may publish any number of job postings. The texttt{status} attribute represents the current state of a job posting through the \texttt{JobStatus} enumeration.
+An employer may own at most one company, and each company belongs to exactly one employer. Similarly, an employer may create multiple job postings, but each job posting is created by exactly one employer. Each job posting belongs to exactly one company, while a company may publish any number of job postings. The \texttt{status} attribute represents the current state of a job posting through the \texttt{JobStatus} enumeration.
 
 \subsection{Job Application}
 Figure~\ref{diagram:erd-job-application} details the entities involved in the job application workflow.
@@ -173,7 +173,7 @@ A job seeker may upload multiple resumes and submit multiple applications, but e
 
 \section{Backend Design}
 \label{c4:section:backend-design}
-This section details the internal design of the Backend API container introduced in Section~\ref{c4:section:system-architecture}. It first describes the project structure and shared infrastructure common to all modules, then presents the two featured business modules following the same template: an introduction, a class diagram, and a design explanation. The class diagrams of the remaining modules are presented in the appendix.
+This section details the internal design of the Backend API container introduced in Section~\ref{c4:section:system-architecture}. It first describes the project structure and shared infrastructure common to all modules, then presents the two featured business modules following the same template: an introduction, a class diagram, and a design explanation. The class diagrams of the remaining modules are presented in Appendix~\ref{appendix:supplementary-design}.
 
 \subsection{Backend Project Structure}
 \label{c4:subsection:backend-structure}
