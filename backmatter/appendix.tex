@@ -239,7 +239,7 @@ As with the Auth and Account group, each role may be assigned to any number of u
 \chapter{Supplementary Module Designs}
 \label{appendix:supplementary-design}
 
-This chapter collects the class-level design of the modules that are not featured in the main body. Each module follows the same controller--service pattern described in Chapter \ref{chapter:system-design}; as with the featured modules, each Controller delegates directly to its Service, which owns all business logic and Prisma access.
+This chapter collects the class-level design of the modules that are not featured in the main body. Each module follows the same controller-service pattern described in Chapter \ref{chapter:system-design}; as with the featured modules, each Controller delegates directly to its Service, which owns all business logic and Prisma access.
 
 \section{Authentication Module}
 
@@ -303,7 +303,7 @@ JobDiscoveryService depends on the shared Prisma Client, which queries the Job a
 
 \section{Back Office Module}
 
-The Back Office module is hosted under \texttt{api-internal}. Figure~\ref{diagram:class-back-office} presents its class diagram.
+The Back Office module is hosted under \texttt{api-internal}. Figures~\ref{diagram:class-job-moderation}, \ref{diagram:class-user-management}, and \ref{diagram:class-audit-log} present its class diagrams.
 
 \begin{figure}[H]
 	\centering
@@ -508,3 +508,51 @@ This chapter collects the sequence diagrams of the platform's use cases as refer
 	\caption{Sequence Diagram: Delete Job.}
 	\label{diagram:sd-admin-delete}
 \end{figure}
+
+
+\chapter{Domain Enumerations}
+\label{appendix:domain-enumerations}
+
+This chapter lists the domain enumerations referenced by name in the entity-relationship diagrams and the module designs. The complete value set of each enumeration is provided here for reference.
+
+\section{JobStatus}
+
+Referenced in Chapter~\ref{chapter:system-design} as the type of the job posting's \texttt{status} attribute (Figure~\ref{diagram:erd-company-job}).
+
+\begin{tabular}{|l|p{9.8cm}|}
+	\hline
+	\textbf{Value} & \textbf{Description} \\
+	\hline
+	PENDING\_APPROVAL & A newly created or edited posting awaiting moderation approval. \\
+	\hline
+	ACTIVE & Approved by an administrator and publicly visible. \\
+	\hline
+	REJECTED & Rejected by an administrator during moderation. \\
+	\hline
+	CLOSED & Closed by the employer before the deadline. \\
+	\hline
+	EXPIRED & Past the application deadline; no longer accepting applications. \\
+	\hline
+	DELETED & Soft-deleted by the employer; the record is retained for history. \\
+	\hline
+\end{tabular}
+
+\section{ApplicationStatus}
+
+Referenced in Chapter~\ref{chapter:system-design} as the type of the application's \texttt{status} attribute (Figure~\ref{diagram:erd-job-application}).
+
+\begin{tabular}{|l|p{9.8cm}|}
+	\hline
+	\textbf{Value} & \textbf{Description} \\
+	\hline
+	SUBMITTED & Initial state when a job seeker applies. \\
+	\hline
+	UNDER\_REVIEW & The employer has acknowledged the application and is reviewing it. \\
+	\hline
+	ACCEPTED & The employer has accepted the application. \\
+	\hline
+	REJECTED & The employer has rejected the application. \\
+	\hline
+	WITHDRAWN & The job seeker has withdrawn the application. \\
+	\hline
+\end{tabular}
