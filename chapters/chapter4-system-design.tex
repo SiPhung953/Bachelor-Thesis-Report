@@ -315,13 +315,34 @@ Company Profile Management takes no company identifier in its operations because
 \section{Frontend Design}
 \label{c4:section:frontend-design}
 
-The frontend is a React single-page application. Pages are grouped in feature folders that mirror the backend module structure, so a feature can be traced end to end. Reusable UI is separated into \texttt{ui-shared/}. Routing is role-based: \texttt{RequireAuth} guards wrap route groups so that a Job Seeker-only area and an Employer-only area are rendered only for the matching role. All API calls go through a client generated from the backend's OpenAPI specification, so the request and response types used by the pages always match the backend contract.
+The frontend is a React single-page application. Pages are grouped in feature folders that mirror the backend module structure, so a feature can be traced end to end.
+
+\subsection{Frontend Structure and Shared Components}
+\label{c4:subsection:frontend-structure}
+
+Each feature module under \texttt{ui-external/} follows the same internal shape: page-level components sit directly in the module's folder, and any component used only within that module is placed in a nested \texttt{components/} folder beneath it.
+
+\dirtree{%
+	.1 ui-external/applications.
+	.2 ApplyJobPage.tsx.
+	.2 MyApplicationsPage.tsx.
+	.2 components.
+	.3 ApplicationCard.tsx.
+	.3 ApplicationStatusBadge.tsx.
+	.3 ResumeSelector.tsx.
+}
+The same structure is applied to the Employer Job Management UI and other feature modules. Shared interface elements are provided through the common UI layer and reused across feature components rather than being duplicated within individual modules. The project uses shadcn/ui and Tailwind CSS for these reusable interface elements.
 
 \subsection{Job Application UI}
-The Job Application UI consists of two pages. The apply page, \texttt{ApplyJobPage} at \texttt{/jobs/:jobId/apply}, loads the chosen posting and the user's resumes, presents the job summary together with a \texttt{ResumeSelector}, and submits the selected resume. The submit errors are handled by HTTP status: a \texttt{409} reports that the user already applied, a \texttt{401} prompts re-login, and a \texttt{403} reports that only job seekers can apply. The tracking page, \texttt{MyApplicationsPage} at \texttt{/applications}, lists the user's applications through \texttt{ApplicationCard} components that show the posting, company, status badge, and submission date. Withdrawing an application is confirmed through a shared \texttt{ConfirmationDialog}; on success the card status is updated locally to \texttt{WITHDRAWN}.
+The Job Application UI follows the feature structure described above. Its page-level components are separated according to the two primary application workflows: applying for a job and managing submitted applications. Reusable elements specific to these workflows, such as application cards, status indicators, and resume selection, are kept within the feature's \texttt{components/} directory.
+
+Components are implemented as \texttt{.tsx} files, keeping their rendering logic and component-specific styling together. This convention keeps each UI component self-contained and avoids unnecessary separation between files that belong to the same component.
 
 \subsection{Employer Job Management UI}
-The Employer Job Management UI covers two pages. \texttt{PostJobPage} at \texttt{/employer/jobs/new} collects a posting through \texttt{JobPostingForm}, which validates each field and converts the chosen calendar date into an ISO deadline at the end of that day via the shared deadline helper. \texttt{MyJobPostingsPage} at \texttt{/employer/jobs} lists the employer's postings with a \texttt{JobStatusBadge}; close, re-open, and delete actions each require confirmation in a \texttt{ConfirmationDialog} and the list is refreshed after the mutation. The company profile page, \texttt{MyCompanyPage}, manages the employer's company. The application review screens that use the employer application review endpoints are still in progress at the time of writing.
+
+The Employer Job Management UI applies the same feature-based organization to the employer workflows. Page-level components handle the major job-management and company-profile screens, while reusable elements are colocated within their respective feature directories.
+
+The UI reuses shared components and the centralized API Client for common interface and backend-integration concerns. This keeps the employer-specific UI focused on its feature responsibilities while avoiding duplication of shared frontend functionality.
 
 \section{Summary}
 \label{c4:section:summary}
