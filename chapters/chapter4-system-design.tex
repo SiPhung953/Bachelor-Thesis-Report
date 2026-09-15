@@ -51,7 +51,7 @@ The remainder of this chapter is organized as follows. Section \ref{c4:section:s
 
 \section{System Architecture}
 \label{c4:section:system-architecture}
-The system architecture is documented using the C4 model, which describes a software system at progressively narrower levels of zoom: Context, Container, and Component. This progression matches the layered, modular design principles established in Section \ref{c4:section:design-overview}, letting each stakeholder read only the level of detail relevant to them.
+The system architecture is documented using the C4 model, which describes a software system at progressively narrower levels of zoom: Context, Container, and Component.
 
 \subsection{System Context}
 The System Context diagram identifies the system's boundary and its interactions with external actors, without describing internal structure.
@@ -63,7 +63,7 @@ The System Context diagram identifies the system's boundary and its interactions
 	\label{diagram:c1-context}
 \end{figure}
 
-As shown in Figure~\ref{diagram:c1-context}, three actors interact with the platform: the Job Seeker browses and applies for jobs, the Employer publishes and manages job postings, and the System Administrator moderates users and platform content. These actors correspond to the roles established in Chapter \ref{chapter:system-analysis}.
+As shown in Figure~\ref{diagram:c1-context}, three actors interact with the platform: the Job Seeker browses and applies for jobs, the Employer publishes and manages job postings, and the System Administrator moderates users and platform content.
 
 \subsection{Container View}
 The Container diagram decomposes the system into its major deployable units and shows how they communicate.
@@ -95,17 +95,11 @@ The Frontend component diagram decomposes the Frontend Web App container into it
 	\label{diagram:c3-frontend}
 \end{figure}
 
-As shown in Figure~\ref{diagram:c3-frontend}, the frontend is organized around role-oriented feature components:
+As shown in Figure~\ref{diagram:c3-frontend}, the feature components are organized primarily by the roles they serve. Job Seeker, Employer, Back Office Worker functionality is grouped separately, while Job Discovery is shared across access contexts and can be used by both Guest and authenticated users.
 
-\begin{itemize}
-	\item The Job Seeker Application UI supports job application submission and status tracking.
-	\item The Profile Management UI manages personal information, avatar, and resumes.
-	\item The Employer Job Management UI supports company and job posting management.
-	\item The Authentication UI handles login, registration, and role-based redirection.
-	\item The Job Discovery UI supports job browsing and company profile viewing.
-\end{itemize}
+Two shared components support the feature layers. The Application Shell and Router manages navigation and role-based access, while the Shared UI Kit provides reusable interface elements and common loading and error states.
 
-All feature components reuse a common Shared UI Components library and communicate with the backend exclusively through a centralized API Client, which handles HTTP requests, authentication tokens, and response parsing.
+Every feature component communicates with the backend exclusively through a centralized API Client, a generated SDK that wraps REST calls, injects the Bearer token, handles 401 interception, and parses responses. No feature component makes direct HTTP requests; the API Client is the single outbound integration point.
 
 \subsection{Component View: Backend}
 The Backend component diagram decomposes the Backend API container into functional components that implement the platform's business capabilities.
@@ -117,18 +111,11 @@ The Backend component diagram decomposes the Backend API container into function
 	\label{diagram:c3-backend}
 \end{figure}
 
-As illustrated in Figure~\ref{diagram:c3-backend}, the backend is organized into role-oriented business components:
+As illustrated in Figure~\ref{diagram:c3-backend}, the backend components are organized primarily by functional responsibility and user role. Public-facing functionality is separated from role-specific components, while Job Seeker, Employer, and Back Office components are grouped according to their respective workflows.
 
-\begin{itemize}
-	\item The Application Management components support the job seeker's workflow of applying and tracking.
-	\item The Job Posting and Employer Application Management components provide employers with job publishing and application review capabilities.
-	\item The Administration/Moderation component enables platform administrators to manage users and job postings.
-\end{itemize}
+A shared infrastructure layer supports the role-specific components by providing common services such as authentication, mailing, file storage, and audit logging.
 
-Common functionality is centralized in shared infrastructure components. The Authentication component manages user registration, login, and authorization using JWT-based authentication, while the Mailing Service handles email notifications. File assets are stored through the File Storage component.
-
-All business components interact with the PostgreSQL database through the shared Prisma Client, ensuring a consistent data access mechanism across the application.
-
+All components access PostgreSQL through a single Prisma Client instance, providing a consistent data access mechanism and avoiding service-to-service API calls within the application.
 
 \section{Database Design}
 \label{c4:section:database-design}
