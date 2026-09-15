@@ -326,6 +326,10 @@ The Back Office module is hosted under \texttt{api-internal}. Figures~\ref{diagr
 	\label{diagram:class-audit-log}
 \end{figure}
 
+\subsection{Back Office Worker UI}
+
+On the presentation side, the back office is realized as a role-guarded route group under \texttt{/admin} that the Application Shell exposes only to users with the \texttt{ADMIN} role. \texttt{AdminLayout} provides a persistent sidebar that navigates between three page areas mirroring the modules above: Job Moderation, a list of postings filterable by status and defaulting to \texttt{PENDING\_APPROVAL}, with a detail page carrying the approve, reject, and delete actions; Users, a searchable account list with a detail page offering ban and unban actions; and Audit Logs, a read-only listing of administrative actions.
+
 \chapter{Sequence Diagrams}
 \label{appendix:sequence-diagrams}
 
