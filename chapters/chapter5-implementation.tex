@@ -8,6 +8,8 @@
 \chapter{Implementation}
 \label{chapter:implementation}
 
+This chapter describes how the design presented in Chapter~\ref{chapter:system-design} was realized in code. It first covers the technology stack and the cross-cutting conventions shared by the whole system, then follows the same two-module focus as the previous chapters: the Job Application and Employer Job Management modules are implemented in full, while the remaining modules are covered briefly.
+
 \section{Overview}
 
 The design in Chapter \ref{chapter:system-design} is implemented as a pnpm monorepo with two applications. The backend, \texttt{apps/api}, is a Node.js/Express service written in TypeScript: it uses Prisma for database access and tsoa to generate both the OpenAPI specification and the route handlers from annotated controllers. The frontend, \texttt{apps/web}, is a React single-page application built with Vite and TypeScript. It uses the generated OpenAPI client for all API calls, Tailwind CSS with shadcn/ui components for styling, and React Router for navigation.
