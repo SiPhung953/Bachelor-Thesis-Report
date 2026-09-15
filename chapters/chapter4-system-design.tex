@@ -246,12 +246,13 @@ A small set of reusable infrastructure components is shared across all business 
 
 \begin{itemize}
 	\item JWT Authentication: issues and verifies signed JSON Web Tokens carrying the user's identifier and role, and is enforced through the \texttt{expressAuthentication} hook on protected routes.
-	\item Role Guards: helpers such as \texttt{assertJobSeeker} and \texttt{assertEmployer} reject requests from users who lack the required role, applied as the first step of every service method.
+	\item Role Guards: helpers such as \texttt{assertJobSeeker} and \texttt{assertEmployer} reject requests from users who lack the required role, applied as the first step of every service method. The guards are always paired with the tsoa \texttt{@Security} decorator form defense in depth.
 	\item HttpError: a uniform error type carrying an HTTP status and message, translated into the proper JSON error response.
 	\item Prisma Client: the generated ORM client, instantiated once in \texttt{lib/prisma.ts} and imported by services for all database access.
 	\item File Storage: abstracts file persistence behind a common interface, used for avatar and resume uploads.
 	\item Email Service: wraps NodeMailer to send transactional emails, such as password reset notifications.
 	\item PasswordHasher and ResetTokenUtils: wrap BCrypt and token generation for credential handling and password recovery.
+	\item AuditLogger: records a structured entry for a system event inside the same database transaction as the mutation it accompanies.
 \end{itemize}
 
 \subsection{Job Application Module}
@@ -269,15 +270,11 @@ Figure~\ref{diagram:class-job-application} presents the class diagram of the Job
 \end{figure}
 
 \subsubsection{Design Explanation}
-Following the thin controller, rich service principle, ApplicationController exposes three REST endpoints and delegates each directly to a matching method on ApplicationService, without containing business logic itself. ApplicationService depends on the shared PrismaClient, which queries the User, Job, Resume, and Application entities whose relationships are detailed in Figure~\ref{diagram:erd-job-application}.
+Following the thin controller, rich service principle, ApplicationController exposes three REST endpoints and delegates each directly to a matching ApplicationService method, without containing business logic itself. This separation keeps HTTP adaptation concerns - request parsing, response shaping, and error mapping - distinct from the business rules that determine how an application can be created, listed, or withdrawn.
 
-Every ApplicationService method begins with the same guard: the caller must hold the \texttt{JOB\_SEEKER} role, otherwise the request is rejected. Beyond this shared guard, each method implements one use case:
+ApplicationService is the only class in the module that owns business logic and the only class that accesses the database, doing so through the shared Prisma Client. It operates on the User, Job, Resume, and Application entities whose relationships are detailed in Figure~\ref{diagram:erd-job-application}. The service depends on two shared infrastructure components: AssertRole, and AuditLogger. These components are documented in Section~\ref{c4:subsection:shared-backend-components}.
 
-\begin{itemize}
-	\item applyJob verifies that the referenced job exists and is \texttt{ACTIVE}, that the referenced resume exists and belongs to the caller, and that no prior application exists for the same job and user pair, before creating the application with an initial status of \texttt{SUBMITTED}.
-	\item getMyApplications returns all applications submitted by the caller, joining through the related job and company to return a flattened summary alongside each application's status and submission date.
-	\item withdrawApplication verifies that the application belongs to the caller and is still in \texttt{SUBMITTED} status, rejecting the request once it has moved further along the review process, then updates its status to \texttt{WITHDRAWN} and records the withdrawal timestamp.
-\end{itemize}
+Authentication and role authorization are enforced at two levels. At the controller boundary, tsoa's \texttt{@Security("jwt", ["JOB\_SEEKER"])} decorator causes the framework to verify the JWT and confirm the caller's role before the controller method is entered. The service then re-asserts the same role via AssertRole, providing defense in depth: business methods remain protected regardless of how they are invoked. Each service method corresponds to a single use case described in Chapter~\ref{chapter:system-analysis}.
 
 \subsection{Employer Job Management Module}
 \label{c4:subsection:employer-job-module}
@@ -308,16 +305,11 @@ Figures~\ref{diagram:class-company-profile}, \ref{diagram:class-job-posting}, an
 \end{figure}
 
 \subsubsection{Design Explanation}
-Across all three diagrams, each Controller delegates directly to a matching Service method, with no business logic in the controller itself, and each Service depends on the shared PrismaClient and the \texttt{assertEmployer} role guard.
+The Employer Job Management Module is decomposed into three cohesive controller and service pairs, each owning a distinct subdomain of the employer workflow. EmployerCompanyController and EmployerCompanyService handle company profile management; JobManagementController and JobManagementService manage the lifecycle of job postings; and EmployerApplicationController and EmployerApplicationService cover the review of incoming applications. This separation keeps each pair focused on a single business concern and allows it to evolve independently.
 
-\paragraph{Company Profile Management:}
-EmployerCompanyController exposes createCompany, getCompany, and updateCompany, delegated to EmployerCompanyService. An employer owns at most one company, so none of these operations take a company identifier; the owning employer is instead resolved from the authenticated user.
+Across all three pairs the same structural pattern is applied: each controller is annotated with tsoa's \texttt{@Security("jwt", ["EMPLOYER"])} decorator at the class level, while exposing REST endpoints and delegating each directly to a matching service method. Each service is the sole owner of business rules and the only class in its pair that accesses the database through the shared Prisma Client. Every service method depends on AssertRole and AuditLogger, which are described in Section~\ref{c4:subsection:shared-backend-components}.
 
-\paragraph{Job Posting Management:}
-JobManagementController exposes the full lifecycle of a job posting: createJob, getEmployerJobs, getEmployerJob, updateJob, closeJob, reopenJob, and deleteJob, delegated to JobManagementService. The Job status attribute includes \texttt{PENDING\_APPROVAL} and \texttt{REJECTED}, reflecting that newly created and edited postings are subject to moderation before becoming publicly visible.
-
-\paragraph{Application Review:}
-EmployerApplicationController exposes getJobApplications, getJobApplicationDetail, putApplicationUnderReview, and updateApplicationStatus, delegated to EmployerApplicationService. This complements the \texttt{SUBMITTED} and \texttt{WITHDRAWN} transitions initiated by the job seeker: here, the employer moves an application through the remaining \texttt{UNDER\_REVIEW}, \texttt{ACCEPTED}, and \texttt{REJECTED} statuses.
+Company Profile Management takes no company identifier in its operations because the employer-company relationship is one-to-one: the owning employer is resolved from the authenticated user. Job Posting Management's own methods can only move a posting into \texttt{PENDING\_APPROVAL}, \texttt{CLOSED}, or \texttt{DELETED}, so a posting cannot become publicly visible without first passing through this external moderation gate. Employer Application Management exposes operations for the employer-driven status transitions that complement the job-seeker-initiated \texttt{SUBMITTED} and \texttt{WITHDRAWN} transitions defined in the Job Application Module. Together the three pairs implement the complete round trip of a recruitment event studied in Chapter~\ref{chapter:system-analysis}.
 
 
 \section{Frontend Design}
