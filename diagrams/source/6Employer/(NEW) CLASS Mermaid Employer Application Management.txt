@@ -22,7 +22,9 @@ direction LR
   %% ==========================================
   class EmployerApplicationController {
     <<Controller>>
-    +getApplications()
+    +getJobApplications()
+    +getJobApplicationDetail()
+    +putApplicationUnderReview()
     +updateApplicationStatus()
   }
 
@@ -31,7 +33,9 @@ direction LR
   %% ==========================================
   class EmployerApplicationService {
     <<Service>>
-    +getApplicationsByJobId()
+    +getJobApplications()
+    +getJobApplicationDetail()
+    +putApplicationUnderReview()
     +updateApplicationStatus()
   }
 
