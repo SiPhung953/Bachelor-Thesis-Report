@@ -1,0 +1,59 @@
+%%{init: {
+	"theme": "redux",
+	"themeVariables": {
+		"fontFamily": "Times New Roman, serif"
+	},
+	"sequence": {
+		"wrap": true,
+		"width": 200,
+		"height": 65,
+		"actorMargin": 100,
+		"messageFontSize": 18,
+		"actorFontSize": 14,
+		"noteFontSize": 16,
+		"messageMargin": 50,
+		"activationWidth": 12,
+		"diagramMarginX": 30,
+		"diagramMarginY": 30,
+		"useMaxWidth": true
+	}
+}}%%
+
+%% (Simple) Happy-path only — no guards, no alternative flows.
+%% Intended for the defense presentation slide; the full version
+%% (SD Mermaid Review Application.txt) stays in the thesis.
+
+sequenceDiagram
+    actor Employer as : Employer
+    participant FrontendUI as «boundary»<br/>: Frontend UI
+    participant EmployerApplicationController as «control»<br/>: EmployerApplicationController
+    participant EmployerApplicationService as «service»<br/>: EmployerApplicationService
+    participant PrismaClient as «persistence»<br/>: PrismaClient
+    participant Database as «database»<br/>: Database
+
+    Employer->>FrontendUI: 1 : Open the posting's application list
+    FrontendUI->>+EmployerApplicationController: 2 : getJobApplications(jobId) with JWT
+    EmployerApplicationController->>+EmployerApplicationService: 3 : getJobApplications(userId, jobId)
+    EmployerApplicationService->>+PrismaClient: 4 : findApplicationsByJobId(jobId)
+    PrismaClient->>+Database: 5 : SELECT applications
+    Database-->>-PrismaClient: 6 : applicationRecords
+    PrismaClient-->>-EmployerApplicationService: 7 : applicationList
+    EmployerApplicationService-->>-EmployerApplicationController: 8 : EmployerApplicationListResponse
+    EmployerApplicationController-->>-FrontendUI: 9 : HTTP 200
+    FrontendUI-->>-Employer: 10 : Display list (SUBMITTED)
+
+    Employer->>+FrontendUI: 11 : Mark application UNDER_REVIEW
+    FrontendUI->>+EmployerApplicationController: 12 : PATCH applications/{id}/under-review
+    EmployerApplicationController->>+EmployerApplicationService: 13 : putApplicationUnderReview(userId, applicationId)
+    EmployerApplicationService->>PrismaClient: 14 : updateStatus(UNDER_REVIEW)
+    EmployerApplicationService-->>-EmployerApplicationController: 15 : HTTP 200 (UNDER_REVIEW)
+    EmployerApplicationController-->>-FrontendUI: 16 : Status badge updates
+    FrontendUI-->>-Employer: 17 : Show UNDER_REVIEW
+
+    Employer->>+FrontendUI: 18 : Make decision (ACCEPTED)
+    FrontendUI->>+EmployerApplicationController: 19 : PATCH applications/{id}/status {decision}
+    EmployerApplicationController->>+EmployerApplicationService: 20 : updateApplicationStatus(userId, applicationId, decision)
+    EmployerApplicationService->>PrismaClient: 21 : updateStatus(ACCEPTED)
+    EmployerApplicationService-->>-EmployerApplicationController: 22 : UpdateApplicationStatusResponse
+    EmployerApplicationController-->>-FrontendUI: 23 : HTTP 200
+    FrontendUI-->>-Employer: 24 : Application marked ACCEPTED

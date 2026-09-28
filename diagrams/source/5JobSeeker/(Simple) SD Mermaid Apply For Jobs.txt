@@ -1,0 +1,47 @@
+%%{init: {
+	"theme": "redux",
+	"themeVariables": {
+		"fontFamily": "Times New Roman, serif"
+	},
+	"sequence": {
+		"wrap": true,
+		"width": 200,
+		"height": 65,
+		"actorMargin": 100,
+		"messageFontSize": 18,
+		"actorFontSize": 14,
+		"noteFontSize": 16,
+		"messageMargin": 50,
+		"activationWidth": 12,
+		"diagramMarginX": 30,
+		"diagramMarginY": 30,
+		"useMaxWidth": true
+	}
+}}%%
+
+%% (Simple) Happy-path only — no guards, no alternative flows.
+%% Intended for the defense presentation slide; the full version
+%% (SD Mermaid Apply For Jobs.txt) stays in the thesis.
+
+sequenceDiagram
+    actor JobSeeker as : Job Seeker
+    participant FrontendUI as «boundary»<br/>: Frontend UI
+    participant ApplicationController as «control»<br/>: ApplicationController
+    participant ApplicationService as «service»<br/>: ApplicationService
+    participant PrismaClient as «persistence»<br/>: PrismaClient
+    participant Database as «database»<br/>: Database
+
+    JobSeeker->>FrontendUI: 1 : View job details
+    JobSeeker->>+FrontendUI: 2 : Click Apply, select a resume
+
+    FrontendUI->>+ApplicationController: 3 : applyJob(jobId, resumeId) with JWT
+    ApplicationController->>+ApplicationService: 4 : applyJob(userId, jobId, resumeId)
+
+    ApplicationService->>+PrismaClient: 5 : createApplication(userId, jobId, resumeId)
+    PrismaClient->>+Database: 6 : INSERT application (SUBMITTED)
+    Database-->>-PrismaClient: 7 : createdApplicationData
+    PrismaClient-->>-ApplicationService: 8 : application (SUBMITTED)
+
+    ApplicationService-->>-ApplicationController: 9 : ApplyJobResponse
+    ApplicationController-->>-FrontendUI: 10 : HTTP 201 Created
+    FrontendUI-->>-JobSeeker: 11 : Display success confirmation
