@@ -34,11 +34,10 @@ Current overview/full schema diagrams are too wide/flat; prefer a more vertical 
 ## 4. Back Office / moderation state (constrains what can be featured)
 
 In the project (as of writing):
-- `api-internal/job-moderation/` is **complete**: `JobModerationController` at `/admin/jobs` (ADMIN scope) implements list, detail, approve, reject, delete.
-- `audit-log/` and `user-management/` are empty.
-- There is **no `ui-internal/` frontend** — the Back Office UI is not implemented.
-- The backend `middlewares/` directory exists but is **empty and unused** — the thesis design chapter must not describe it as a component; JWT auth lives in `authentication.ts` (expressAuthentication) instead.
-→ Back Office cannot be one of the two featured modules.
+- `api-internal/` is **complete**: `job-moderation` (`JobModerationController` at `/admin/jobs` — list, detail, approve, reject, delete), `user-management` (`UserManagementController` at `/admin/users` — list, detail, ban, unban), and `audit-log` (`AuditLogController` at `/admin/logs` — read-only log listing). All are protected with the `ADMIN` scope via `@Security("jwt", ["ADMIN"])`.
+- `apps/web/src/ui-internal/admin/` implements the **Back Office Worker UI**: `AdminLayout` (sidebar: Job Moderation / Users / Audit Logs), `ModerationJobsPage` / `ModerationJobDetailPage` (status filter defaulting to `PENDING_APPROVAL`; approve, `RejectJobDialog`, `DeleteJobDialog`), `UserManagementPage` / `UserDetailPage` (email search; ban/unban; `UserStatusBadge`), `AuditLogPage` (level badges). Routes under `/admin/*` guarded by `RequireAuth role="ADMIN"`; admin login redirects to `/admin/jobs`.
+- NOTE: JWT auth lives in `authentication.ts` (expressAuthentication); there is no separate `middlewares/` component to describe in the design chapter.
+→ Back Office is implemented in full but is NOT one of the two featured modules (the 2-module rule governs depth, not availability). Employer Application Review UI is still pending — see §5.
 
 ## 5. Employer Application Review UI
 

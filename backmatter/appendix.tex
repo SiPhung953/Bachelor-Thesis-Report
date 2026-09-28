@@ -326,6 +326,8 @@ The Back Office module is hosted under \texttt{api-internal}. Figures~\ref{diagr
 	\label{diagram:class-audit-log}
 \end{figure}
 
+\texttt{JobModerationController} delegates to \texttt{JobModerationService}: \texttt{getModerationJobs} lists postings with an optional status filter, \texttt{approveJobPosting} moves a posting to \texttt{ACTIVE}, and \texttt{rejectJobPosting} moves it to \texttt{REJECTED} with a required reason capped at 255 characters; \texttt{deleteJobPosting} removes any posting that is not already \texttt{DELETED}. \texttt{UserManagementController} delegates to \texttt{UserManagementService}: \texttt{getUsers} searches accounts by a case-insensitive, partial email match, and an administrator can ban or unban an account, a status the JWT middleware re-checks on every subsequent protected request. \texttt{AuditLogController} delegates to \texttt{AuditLogService}, which returns the 50 most recent log entries, newest first, with no filtering. All three services depend on the shared Prisma Client and record their mutations through \texttt{AuditLogger}.
+
 \subsection{Back Office Worker UI}
 
 On the presentation side, the back office is realized as a role-guarded route group under \texttt{/admin} that the Application Shell exposes only to users with the \texttt{ADMIN} role. \texttt{AdminLayout} provides a persistent sidebar that navigates between three page areas mirroring the modules above: Job Moderation, a list of postings filterable by status and defaulting to \texttt{PENDING\_APPROVAL}, with a detail page carrying the approve, reject, and delete actions; Users, a searchable account list with a detail page offering ban and unban actions; and Audit Logs, a read-only listing of administrative actions.
