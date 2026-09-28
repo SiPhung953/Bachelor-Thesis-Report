@@ -1,0 +1,29 @@
+# ==========================================
+# Line-ending normalization
+# The index stores LF. Working tree is kept LF
+# (eol=lf). Editors that save CRLF are folded
+# back to LF on comparison, so line-ending
+# resaves never show up as spurious changes.
+# ==========================================
+* text=auto
+
+*.tex  text eol=lf
+*.txt  text eol=lf
+*.bib  text eol=lf
+*.sty  text eol=lf
+*.md   text eol=lf
+*.js   text eol=lf
+*.json text eol=lf
+*.py   text eol=lf
+.gitignore     text eol=lf
+.gitattributes text eol=lf
+
+# ==========================================
+# Binary formats — never convert
+# ==========================================
+*.pdf  binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.pptx binary

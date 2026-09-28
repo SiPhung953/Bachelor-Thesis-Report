@@ -47,3 +47,9 @@ desktop.ini
 
 .vscode/
 .idea/
+
+# ==========================================
+# Print-preview splits (derived from main.pdf)
+# ==========================================
+
+main-part*.pdf
