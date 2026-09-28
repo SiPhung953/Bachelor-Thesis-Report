@@ -80,9 +80,30 @@ The module lives in \texttt{api-external/job-application/} and exposes the endpo
 \end{table}
 
 \paragraph{applyJob}
-The core of the module is the \texttt{applyJob} method, which guards every business rule from the use case specification before any row is written. 
+The core of the module is the \texttt{applyJob} method, which guards every business rule from the use case specification before any row is written. Table~\ref{tab:apply-job-rules} lists these checks in the order they are applied; the method fails on the first one that does not hold.
 
-\textbf{SEQUENCE DIAGRAM HERE}
+\begin{table}[H]
+	\centering
+	\caption{Business Rules Enforced by \texttt{applyJob}.}
+	\label{tab:apply-job-rules}
+	\begin{tabular}{|p{7.2cm}|p{6.8cm}|}
+		\hline
+		\textbf{Check (applied in order)} & \textbf{Failure Response} \\
+		\hline
+		Caller holds the \texttt{JOB\_SEEKER} role & 403 Forbidden \\
+		\hline
+		The job posting exists & 404 Job not found \\
+		\hline
+		The job posting is \texttt{ACTIVE} & 400 Job posting is no longer available \\
+		\hline
+		The resume exists and is not soft-deleted & 404 Resume not found \\
+		\hline
+		The resume belongs to the caller & 403 You do not own this resume \\
+		\hline
+		No prior application exists for this job and caller & 409 You have already applied for this job \\
+		\hline
+	\end{tabular}
+\end{table}
 
 The duplicate check relies on the composite unique constraint \texttt{userId\_jobId} defined on the \texttt{Application} table, which makes the one-application-per-job rule enforceable at the database level as well as in the service.
 
@@ -91,15 +112,72 @@ This method returns only the caller's applications.
 %%Because an application relates to a job, and a job relates to its company, a single Prisma query joins those relations and maps each row to a flattened list item carrying the application status and submission date together with the job and company summary -- the fields the tracking page displays.
 
 \paragraph{withdrawApplication}
-Withdrawal verifies ownership and then checks that the application is still in \texttt{SUBMITTED} status. An application that has moved into review, been decided, or already been withdrawn cannot be withdrawn again. On success the status is set to \texttt{WITHDRAWN} and the \texttt{withdrawnAt} timestamp is recorded; the row itself is kept for the job seeker's history.
+Table~\ref{tab:withdraw-application-rules} lists the checks applied before an application can be withdrawn. On success the status is set to \texttt{WITHDRAWN} and the \texttt{withdrawnAt} timestamp is recorded; the row itself is kept for the job seeker's history.
+
+\begin{table}[H]
+	\centering
+	\caption{Business Rules Enforced by \texttt{withdrawApplication}.}
+	\label{tab:withdraw-application-rules}
+	\begin{tabular}{|p{7.2cm}|p{6.8cm}|}
+		\hline
+		\textbf{Check (applied in order)} & \textbf{Failure Response} \\
+		\hline
+		Caller holds the \texttt{JOB\_SEEKER} role & 403 Forbidden \\
+		\hline
+		The application exists & 404 Application not found \\
+		\hline
+		The application belongs to the caller & 403 You are not allowed to withdraw this application \\
+		\hline
+		The application is in \texttt{SUBMITTED} status & 400 Application cannot be withdrawn at its current status \\
+		\hline
+	\end{tabular}
+\end{table}
 
 \subsection{Employer Job Management Module}
 
-This module spans three folders in \texttt{api-external}: \texttt{employer-company/}, \texttt{employer-job-management/}, and \texttt{employer-application-management/}, all protected with the \texttt{EMPLOYER} scope.
+This module spans three folders in \texttt{api-external}: \texttt{employer-company/},\\ \texttt{employer-job-management/}, and \texttt{employer-application-management/}, all protected with the \texttt{EMPLOYER} scope.
 
 \subsubsection{Company Profile}
 
-The company controller is mounted at \texttt{/employer/company} and provides \texttt{POST} (create), \texttt{GET} (view my company), and \texttt{PATCH} (update). Because an employer owns at most one company, no company identifier is ever sent by the client: the service looks the company up by \texttt{ownerEmployerId}, resolved from \texttt{currentUser}. The owner is therefore taken from the authenticated token, never from the request body.
+The company controller is mounted at \texttt{/employer/company} and exposes the endpoints in Table~\ref{tab:company-endpoints}. Because an employer owns at most one company, no company identifier is ever sent by the client: every method resolves the company by \texttt{ownerEmployerId}, taken from the authenticated token rather than the request body.
+
+\begin{table}[H]
+	\centering
+	\caption{Company Profile Endpoints.}
+	\label{tab:company-endpoints}
+	\begin{tabular}{|p{4.4cm}|p{9.6cm}|}
+		\hline
+		\textbf{Endpoint} & \textbf{Purpose} \\
+		\hline
+		GET /employer/company & View the caller's own company profile. \\
+		\hline
+		POST /employer/company & Create the caller's company profile. \\
+		\hline
+		PATCH /employer/company & Update the caller's company profile. \\
+		\hline
+	\end{tabular}
+\end{table}
+
+Table~\ref{tab:company-rules} lists the check each endpoint applies beyond the shared role check.
+
+\begin{table}[H]
+	\centering
+	\caption{Business Rules Enforced by the Company Profile Endpoints.}
+	\label{tab:company-rules}
+	\begin{tabular}{|p{2.6cm}|p{6cm}|p{5.2cm}|}
+		\hline
+		\textbf{Endpoint} & \textbf{Check} & \textbf{Failure Response} \\
+		\hline
+		All & Caller holds the \texttt{EMPLOYER} role & 403 Forbidden \\
+		\hline
+		GET & Caller already has a company & 404 You haven't created a company \\
+		\hline
+		POST & Caller does not already have a company & 409 You have already created a company \\
+		\hline
+		PATCH & Caller already has a company & 404 You haven't created a company \\
+		\hline
+	\end{tabular}
+\end{table}
 
 \subsubsection{Job Posting Lifecycle}
 
@@ -131,10 +209,42 @@ The endpoints in Table~\ref{tab:job-posting-endpoints} implement the full lifecy
 \end{table}
 
 \paragraph{Input validation}
-Before creating or editing a posting, the service trims and validates every required field: the title and location are capped at 255 characters and the description and requirements at 10000. The deadline is parsed as a date and must lie in the future. A company profile must already exist, because the posting's \texttt{companyId} is resolved from the employer's own company, not provided by the client.
+Before creating or editing a posting, the service validates every required field in order and rejects the request with \texttt{400} on the first check that fails; Table~\ref{tab:job-posting-validation} lists these checks, each producing a message that names the specific field.
+
+\begin{table}[H]
+	\centering
+	\caption{Input Validation Rules for Creating or Editing a Job Posting.}
+	\label{tab:job-posting-validation}
+	\begin{tabular}{|p{8.6cm}|p{5.4cm}|}
+		\hline
+		\textbf{Check} & \textbf{Failure Response} \\
+		\hline
+		Title, description, requirement, and location are non-empty after trimming & 400 \textit{Field} cannot be empty \\
+		\hline
+		Title and location are at most 255 characters & 400 \textit{Field} can only be at most 255 character long \\
+		\hline
+		Description and requirement are at most 10{,}000 characters & 400 \textit{Field} can only be at most 10000 character long \\
+		\hline
+		Deadline parses as a valid date & 400 Deadline is not a valid date \\
+		\hline
+		Deadline lies in the future & 400 Deadline must be a future date \\
+		\hline
+		A company profile already exists for the caller, since \texttt{companyId} is resolved from it rather than supplied by the client & 400 You need to register a Company before you can publish \\
+		\hline
+	\end{tabular}
+\end{table}
 
 \paragraph{Status transitions}
-Each lifecycle action is a guarded state transition. Only an \texttt{ACTIVE} posting can be closed; only a \texttt{CLOSED} posting can be re-opened, and only if its deadline is still in the future; editing is allowed for every status except \texttt{DELETED} and \texttt{EXPIRED}. Deleting is a soft delete: the status is set to \texttt{DELETED} and a \texttt{deletedAt} timestamp is recorded, so the record and its applications are preserved for history. Whenever a posting is edited or re-opened, its status returns to \texttt{PENDING\_APPROVAL} and the moderation timestamps (\texttt{approvedAt}, \texttt{rejectedAt}, \texttt{rejectionReason}) are cleared, so a previously rejected posting does not appear to be rejected again.
+Figure~\ref{diagram:state-job-posting} presents the job posting lifecycle as a state machine, where each transition corresponds to one guarded method call.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{diagrams/exported/StateChart/JobStatus State Diagram-crop.pdf}
+	\caption{Job Posting Status Transitions.}
+	\label{diagram:state-job-posting}
+\end{figure}
+
+Two transitions are not driven by this module at all: \texttt{Approve} and \texttt{Reject} belong to the Job Moderation module described in Chapter~\ref{chapter:system-design}, and \texttt{Deadline passed} is not a request but a scheduled sweep that turns overdue \texttt{ACTIVE} postings into \texttt{EXPIRED} on its own, independent of any employer or moderator action. Deleting is always a soft delete: the status is set to \texttt{DELETED} and a \texttt{deletedAt} timestamp is recorded, so the record and its applications are preserved for history rather than removed.
 
 \subsubsection{Employer Application Review}
 
@@ -163,33 +273,37 @@ The application list and the detail both verify that the application belongs to 
 
 \subsection{Remaining Modules}
 
-The remaining modules follow the same controller - service pattern, but are covered here briefly.
-
-\paragraph{Authentication}
-\texttt{AuthService} implements registration, login, logout, password reset requests, and password reset. Passwords are hashed with BCrypt before storage and compared at login; a banned account is rejected at login and by the JWT middleware on every protected request. Password reset tokens are hashed before being stored, carry an expiration, and are single-use; the reset email is sent through the email service.
-
-\paragraph{Profile}
-\texttt{ProfileService} lets a user read their profile and job preferences, update them with partial-update semantics (an omitted field is left unchanged, an explicit \texttt{null} clears it), change the avatar with file type and size checks, and change the password after verifying the current one.
-
-\paragraph{Resume}
-\texttt{ResumeService} lists, uploads, and deletes resumes. Uploads accept only PDF, DOC, and DOCX files up to 5~MB, stored through the file storage abstraction. A resume referenced by an existing application is soft-deleted so old applications keep a valid reference; otherwise it is removed entirely.
-
-\paragraph{Job Discovery}
-\texttt{JobDiscoveryService} powers public job search and job detail. Search restricts results to \texttt{ACTIVE} postings and matches an optional keyword against the job title or company name and an optional location against the job location or company city and district; the public company profile endpoints expose company details and their active postings.
-
-\paragraph{Back Office Moderation}
-The \texttt{api-internal/job-moderation/} module implements the moderation operations for administrators as part of the internal API. \texttt{JobModerationController} is mounted at \texttt{/admin/jobs} and protected with the \texttt{ADMIN} scope; it lists and inspects pending postings, approves a posting so it becomes \texttt{ACTIVE}, rejects it with an optional reason, and deletes it. The user interface of the internal application is still under development.
+The remaining modules follow the same controller - service pattern; they are covered briefly in Appendix~\ref{appendix:supplementary-design}.
 
 \section{Frontend Implementation}
 
-This section describes how the two featured modules are realized in the React frontend. %%The Employer Application Review use case does not have a user interface yet -- it is implemented at the API level as described above, and its UI will be written later.
+This section describes how the two featured modules are realized in the React frontend.
 
 %%Pages and components live in feature folders that mirror the backend, and each route group is wrapped with \texttt{RequireAuth} so that Job Seeker-only and Employer-only areas render only for the matching role. The API client is generated from the backend's OpenAPI spec, so calls such as \texttt{getMyApplications(...)} or \texttt{applyJobs(...)} are typed end to end, and the shared \texttt{apiClient} attaches the stored access token and redirects to login on a \texttt{401}.
 
 \subsection{Job Application UI}
 
 \paragraph{Apply page}
-\texttt{ApplyJobPage} (\texttt{/jobs/:jobId/apply}) loads the posting and the user's resumes on mount. The page shows the job summary and a \texttt{ResumeSelector}; the first available resume is preselected. On submit it calls the \texttt{applyJobs} API and maps errors by status: a \texttt{409} explains that the user already applied, a \texttt{401} that the session expired, and a \texttt{403} that the role is not allowed. A success state replaces the form with a confirmation and links to the applications page.
+\texttt{ApplyJobPage} (\texttt{/jobs/:jobId/apply}) loads the posting and the user's resumes on mount. The page shows the job summary and a \texttt{ResumeSelector}; the first available resume is preselected. On submit it calls the \texttt{applyJobs} API; Table~\ref{tab:apply-job-ui-errors} shows how each failure from Table~\ref{tab:apply-job-rules} is displayed to the user. A success state replaces the form with a confirmation and links to the applications page.
+
+\begin{table}[H]
+	\centering
+	\caption{Apply Page Error Display.}
+	\label{tab:apply-job-ui-errors}
+	\begin{tabular}{|p{6.2cm}|p{7.8cm}|}
+		\hline
+		\textbf{Response} & \textbf{Displayed Message} \\
+		\hline
+		409 (duplicate application) & ``You have already applied for this job. Duplicate applications are not allowed.'' \\
+		\hline
+		401 (missing or expired token, any endpoint) & ``Your session has expired. Please log in again.'' \\
+		\hline
+		403 (wrong role or unowned resume) & ``Only job seekers are authorized to apply for jobs.'' \\
+		\hline
+		Any other failure (404 job/resume not found, 400 job not \texttt{ACTIVE}) & The backend's own error message, or a generic fallback if none is given \\
+		\hline
+	\end{tabular}
+\end{table}
 
 \paragraph{Tracking page}
 \texttt{MyApplicationsPage} (\texttt{/applications}) fetches the user's applications and renders one \texttt{ApplicationCard} per row, showing the posting, company, status badge, and application date. Withdrawal runs through a shared \texttt{ConfirmationDialog}; after the API succeeds, the card's status is updated locally to \texttt{WITHDRAWN} without refetching the whole list.
@@ -197,10 +311,14 @@ This section describes how the two featured modules are realized in the React fr
 \subsection{Employer Job Management UI}
 
 \paragraph{Post a job}
-\texttt{PostJobPage} (\texttt{/employer/jobs/new}) collects the posting through \texttt{JobPostingForm}: title, description, requirements, location, a segmented employment-type control, and a deadline date picker. The deadline picker only allows dates from tomorrow onward, and on submit the helper \texttt{toDeadlineIso} converts the chosen calendar date into an ISO timestamp at the end of that day in the employer's local time zone, matching the backend rule that a deadline must be strictly in the future. After submission the page returns to the list, where the new posting is visible in \texttt{PENDING\_APPROVAL}.
+\texttt{PostJobPage} (\texttt{/employer/jobs/new}) collects the posting through\\ \texttt{JobPostingForm}: title, description, requirements, location, a segmented employment-type control, and a deadline date picker. The deadline picker only allows dates from tomorrow onward, and on submit the helper \texttt{toDeadlineIso} converts the chosen calendar date into an ISO timestamp at the end of that day in the employer's local time zone, matching the backend rule that a deadline must be strictly in the future. After submission the page returns to the list, where the new posting is visible in \texttt{PENDING\_APPROVAL}.
 
 \paragraph{My job postings}
 \texttt{MyJobPostingsPage} (\texttt{/employer/jobs}) lists the employer's postings from newest to oldest through \texttt{JobPostingCard}, which shows the summary fields and a \texttt{JobStatusBadge}. The close, re-open, and delete actions each require confirmation in a \texttt{ConfirmationDialog} with copy that reflects the real consequence of the action; on success the list is refreshed so the card reflects the new status.
+
+\subsection{Remaining Modules}
+
+The remaining pages follow the same conventions described in this chapter; they are covered briefly in Appendix~\ref{appendix:supplementary-design}.
 
 %%\subsection{Remaining Pages}
 
@@ -208,4 +326,4 @@ This section describes how the two featured modules are realized in the React fr
 
 \section{Summary}
 
-The platform was implemented as a two-application monorepo. The backend follows the controller-service architecture established in the design chapter: tsoa provides routing and the OpenAPI contract, services own all business rules, and Prisma provides typed database access. The two featured modules were implemented in full - the job seeker can apply, track, and withdraw applications, while the employer can manage a company, run the lifecycle of a job posting, and review its applications - and the remaining modules follow the same pattern, with the moderation backend complete and its interface still under development. The frontend mirrors the backend with role-guarded pages and a generated, typed API client.
+The platform was implemented as a two-application monorepo. The backend follows the controller-service architecture established in the design chapter: tsoa provides routing and the OpenAPI contract, services own all business rules, and Prisma provides typed database access. The two featured modules were implemented in full - the job seeker can apply, track, and withdraw applications, while the employer can manage a company, run the lifecycle of a job posting, and review its applications - and the remaining modules follow the same pattern, including the complete Back Office, where job moderation, user management, and the audit log are served to administrators through a dedicated, role-guarded admin area. The frontend mirrors the backend with role-guarded pages and a generated, typed API client.
