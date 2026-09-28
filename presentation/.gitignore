@@ -1,0 +1,5 @@
+node_modules/
+.validate_tmp/
+__pycache__/
+*.pyc
+~$*
