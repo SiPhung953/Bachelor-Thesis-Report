@@ -7,3 +7,240 @@
 
 \chapter{Testing}
 \label{chapter:testing}
+
+This chapter reports how the implementation described in Chapter~\ref{chapter:implementation} was verified against the requirements established in Chapter~\ref{chapter:system-analysis}. It states the testing strategy and why that strategy was chosen, describes the environment the tests run in, and presents a traceability matrix mapping each verified business rule back to the use case that specifies it. It closes with an explicit account of what was not tested.
+
+\section{Testing Strategy}
+
+The system's defining property is what it refuses to do, not what it does correctly: most use cases in Chapter~\ref{chapter:system-analysis} are constraints, such as an Employer managing only their own postings or a posting becoming visible only after moderation. A suite that exercised only the successful path would therefore prove little, since it would never attempt what the specification forbids. Negative cases carry the evidential weight, and are cheap to add once a fixture exists.
+
+Testing is concentrated at two levels.
+
+\paragraph{Unit tests} cover the recommendation algorithm described in Section~\ref{chapter:implementation}. \texttt{scoreJob} is a pure function over plain objects, so its tests need no database, no HTTP layer and no fixtures; every input is visible in the test itself. This makes the algorithm's behaviour reproducible from the text of the test alone.
+
+\paragraph{Integration tests} drive the real Express application through its HTTP interface, exercising the full request pipeline --- route table, controller, service, Prisma, PostgreSQL --- against a real database. This is the level at which business rules actually live, since the services own every rule and every database access.
+
+\section{Test Environment}
+
+The suite uses Vitest as the test runner and supertest to issue HTTP requests against the Express application without binding a network port. Because \texttt{app.ts} exports the configured application separately from \texttt{server.ts}, which starts the listener and the expiry scheduler, the tests can load the application without starting any background work.
+
+Three properties of the environment are worth recording, since each affects whether the results can be trusted.
+
+\textbf{The test database is derived, not configured.} The connection string is computed by appending the suffix \texttt{\_test} to the application's own \texttt{DATABASE\_URL}, so the database \texttt{mydb} yields \texttt{mydb\_test}. The derivation is a safety measure rather than a convenience: the suite truncates every table before each test case, so a manually configured connection string pointing at the development database would destroy it.
+
+\textbf{The schema is built from the migrations.} Before the suite runs, \texttt{prisma migrate deploy} creates the test database and applies every migration in sequence. The tests therefore run against the same schema a deployment would produce, so a defective migration fails here rather than in production.
+
+\textbf{Each test case begins from an empty database.} Every table is truncated and the three role records re-inserted before each case, so a test can never pass or fail depending on what an earlier test left behind. For the same reason, test files run sequentially rather than in parallel, since they share one database.
+
+Fixtures create database rows and issue authentication tokens directly rather than through the registration and login endpoints, so a test fails only when the behaviour it targets is actually broken, not because an unrelated setup endpoint has a defect. Those setup flows are covered by their own tests.
+
+\section{Requirements Traceability}
+
+Table~\ref{tab:traceability} maps every business rule verified by the suite to the use case that specifies it. It is the primary evidence that the implementation satisfies the requirements: each row names a rule from Chapter~\ref{chapter:system-analysis}, the test suite that checks it, and the outcome.
+
+\begin{longtable}{|>{\raggedright\arraybackslash}p{2.0cm}|>{\raggedright\arraybackslash}p{5.7cm}|>{\raggedright\arraybackslash}p{4.6cm}|>{\raggedright\arraybackslash}p{1.4cm}|}
+	\caption{Requirements Traceability Matrix.}
+	\label{tab:traceability} \\
+	\hline
+	\textbf{Use Case} & \textbf{Rule or Behaviour Verified} & \textbf{Test Suite} & \textbf{Result} \\
+	\hline
+	\endfirsthead
+	\multicolumn{4}{c}{\tablename\ \thetable{} --- continued from previous page} \\
+	\hline
+	\textbf{Use Case} & \textbf{Rule or Behaviour Verified} & \textbf{Test Suite} & \textbf{Result} \\
+	\hline
+	\endhead
+	\hline
+	\multicolumn{4}{r}{\textit{continued on next page}} \\
+	\endfoot
+	\hline
+	\endlastfoot
+
+	UC-PUB-01 & Approved, open postings appear in public search & PublicJobAccess & Pass \\
+	\hline
+	UC-PUB-01 & A posting awaiting moderation is hidden from search & PublicJobAccess & Pass \\
+	\hline
+	UC-PUB-01 & A posting past its deadline is hidden even while its stored status is still \texttt{ACTIVE} & PublicJobAccess & Pass \\
+	\hline
+	UC-PUB-01 & Keyword search matches against the job title & PublicJobAccess & Pass \\
+	\hline
+	UC-PUB-01 & Job detail is refused for a lapsed or unapproved posting & PublicJobAccess & Pass \\
+	\hline
+	UC-PUB-02 & A company profile lists only that company's open postings & PublicJobAccess & Pass \\
+	\hline
+	UC-AUTH-01 & Registration creates an account holding the Job Seeker role & AuthenticationFlow & Pass \\
+	\hline
+	UC-AUTH-01 & The password is stored as a bcrypt digest, never in plain text & AuthenticationFlow & Pass \\
+	\hline
+	UC-AUTH-01 & An email address already registered is rejected & AuthenticationFlow & Pass \\
+	\hline
+	UC-AUTH-01 & A request missing the password is rejected by validation & AuthenticationFlow & Pass \\
+	\hline
+	UC-AUTH-02 & Correct credentials return an access token & AuthenticationFlow & Pass \\
+	\hline
+	UC-AUTH-02 & An incorrect password is rejected & AuthenticationFlow & Pass \\
+	\hline
+	UC-AUTH-02 & A banned account cannot log in & AuthenticationFlow & Pass \\
+	\hline
+	UC-AUTH-03 & Logout requires authentication, so every logout has an actor & AuthenticationFlow & Pass \\
+	\hline
+	UC-JS-01 & An application is stored as \texttt{SUBMITTED} against the chosen CV & JobSeekerFlow & Pass \\
+	\hline
+	UC-JS-01 & A second application to the same posting is refused & JobSeekerFlow & Pass \\
+	\hline
+	UC-JS-01 & A posting past its deadline accepts no applications & JobSeekerFlow & Pass \\
+	\hline
+	UC-JS-01 & A posting not yet approved accepts no applications & JobSeekerFlow & Pass \\
+	\hline
+	UC-JS-02 & A CV belonging to another user cannot be attached & JobSeekerFlow & Pass \\
+	\hline
+	UC-JS-03 & A seeker sees their own applications and the postings they target & JobSeekerFlow & Pass \\
+	\hline
+	UC-JS-03 & An application remains in history after its posting expires & JobSeekerFlow & Pass \\
+	\hline
+	UC-JS-03 & A seeker never sees another seeker's applications & JobSeekerFlow & Pass \\
+	\hline
+	UC-JS-04 & The owner may withdraw; status and timestamp are recorded & JobSeekerFlow & Pass \\
+	\hline
+	UC-JS-04 & Another seeker's application cannot be withdrawn & JobSeekerFlow & Pass \\
+	\hline
+	UC-JS-04 & An application cannot be withdrawn twice & JobSeekerFlow & Pass \\
+	\hline
+	UC-JS-05 & Results are ranked against stated preferences, each carrying an explanation & JobSeekerFlow & Pass \\
+	\hline
+	UC-JS-05 & A posting already applied to is never recommended & JobSeekerFlow & Pass \\
+	\hline
+	UC-JS-05 & With no preferences stated, the newest postings are returned unranked & JobSeekerFlow & Pass \\
+	\hline
+	UC-JS-05 & A seeker set to Not Looking receives an empty list & JobSeekerFlow & Pass \\
+	\hline
+	UC-JS-05 & A posting matching nothing the seeker asked for is omitted & JobSeekerFlow & Pass \\
+	\hline
+	UC-JS-05 & The scoring weights sum to 1, so every score lies in $[0,1]$ & Recommendation\-Scoring & Pass \\
+	\hline
+	UC-JS-05 & A posting with no explanation is never recommended, although it still scores & Recommendation\-Scoring & Pass \\
+	\hline
+	UC-JS-05 & A job located in the preferred city is distinguished from a company merely based there & Recommendation\-Scoring & Pass \\
+	\hline
+	UC-JS-05 & Freshness breaks ties but is never offered as a reason & Recommendation\-Scoring & Pass \\
+	\hline
+	UC-EMP-01 & A new posting is created as \texttt{PENDING\_APPROVAL}, never \texttt{ACTIVE} & EmployerFlow & Pass \\
+	\hline
+	UC-EMP-01 & A new posting is absent from public search until approved & EmployerFlow & Pass \\
+	\hline
+	UC-EMP-01 & A deadline in the past is rejected & EmployerFlow & Pass \\
+	\hline
+	UC-EMP-01 & An empty title is rejected & EmployerFlow & Pass \\
+	\hline
+	UC-EMP-01 & An overdue \texttt{ACTIVE} posting is moved to \texttt{EXPIRED} & JobExpirySweep & Pass \\
+	\hline
+	UC-EMP-01 & A posting whose deadline is still ahead is left unchanged & JobExpirySweep & Pass \\
+	\hline
+	UC-EMP-01 & A posting awaiting moderation is never expired & JobExpirySweep & Pass \\
+	\hline
+	UC-EMP-01 & A closed posting is never expired & JobExpirySweep & Pass \\
+	\hline
+	UC-EMP-01 & Each expiry is recorded in the audit log with no actor & JobExpirySweep & Pass \\
+	\hline
+	UC-EMP-02 & Only the caller's own postings are listed & EmployerFlow & Pass \\
+	\hline
+	UC-EMP-03 & Another employer's posting can be neither viewed nor edited & EmployerFlow & Pass \\
+	\hline
+	UC-EMP-04 & Closing removes the posting from public search & EmployerFlow & Pass \\
+	\hline
+	UC-EMP-04 & A posting cannot be closed twice & EmployerFlow & Pass \\
+	\hline
+	UC-EMP-04 & Re-opening is refused while the deadline lies in the past & EmployerFlow & Pass \\
+	\hline
+	UC-EMP-04 & A re-opened posting returns to \texttt{PENDING\_APPROVAL} for re-moderation & EmployerFlow & Pass \\
+	\hline
+	UC-EMP-03 & An edited \texttt{ACTIVE} posting returns to moderation and is unpublished & EmployerFlow & Pass \\
+	\hline
+	UC-EMP-03 & An edited \texttt{REJECTED} posting returns to moderation with its rejection cleared & EmployerFlow & Pass \\
+	\hline
+	UC-EMP-03 & An \texttt{EXPIRED} posting cannot be edited & EmployerFlow & Pass \\
+	\hline
+	UC-EMP-05 & An Employer may delete a posting awaiting moderation & EmployerFlow & Pass \\
+	\hline
+	UC-EMP-05 & An Employer may delete an expired posting & EmployerFlow & Pass \\
+	\hline
+	UC-ADMIN-02 & A Moderator may not delete a posting awaiting moderation & BackOfficeFlow & Pass \\
+	\hline
+	UC-ADMIN-02 & A Moderator may delete a published posting & BackOfficeFlow & Pass \\
+	\hline
+	UC-ADMIN-01 & Approval publishes the posting and records the approval time & BackOfficeFlow & Pass \\
+	\hline
+	UC-ADMIN-01 & A posting becomes publicly visible only after approval & BackOfficeFlow & Pass \\
+	\hline
+	UC-ADMIN-01 & Approval writes exactly one audit entry, attributed to the moderator & BackOfficeFlow & Pass \\
+	\hline
+	UC-ADMIN-01 & Rejection stores the reason and leaves the posting unpublished & BackOfficeFlow & Pass \\
+	\hline
+	UC-ADMIN-04 & A ban takes effect on a token the user already holds & BackOfficeFlow & Pass \\
+	\hline
+	UC-ADMIN-04 & Unbanning restores access & BackOfficeFlow & Pass \\
+	\hline
+	UC-ADMIN-05 & The audit trail is returned to a moderator & BackOfficeFlow & Pass \\
+	\hline
+	Cross-cutting & An unauthenticated request to a protected route is refused & PublicJobAccess & Pass \\
+	\hline
+	Cross-cutting & A malformed token is refused & PublicJobAccess & Pass \\
+	\hline
+	Cross-cutting & A Job Seeker cannot reach Employer or Back-Office endpoints & JobSeekerFlow & Pass \\
+	\hline
+	Cross-cutting & An Employer cannot reach Job Seeker or Back-Office endpoints & EmployerFlow & Pass \\
+	\hline
+	Cross-cutting & Neither a Job Seeker nor an Employer can read the audit log & BackOfficeFlow & Pass \\
+	\hline
+\end{longtable}
+
+\section{Results}
+
+The suite comprises 89 test cases across seven files and completes in approximately 30 seconds. Table~\ref{tab:test-results} summarises the outcome by suite.
+
+\begin{table}[H]
+	\centering
+	\caption{Test Execution Summary.}
+	\label{tab:test-results}
+	\begin{tabular}{|p{4.6cm}|p{4.0cm}|p{1.5cm}|p{1.5cm}|p{1.5cm}|}
+		\hline
+		\textbf{Test Suite} & \textbf{Use Cases} & \textbf{Cases} & \textbf{Passed} & \textbf{Failed} \\
+		\hline
+		RecommendationScoring & UC-JS-05 & 15 & 15 & 0 \\
+		\hline
+		PublicJobAccess & UC-PUB-01, UC-PUB-02 & 10 & 10 & 0 \\
+		\hline
+		AuthenticationFlow & UC-AUTH-01 to 03 & 8 & 8 & 0 \\
+		\hline
+		JobSeekerFlow & UC-JS-01 to 05 & 18 & 18 & 0 \\
+		\hline
+		EmployerFlow & UC-EMP-01 to 05 & 20 & 20 & 0 \\
+		\hline
+		BackOfficeFlow & UC-ADMIN-01, 02, 04, 05 & 11 & 11 & 0 \\
+		\hline
+		JobExpirySweep & UC-EMP-01 & 7 & 7 & 0 \\
+		\hline
+		\textbf{Total} & & \textbf{89} & \textbf{89} & \textbf{0} \\
+		\hline
+	\end{tabular}
+\end{table}
+
+Two behaviours deserve separate mention, because the suite is the only place either can be observed.
+
+The first is job expiry. It cannot be demonstrated interactively, since it requires waiting for a real deadline to elapse; the test instead backdates a posting and invokes the sweep directly, confirming both the status change and its audit entry. The sweep's limits are deliberate: a posting awaiting moderation or already closed is left untouched, since a moderator cannot approve a lapsed posting and an expired posting cannot be edited to carry a new deadline.
+
+The second is account banning. A ban must take effect on the access token the user is already holding, not merely at their next login attempt. The test confirms that a request succeeding before the ban is refused immediately afterwards using the same token, which verifies that the check is performed during authentication rather than at login.
+
+\section{Limitations}
+
+The following were not covered by automated testing, and are recorded here rather than left implicit.
+
+\textbf{The user interface is untested.} No automated test exercises the React application. Interface behaviour was verified manually.
+
+\textbf{Several use cases have no automated coverage.} These are UC-AUTH-04 (Forgot Password), UC-PROFILE-01 to UC-PROFILE-06, UC-EMP-00 (Create Company Profile), UC-EMP-06 to UC-EMP-08 (application review and status updates) and UC-ADMIN-03 (View Users). The password-reset flow was excluded deliberately, since testing it would require dispatching real electronic mail; the remainder were omitted for reasons of time.
+
+\textbf{File upload is not exercised end to end.} Fixtures create CV records directly without writing files to disk, so the storage layer is not covered.
+
+\textbf{Concurrency and load were not tested.} Every test runs against a single-user database with no contention, so behaviour under simultaneous access is unverified.
+
+\textbf{Only status codes are asserted, not error bodies.} The application registers no error-handling middleware, so errors are rendered by the framework's default handler rather than as structured responses. There is consequently no error contract for the tests to verify.
