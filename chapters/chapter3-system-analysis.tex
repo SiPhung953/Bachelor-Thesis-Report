@@ -28,7 +28,7 @@ This thesis develops the platform in full but examines two flows in depth: the J
 
 \section{Functional Requirement}
 
-Functional requirements define what the platform must do for its stakeholders. They are organized into modules based on business responsibility, as summarized in Table~\ref{tab:functional-requirements}.
+Functional requirements are statements of the services a system should provide, how it should react to particular inputs, and how it should behave in particular situations \cite{sommerville2016software}. For this platform, they describe what it must do for its stakeholders, and they are organized into modules based on business responsibility, as summarized in Table~\ref{tab:functional-requirements}.
 
 \begin{table}[H]
 	\centering
@@ -76,7 +76,7 @@ Functional requirements define what the platform must do for its stakeholders. T
 
 \section{Non-Functional Requirement}
 
-Non-functional requirements describe the quality attributes the platform must satisfy, such as security, performance, usability, reliability, maintainability, and compatibility. Table~\ref{tab:non-functional-requirements} summarizes the main ones considered during design.
+Non-functional requirements are constraints on the services or functions offered by a system, and often apply to the system as a whole rather than to individual features \cite{sommerville2016software}. The categories used here (security, performance, usability, reliability, maintainability, and compatibility) are taken from the product quality characteristics of the ISO/IEC 25010 quality model \cite{iso25010}. Table~\ref{tab:non-functional-requirements} summarizes the main ones considered during design.
 
 \begin{table}[H]
 	\centering
@@ -88,7 +88,7 @@ Non-functional requirements describe the quality attributes the platform must sa
 		\hline
 		
 		Security &
-		The system shall authenticate users before granting access to protected resources and enforce role-based authorization. Sensitive credentials shall be securely stored using password hashing techniques. \\
+		The system shall authenticate users before granting access to protected resources and enforce role-based authorization. Sensitive credentials shall be securely stored using an adaptive password hashing algorithm such as bcrypt \cite{provos1999bcrypt, owasp_password_storage}. \\
 		\hline
 		
 		Performance &
@@ -116,11 +116,11 @@ Non-functional requirements describe the quality attributes the platform must sa
 
 \section{Use Case Analysis}
 
-Use case analysis models how users interact with the platform and shows the functional scope from each user role's perspective.
+Use case analysis, introduced by Jacobson et al. \cite{jacobson1992oose}, models how users interact with the platform and shows the functional scope from each user role's perspective. The diagrams in this section follow the UML use case notation \cite{omg2017uml}.
 
 \subsection{Shared Use Cases}
 
-To keep the model compact, the actors are organized with UML generalization. Visitors and signed-in users are represented by the Guest actor and Authenticated User actor respectively.
+To keep the model compact, the actors are organized with UML generalization, in which a specialized actor inherits the use cases of its more general parent \cite{omg2017uml}. Visitors and signed-in users are represented by the Guest actor and Authenticated User actor respectively.
 
 \subsubsection{Guest Use Cases}
 
@@ -189,7 +189,7 @@ Figure \ref{diagram:uc-back_office} show the Back Office Worker's capabilities, 
 
 \section{Use Case Specification}
 
-The use case diagrams above give an overview of the system's functional scope. This section specifies the main use cases of the two featured modules in detail.
+The use case diagrams above give an overview of the system's functional scope. This section specifies the main use cases of the two featured modules in detail. Each specification follows the fully dressed template described by Cockburn \cite{cockburn2000usecases}: the goal, preconditions, trigger, main success scenario, alternative flows (extensions), and postconditions (success guarantees) of the use case.
 
 \newpage
 \subsection{Job Seeker: Apply for Job}

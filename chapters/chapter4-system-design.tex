@@ -23,23 +23,23 @@ The design follows a small set of guiding principles, each addressing one or mor
 		\hline
 		
 		Layered Architecture &
-		Separates presentation, API, business logic, and data access concerns, improving maintainability and testability. \\
+		Separates presentation, API, business logic, and data access concerns, improving maintainability and testability \cite{fowler2002peaa}. \\
 		\hline
 		
 		Feature-Oriented Modular Design &
-		Organizes code by business domain (e.g., Job, Application) rather than by technical type, keeping related logic together and easing future extension. \\
+		Organizes code by business domain (e.g., Job, Application) rather than by technical type, keeping related logic together and easing future extension; modules are drawn around design decisions likely to change \cite{parnas1972criteria}. \\
 		\hline
 		
 		Thin Controller, Rich Service &
-		Controllers handle only request/response concerns; business logic and validation reside in services, reducing duplication and improving reusability. \\
+		Controllers handle only request/response concerns; business logic and validation reside in services, reducing duplication and improving reusability, following the Service Layer pattern \cite{fowler2002peaa}. \\
 		\hline
 		
 		Security by Design &
-		Authentication and authorization are consistently enforced to protect restricted resources, while credentials are securely stored using industry-standard cryptographic techniques. \\
+		Every access to a restricted resource is checked for authentication and authorization \cite{saltzer1975protection}, while credentials are stored as adaptive password hashes \cite{provos1999bcrypt, owasp_password_storage}. \\
 		\hline
 		
 		Data Integrity &
-		Relational constraints, foreign keys, and database integrity rules ensure data consistency and prevent invalid relationships. \\
+		Relational constraints, foreign keys, and database integrity rules ensure data consistency and prevent invalid relationships \cite{codd1970relational}. \\
 		\hline
 		
 	\end{tabular}
@@ -51,7 +51,7 @@ The remainder of this chapter is organized as follows. Section \ref{c4:section:s
 
 \section{System Architecture}
 \label{c4:section:system-architecture}
-The system architecture is documented using the C4 model, which describes a software system at progressively narrower levels of zoom: Context, Container, and Component.
+The system architecture is documented using the C4 model proposed by Simon Brown \cite{brown_c4}, which describes a software system at progressively narrower levels of zoom: Context, Container, and Component.
 
 \subsection{System Context}
 The System Context diagram identifies the system's boundary and its interactions with external actors, without describing internal structure.
@@ -78,12 +78,12 @@ The Container diagram decomposes the system into its major deployable units and 
 As illustrated in Figure~\ref{diagram:c2-container}, the system consists of three containers:
 
 \begin{itemize}
-	\item The Frontend Web App is a React single-page application that renders the user interface.
-	\item The Backend API is a Node.js/Express service, built with TypeScript and Prisma ORM, that implements all business logic and exposes it as a REST API.
-	\item The Database is a PostgreSQL instance that persists user accounts, job postings, applications, and other platform data.
+	\item The Frontend Web App is a React \cite{react_docs} single-page application that renders the user interface.
+	\item The Backend API is a Node.js/Express service \cite{nodejs_docs, express_docs}, built with TypeScript \cite{typescript_docs} and Prisma ORM \cite{prisma_docs}, that implements all business logic and exposes it as a REST API, following the Representational State Transfer architectural style \cite{fielding2000rest}.
+	\item The Database is a PostgreSQL \cite{postgresql_docs} instance that persists user accounts, job postings, applications, and other platform data.
 \end{itemize}
 
-The Frontend communicates with the Backend over HTTPS using JSON, and the Backend communicates with the Database using SQL through Prisma.
+The Frontend communicates with the Backend over HTTPS \cite{rfc9110} using JSON \cite{rfc8259}, and the Backend communicates with the Database using SQL through Prisma.
 
 \subsection{Component View: Frontend}
 The Frontend component diagram decomposes the Frontend Web App container into its internal building blocks.
@@ -119,10 +119,10 @@ All components access PostgreSQL through a single Prisma Client instance, provid
 
 \section{Database Design}
 \label{c4:section:database-design}
-The database design defines how the system's persistent data is organized and managed. It identifies the main business entities, their relationships, and the constraints that ensure data consistency. The design follows the principles introduced in Section~\ref{c4:section:design-overview}, particularly data integrity, by using a normalized relational schema with clearly defined primary and foreign key relationships.
+The database design defines how the system's persistent data is organized and managed. It identifies the main business entities, their relationships, and the constraints that ensure data consistency. The design follows the principles introduced in Section~\ref{c4:section:design-overview}, particularly data integrity, by using a normalized relational schema with clearly defined primary and foreign key relationships \cite{codd1970relational}.
 
 \subsection{Entity Relationship Overview}
-Figure~\ref{diagram:erd-overview} presents an overview of the complete database schema used by the platform. To improve readability, the overview diagram includes the primary entities, key attributes, and relationships while omitting system-generated fields such as timestamps and audit metadata.
+Figure~\ref{diagram:erd-overview} presents an overview of the complete database schema used by the platform as an entity-relationship diagram \cite{chen1976er}. To improve readability, the overview diagram includes the primary entities, key attributes, and relationships while omitting system-generated fields such as timestamps and audit metadata.
 
 \begin{figure}[H]
 	\centering
@@ -245,13 +245,13 @@ Table~\ref{tab:backend-folders} summarizes the purpose of each top-level entry.
 A small set of reusable infrastructure components is shared across all business modules, avoiding duplication and ensuring consistent behavior.
 
 \begin{itemize}
-	\item JWT Authentication: issues and verifies signed JSON Web Tokens carrying the user's identifier and role, and is enforced through the \texttt{expressAuthentication} hook on protected routes.
-	\item Role Guards: helpers such as \texttt{assertJobSeeker} and \texttt{assertEmployer} reject requests from users who lack the required role, applied as the first step of every service method. The guards are always paired with the tsoa \texttt{@Security} decorator form defense in depth.
+	\item JWT Authentication: issues and verifies signed JSON Web Tokens \cite{rfc7519} carrying the user's identifier and role, and is enforced through the \texttt{expressAuthentication} hook on protected routes.
+	\item Role Guards: helpers such as \texttt{assertJobSeeker} and \texttt{assertEmployer} reject requests from users who lack the required role, applied as the first step of every service method. The guards are always paired with the tsoa \texttt{@Security} decorator to form defense in depth, a strategy of layering several independent safeguards so that a failure in one is caught by another \cite{nist2020sp80053}.
 	\item HttpError: a uniform error type carrying an HTTP status and message, translated into the proper JSON error response.
 	\item Prisma Client: the generated ORM client, instantiated once in \texttt{lib/prisma.ts} and imported by services for all database access.
 	\item File Storage: abstracts file persistence behind a common interface, used for avatar and resume uploads.
-	\item Email Service: wraps NodeMailer to send transactional emails, such as password reset notifications.
-	\item PasswordHasher and ResetTokenUtils: wrap BCrypt and token generation for credential handling and password recovery.
+	\item Email Service: wraps Nodemailer \cite{nodemailer_docs} to send transactional emails, such as password reset notifications.
+	\item PasswordHasher and ResetTokenUtils: wrap bcrypt \cite{provos1999bcrypt} and token generation for credential handling and password recovery.
 	\item AuditLogger: records a structured entry for a system event inside the same database transaction as the mutation it accompanies.
 \end{itemize}
 
@@ -260,7 +260,7 @@ A small set of reusable infrastructure components is shared across all business 
 The Job Application Module lets job seekers apply to active job postings using one of their resumes, view their own submitted applications, and withdraw an application while it is still eligible. It resides in \texttt{api-external}, and every endpoint requires both a valid JWT and the \texttt{JOB\_SEEKER} role.
 
 \subsubsection{Class Diagram}
-Figure~\ref{diagram:class-job-application} presents the class diagram of the Job Application Module.
+Figure~\ref{diagram:class-job-application} presents the class diagram of the Job Application Module, drawn in UML class diagram notation \cite{omg2017uml}.
 
 \begin{figure}[H]
 	\centering
@@ -331,7 +331,7 @@ Each feature module under \texttt{ui-external/} follows the same internal shape:
 	.3 ApplicationStatusBadge.tsx.
 	.3 ResumeSelector.tsx.
 }
-The same structure is applied to the Employer Job Management UI and other feature modules. Shared interface elements are provided through the common UI layer and reused across feature components rather than being duplicated within individual modules. The project uses shadcn/ui and Tailwind CSS for these reusable interface elements.
+The same structure is applied to the Employer Job Management UI and other feature modules. Shared interface elements are provided through the common UI layer and reused across feature components rather than being duplicated within individual modules. The project uses shadcn/ui \cite{shadcn_docs} and Tailwind CSS \cite{tailwind_docs} for these reusable interface elements.
 
 \subsection{Job Application UI}
 The Job Application UI follows the feature structure described above. Its page-level components are separated according to the two primary application workflows: applying for a job and managing submitted applications. Reusable elements specific to these workflows, such as application cards, status indicators, and resume selection, are kept within the feature's \texttt{components/} directory.

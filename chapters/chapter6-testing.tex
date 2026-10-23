@@ -12,9 +12,9 @@ This chapter reports how the implementation described in Chapter~\ref{chapter:im
 
 \section{Testing Strategy}
 
-The system's defining property is what it refuses to do, not what it does correctly: most use cases in Chapter~\ref{chapter:system-analysis} are constraints, such as an Employer managing only their own postings or a posting becoming visible only after moderation. A suite that exercised only the successful path would therefore prove little, since it would never attempt what the specification forbids. Negative cases carry the evidential weight, and are cheap to add once a fixture exists.
+The system's defining property is what it refuses to do, not what it does correctly: most use cases in Chapter~\ref{chapter:system-analysis} are constraints, such as an Employer managing only their own postings or a posting becoming visible only after moderation. A suite that exercised only the successful path would therefore prove little, since it would never attempt what the specification forbids. This follows the long-standing testing principle that test cases must be written for invalid and unexpected input conditions as well as valid ones \cite{myers2011testing}. Negative cases carry the evidential weight, and are cheap to add once a fixture exists.
 
-Testing is concentrated at two levels.
+Testing is concentrated at two levels, distinguishing tests of individual units in isolation from tests of units combined into a working whole \cite{myers2011testing}.
 
 \paragraph{Unit tests} cover the recommendation algorithm described in Section~\ref{chapter:implementation}. \texttt{scoreJob} is a pure function over plain objects, so its tests need no database, no HTTP layer and no fixtures; every input is visible in the test itself. This makes the algorithm's behaviour reproducible from the text of the test alone.
 
@@ -22,7 +22,7 @@ Testing is concentrated at two levels.
 
 \section{Test Environment}
 
-The suite uses Vitest as the test runner and supertest to issue HTTP requests against the Express application without binding a network port. Because \texttt{app.ts} exports the configured application separately from \texttt{server.ts}, which starts the listener and the expiry scheduler, the tests can load the application without starting any background work.
+The suite uses Vitest \cite{vitest_docs} as the test runner and supertest \cite{supertest_repo} to issue HTTP requests against the Express application without binding a network port. Because \texttt{app.ts} exports the configured application separately from \texttt{server.ts}, which starts the listener and the expiry scheduler, the tests can load the application without starting any background work.
 
 Three properties of the environment are worth recording, since each affects whether the results can be trusted.
 
@@ -36,7 +36,7 @@ Fixtures create database rows and issue authentication tokens directly rather th
 
 \section{Requirements Traceability}
 
-Table~\ref{tab:traceability} maps every business rule verified by the suite to the use case that specifies it. It is the primary evidence that the implementation satisfies the requirements: each row names a rule from Chapter~\ref{chapter:system-analysis}, the test suite that checks it, and the outcome.
+Requirements traceability is the ability to describe and follow the life of a requirement in both a forwards and backwards direction \cite{gotel1994traceability}. Table~\ref{tab:traceability} applies it backwards from the tests, mapping every business rule verified by the suite to the use case that specifies it. It is the primary evidence that the implementation satisfies the requirements: each row names a rule from Chapter~\ref{chapter:system-analysis}, the test suite that checks it, and the outcome.
 
 \begin{longtable}{|>{\raggedright\arraybackslash}p{2.0cm}|>{\raggedright\arraybackslash}p{5.7cm}|>{\raggedright\arraybackslash}p{4.6cm}|>{\raggedright\arraybackslash}p{1.4cm}|}
 	\caption{Requirements Traceability Matrix.}
