@@ -1,5 +1,6 @@
 // Defense deck generator — "Big Pickle" thesis defense
-// Structure: 9 slides, ~10 minutes. Design per student spec:
+// Structure: 12 slides — a ~10-minute talk, then the live demo as the bridge into Q&A.
+// Design per student spec:
 //   - off-white background (F7F7F2), thin black+red streaks top & bottom
 //   - section label above the top streak, page counter bottom-right
 const pptxgen = require("pptxgenjs");
@@ -41,7 +42,7 @@ const C = {
 const F_HEAD = "Cambria"; // serif headers (safe)
 const F_BODY = "Calibri"; // sans body (safe)
 
-const TOTAL = 9;
+const TOTAL = 12;
 
 // ---------- shared chrome helpers ----------
 
@@ -82,7 +83,7 @@ function sectionLabel(slide, label, opts = {}) {
 
 function counter(slide, n) {
   slide.addText(`${n} / ${TOTAL}`, {
-    x: SW - 1.0 - 0.55, y: 7.0, w: 1.0, h: 0.22,
+    x: SW - 1.0 - 0.55, y: 6.84, w: 1.0, h: 0.22,
     fontFace: F_BODY, fontSize: 10.5, color: C.faint,
     align: "right", isTextBox: true,
   });
@@ -129,6 +130,35 @@ function bullets(slide, items, x, y, w, h, fontSize = 14, gap = 12) {
     x, y, w, h, valign: "top", isTextBox: true,
   });
 }
+// Red-barred callout panel, used for the one sentence a slide must land.
+function callout(slide, x, y, w, h) {
+  slide.addShape(pptx.ShapeType.rect, {
+    x, y, w, h,
+    fill: { color: C.panel }, line: { type: "none" },
+  });
+  slide.addShape(pptx.ShapeType.rect, {
+    x, y, w: 0.1, h,
+    fill: { color: C.red }, line: { type: "none" },
+  });
+}
+
+function caption(slide, text, x, y, w) {
+  slide.addText(text, {
+    x, y, w, h: 0.3,
+    fontFace: F_BODY, fontSize: 11.5, italic: true, color: C.muted,
+    align: "center", isTextBox: true,
+  });
+}
+
+function newSlide(label, n, heading) {
+  const s = pptx.addSlide();
+  s.background = { color: C.bg };
+  streaks(s);
+  sectionLabel(s, label);
+  counter(s, n);
+  title(s, heading);
+  return s;
+}
 
 // ---------- slide builders ----------
 
@@ -151,7 +181,7 @@ function slideTitle() {
       align: "center", isTextBox: true, lineSpacing: 26,
     }
   );
-  s.addText("A centralized platform for the recruitment round trip — from application to decision", {
+  s.addText("One platform for the recruitment round trip — from application to decision", {
     x: 1.0, y: 4.55, w: SW - 2.0, h: 0.35,
     fontFace: F_BODY, fontSize: 15, italic: true, color: C.muted,
     align: "center", isTextBox: true,
@@ -172,380 +202,415 @@ function slideTitle() {
     align: "center", isTextBox: true,
   });
   s.addNotes(
-    "Hook (15s): 'Every candidate I know has applied to the same job on three platforms. This thesis builds one place where the whole recruitment round trip — from application to decision — actually lives.' Do not read the title. Move on."
+    "~0:30. Hand out the printed copies, greet the council, introduce yourself and the thesis in one sentence. Do not read the title aloud word for word."
   );
 }
 
+function slideAgenda() {
+  const s = newSlide("OUTLINE", 2, "Outline");
+  const rows = [
+    { t: "Introduction", d: "why recruitment, and how I worked" },
+    { t: "Goal & Scope", d: "four actors, two modules in depth" },
+    { t: "System Design", d: "architecture and the two flows of the round trip" },
+    { t: "Testing", d: "how the backend is verified — and what is not" },
+    { t: "Conclusion", d: "what I built, what I learned, what comes next" },
+    { t: "Live Demo → Q&A", d: "one application, end to end" },
+  ];
+  rows.forEach((r, i) => {
+    const y = 1.5 + i * 0.86;
+    s.addText(String(i + 1).padStart(2, "0"), {
+      x: 1.4, y, w: 0.9, h: 0.6,
+      fontFace: F_HEAD, fontSize: 28, bold: true, color: C.red, isTextBox: true,
+    });
+    s.addText(r.t, {
+      x: 2.4, y, w: 4.2, h: 0.6,
+      fontFace: F_HEAD, fontSize: 22, bold: true, color: C.ink,
+      valign: "middle", isTextBox: true,
+    });
+    s.addText(r.d, {
+      x: 6.6, y, w: 5.6, h: 0.6,
+      fontFace: F_BODY, fontSize: 15, color: C.muted,
+      valign: "middle", isTextBox: true,
+    });
+    if (i < rows.length - 1) {
+      s.addShape(pptx.ShapeType.rect, {
+        x: 1.4, y: y + 0.74, w: 10.8, h: 0.01,
+        fill: { color: C.cardLine }, line: { type: "none" },
+      });
+    }
+  });
+  s.addNotes("~0:15. One sentence covering all six items. The demo is last on purpose: it is the bridge into Q&A.");
+}
+
 function slideWhy() {
-  const s = pptx.addSlide();
-  s.background = { color: C.bg };
-  streaks(s);
-  sectionLabel(s, "INTRODUCTION — WHY RECRUITMENT");
-  counter(s, 2);
-  title(s, "Recruitment is broken at scale");
+  const s = newSlide("INTRODUCTION - WHY RECRUITMENT", 3, "A large, active market - still fragmented");
 
   const stats = [
-    { n: "35%", l: "of Vietnamese professionals are job-hunting right now", src: "Michael Page, 2023" },
-    { n: "~44 days", l: "average time from posting to accepted offer", src: "Global recruiter survey, 2023" },
-    { n: "≈7 sec", l: "a recruiter spends screening one resume", src: "Ladders eye-tracking, 2018" },
+    { n: "52.9 M", l: "people in Vietnam's labour force", src: "National Statistics Office, 2024" },
+    { n: "35%", l: "of Vietnamese professionals actively job-hunting", src: "Michael Page Vietnam, 2023" },
+    { n: "44 days", l: "average from a job being posted to an offer being made", src: "AMS & The Josh Bersin Company, 2023" },
   ];
   const cw = 3.9, gap = 0.24;
   stats.forEach((st, i) => {
     const x = 0.55 + i * (cw + gap);
-    card(s, { x, y: 1.32, w: cw, h: 1.85 });
+    card(s, { x, y: 1.4, w: cw, h: 2.0 });
     s.addText(st.n, {
-      x, y: 1.5, w: cw, h: 0.75,
+      x, y: 1.58, w: cw, h: 0.75,
       fontFace: F_HEAD, fontSize: 40, bold: true, color: C.ink,
       align: "center", isTextBox: true,
     });
     s.addText(st.l, {
-      x: x + 0.15, y: 2.28, w: cw - 0.3, h: 0.55,
-      fontFace: F_BODY, fontSize: 12.5, color: C.ink,
-      align: "center", isTextBox: true,
+      x: x + 0.2, y: 2.36, w: cw - 0.4, h: 0.62,
+      fontFace: F_BODY, fontSize: 13, color: C.ink,
+      align: "center", valign: "middle", isTextBox: true,
     });
     s.addText(st.src, {
-      x: x + 0.15, y: 2.83, w: cw - 0.3, h: 0.25,
+      x: x + 0.15, y: 3.02, w: cw - 0.3, h: 0.25,
       fontFace: F_BODY, fontSize: 9.5, color: C.faint,
       align: "center", isTextBox: true,
     });
   });
 
-  s.addShape(pptx.ShapeType.rect, {
-    x: 0.55, y: 3.52, w: 12.18, h: 0.95,
-    fill: { color: C.panel }, line: { type: "none" },
-  });
-  s.addShape(pptx.ShapeType.rect, {
-    x: 0.55, y: 3.52, w: 0.1, h: 0.95,
-    fill: { color: C.red }, line: { type: "none" },
-  });
-  s.addText("The friction: candidates recreate profiles and resumes on every platform and check each one separately — employers stitch postings, applications and decisions together by hand.", {
-    x: 0.95, y: 3.65, w: 11.5, h: 0.7,
-    fontFace: F_BODY, fontSize: 14, italic: true, color: C.ink,
-    valign: "middle", isTextBox: true,
+  s.addText("TopCV alone reports 8M+ candidate profiles and 540,000+ employers (TopCV, 2023), yet hiring remains slow and largely manual.", {
+    x: 0.55, y: 3.7, w: 12.18, h: 0.75,
+    fontFace: F_BODY, fontSize: 14.5, color: C.muted, isTextBox: true,
   });
 
-  s.addText("How I began — self-taught, then a process", {
-    x: 0.55, y: 4.72, w: 10, h: 0.32,
-    fontFace: F_HEAD, fontSize: 16, bold: true, color: C.ink, isTextBox: true,
+  callout(s, 0.55, 4.75, 12.18, 1.75);
+  s.addText("THE FRICTION I FOCUS ON", {
+    x: 0.95, y: 4.9, w: 11.5, h: 0.3,
+    fontFace: F_BODY, fontSize: 12, bold: true, color: C.red,
+    charSpacing: 1.4, isTextBox: true,
   });
-  const chips = [
-    { t: "Learn SDLC from scratch", d: "no formal process — studied the fundamentals first" },
-    { t: "Use-case-driven loop", d: "document → implement → write every surprise back" },
-    { t: "Backend-first, deliberately", d: "my goal is Backend Engineering" },
+  s.addText([
+    { text: "Job seekers ", options: { bold: true } },
+    { text: "recreate the same profile and resume on every site, then check each one separately.", options: { breakLine: true } },
+    { text: "Employers ", options: { bold: true } },
+    { text: "stitch postings, applications and decisions together by hand." },
+  ], {
+    x: 0.95, y: 5.25, w: 11.5, h: 1.1,
+    fontFace: F_BODY, fontSize: 15, color: C.ink,
+    valign: "top", paraSpaceAfter: 6, isTextBox: true,
+  });
+
+  s.addNotes(
+    "~1:10. Scale first (labour force, 35% hunting), then: platforms are already big, yet hiring is still slow and manual (44 days, posted → offer made). Then pivot: the part of that friction I address is fragmentation. Do NOT say the platform shortens time-to-hire; these are market figures, not my measurements."
+  );
+}
+
+function slideApproach() {
+  const s = newSlide("INTRODUCTION - HOW I WORKED", 4, "A use-case-driven loop");
+
+  const steps = [
+    { t: "1 · Document", d: "use cases, specifications, class and sequence diagrams for one group" },
+    { t: "2 · Implement", d: "backend first, then the frontend that consumes it" },
+    { t: "3 · Write back", d: "anything unexpected becomes a documented use case" },
   ];
-  const cw2 = 3.85, gap2 = 0.31;
-  chips.forEach((ch, i) => {
-    const x = 0.55 + i * (cw2 + gap2);
-    card(s, { x, y: 5.15, w: cw2, h: 1.45, fill: C.panel, line: { type: "none" } });
-    s.addText(ch.t, {
-      x: x + 0.2, y: 5.32, w: cw2 - 0.4, h: 0.35,
-      fontFace: F_BODY, fontSize: 14, bold: true, color: C.ink, isTextBox: true,
+  const bw = 3.4, bg = 0.79, by = 1.55, bh = 1.75;
+  const xs = steps.map((_, i) => 0.75 + i * (bw + bg));
+  steps.forEach((st, i) => {
+    const x = xs[i];
+    card(s, { x, y: by, w: bw, h: bh });
+    s.addShape(pptx.ShapeType.rect, {
+      x, y: by, w: bw, h: 0.09,
+      fill: { color: C.red }, line: { type: "none" },
     });
-    s.addText(ch.d, {
-      x: x + 0.2, y: 5.72, w: cw2 - 0.4, h: 0.75,
-      fontFace: F_BODY, fontSize: 11.5, color: C.muted, isTextBox: true,
+    s.addText(st.t, {
+      x: x + 0.2, y: by + 0.25, w: bw - 0.4, h: 0.4,
+      fontFace: F_HEAD, fontSize: 18, bold: true, color: C.ink, isTextBox: true,
     });
-    if (i < chips.length - 1) {
-      s.addText("→", {
-        x: x + cw2 - 0.02, y: 5.52, w: gap2 + 0.04, h: 0.4,
-        fontFace: F_BODY, fontSize: 20, bold: true, color: C.red,
-        align: "center", isTextBox: true,
+    s.addText(st.d, {
+      x: x + 0.2, y: by + 0.72, w: bw - 0.4, h: 0.9,
+      fontFace: F_BODY, fontSize: 13, color: C.muted, valign: "top", isTextBox: true,
+    });
+    if (i < steps.length - 1) {
+      s.addShape(pptx.ShapeType.line, {
+        x: x + bw + 0.12, y: by + bh / 2, w: bg - 0.24, h: 0,
+        line: { color: C.red, width: 2, endArrowType: "triangle" },
       });
     }
   });
 
-  s.addNotes(
-    "Why Recruitment — 1:45–2:00. Story first: I kept watching friends grind the same application across 3–4 websites, and employers drowning in resumes they screen in seconds. Read the three numbers as a sequence: 35% of the workforce is hunting right now; a posting takes ~44 days to fill; a single resume gets ~7 seconds. Good — thank the sources. Then the friction line. How I began (the personal note): I had no formal SDLC background; I taught myself the fundamentals, then locked onto a use-case-driven loop — document a group, implement backend-first, write any surprise back into the docs. Save the career motive for the demo slide."
-  );
-}
-
-function slideGoal() {
-  const s = pptx.addSlide();
-  s.background = { color: C.bg };
-  streaks(s);
-  sectionLabel(s, "GOAL & SCOPE");
-  counter(s, 3);
-  title(s, "One platform for the whole round trip");
-
-  bullets(s, [
-    "Job seekers: search jobs, apply with a resume, track and withdraw applications.",
-    "Employers: manage a company, publish postings, run them through their lifecycle, review applications to a decision.",
-    "Administration: moderation, user management, audit logs.",
-  ], 0.55, 1.35, 6.2, 2.6);
-
-  s.addShape(pptx.ShapeType.rect, {
-    x: 0.55, y: 4.45, w: 6.2, h: 2.1,
-    fill: { color: C.panel }, line: { type: "none" },
+  // Return path: step 3 back to step 1.
+  const loopY = by + bh + 0.45;
+  const x1 = xs[0] + bw / 2, x3 = xs[2] + bw / 2;
+  const lineStyle = { color: C.red, width: 2 };
+  s.addShape(pptx.ShapeType.line, { x: x3, y: by + bh, w: 0, h: loopY - (by + bh), line: lineStyle });
+  s.addShape(pptx.ShapeType.line, { x: x1, y: loopY, w: x3 - x1, h: 0, line: lineStyle });
+  s.addShape(pptx.ShapeType.line, {
+    x: x1, y: by + bh, w: 0, h: loopY - (by + bh),
+    line: { ...lineStyle, beginArrowType: "triangle" },
   });
-  s.addShape(pptx.ShapeType.rect, {
-    x: 0.55, y: 4.45, w: 0.1, h: 2.1,
-    fill: { color: C.red }, line: { type: "none" },
-  });
-  s.addText("TWO FLOWS IN DEPTH", {
-    x: 0.9, y: 4.62, w: 5.6, h: 0.3,
-    fontFace: F_BODY, fontSize: 12, bold: true, color: C.red,
-    charSpacing: 1.4, isTextBox: true,
-  });
-  s.addText("Job Application (seeker)  +  Employer Job Management (employer) — together the recruitment round trip.", {
-    x: 0.9, y: 4.98, w: 5.6, h: 0.7,
-    fontFace: F_BODY, fontSize: 13.5, color: C.ink, isTextBox: true,
-  });
-  s.addText("8 modules built in total; the supporting ones are implemented and summarized, not dissected.", {
-    x: 0.9, y: 5.85, w: 5.6, h: 0.55,
-    fontFace: F_BODY, fontSize: 12, italic: true, color: C.muted, isTextBox: true,
-  });
-
-  s.addImage({ path: IMG("C1! System Context Diagram.png"), x: 7.0, y: 1.35, w: 5.9, h: 3.64 });
-  s.addText("System context — three actors around one platform", {
-    x: 7.0, y: 5.08, w: 5.9, h: 0.3,
-    fontFace: F_BODY, fontSize: 11, italic: true, color: C.faint,
+  s.addText("repeat for each group: profile · resume · job application · employer · back office", {
+    x: x1, y: loopY + 0.05, w: x3 - x1, h: 0.35,
+    fontFace: F_BODY, fontSize: 12, italic: true, color: C.muted,
     align: "center", isTextBox: true,
   });
 
+  const notes = [
+    { t: "Started from the fundamentals", d: "During my internship I first studied the Software Development Life Cycle, then applied it to this project." },
+    { t: "Backend-first, on purpose", d: "My goal is to learn Backend Engineering skills, so the business rules were built and tested first." },
+  ];
+  notes.forEach((n, i) => {
+    const x = 0.55 + i * 6.19;
+    callout(s, x, 4.9, 5.99, 1.35);
+    s.addText(n.t, {
+      x: x + 0.35, y: 5.05, w: 5.45, h: 0.35,
+      fontFace: F_BODY, fontSize: 15, bold: true, color: C.ink, isTextBox: true,
+    });
+    s.addText(n.d, {
+      x: x + 0.35, y: 5.45, w: 5.45, h: 0.75,
+      fontFace: F_BODY, fontSize: 13, color: C.muted, valign: "top", isTextBox: true,
+    });
+  });
+
+  s.addNotes("~0:40. The loop is why the paper and the code agree: every surprise found during implementation was written back into the analysis. If running long, cut this slide and say it in one sentence on slide 3.");
+}
+
+function slideGoal() {
+  const s = newSlide("GOAL & SCOPE", 5, "One platform for the whole round trip");
+
+  bullets(s, [
+    "Guest: a visitor - search jobs, see companies and their jobs, no account needed.",
+    "Job Seeker: search, apply with a resume, track and withdraw applications; recommendations ranked on stated preferences.",
+    "Employer: company profile, job postings through their lifecycle, review applications to a decision.",
+    "Back-Office Worker: moderate postings, manage users, read audit logs.",
+  ], 0.55, 1.35, 6.3, 3.1, 14, 9);
+
+  callout(s, 0.55, 4.6, 6.3, 1.95);
+  s.addText("TWO MODULES IN DEPTH", {
+    x: 0.9, y: 4.75, w: 5.7, h: 0.3,
+    fontFace: F_BODY, fontSize: 12, bold: true, color: C.red,
+    charSpacing: 1.4, isTextBox: true,
+  });
+  s.addText("Job Application (Job Seeker)  +  Employer Job Management (Employer) together makes the recruitment round trip.", {
+    x: 0.9, y: 5.08, w: 5.75, h: 0.75,
+    fontFace: F_BODY, fontSize: 14, color: C.ink, isTextBox: true,
+  });
+  s.addText("7 modules built in total; the other five are implemented and summarized in the paper.", {
+    x: 0.9, y: 5.9, w: 5.75, h: 0.5,
+    fontFace: F_BODY, fontSize: 12, italic: true, color: C.muted, isTextBox: true,
+  });
+
+  s.addImage({ path: IMG("C1! System Context Diagram.png"), x: 7.1, y: 1.45, w: 5.65, h: 5.65 / 1.619 });
+  caption(s, "System context: four actors around one platform", 7.1, 5.05, 5.65);
+
   s.addNotes(
-    "Goal & scope — ~1:00. One sentence: the platform is one place for the whole round trip; two of the eight modules — Job Application and Employer Job Management — are examined in depth, and they complete each other: a seeker applies, an employer decides. Everything else (auth, profile, resume, discovery, admin) is built and described briefly. Point at the context diagram: three actors, one system."
+    "~0:45. Four actors; I focus on the two every recruitment platform needs. The Job Seeker applies, the Employer manages postings and decides, those two modules complete each other."
   );
 }
 
 function slideArch() {
-  const s = pptx.addSlide();
-  s.background = { color: C.bg };
-  streaks(s);
-  sectionLabel(s, "SYSTEM DESIGN — ARCHITECTURE");
-  counter(s, 4);
-  title(s, "Contract-first monorepo");
+  const s = newSlide("SYSTEM DESIGN - ARCHITECTURE", 6, "Three containers, one contract");
 
   bullets(s, [
-    "pnpm monorepo — two apps, one contract.",
-    "Backend (apps/api): Express 5 + TypeScript; tsoa generates the OpenAPI spec and the routes from annotated controllers; Prisma → PostgreSQL.",
-    "Frontend (apps/web): React 19 + Vite; a typed API client is regenerated from the same OpenAPI spec; Tailwind + shadcn/ui.",
-  ], 0.55, 1.3, 7.7, 3.0);
+    "Frontend Web App: React 19 + Vite single-page app (Tailwind, shadcn/ui).",
+    "Backend API: Express 5 + TypeScript; every business rule lives here.",
+    "Database: PostgreSQL, accessed through the Prisma ORM.",
+  ], 0.55, 1.35, 8.0, 1.85, 15, 8);
 
-  s.addShape(pptx.ShapeType.rect, {
-    x: 0.55, y: 4.5, w: 7.7, h: 1.5,
-    fill: { color: C.panel }, line: { type: "none" },
+  callout(s, 0.55, 3.3, 8.0, 1.3);
+  s.addText("Contract-first", {
+    x: 0.9, y: 3.43, w: 7.4, h: 0.35,
+    fontFace: F_BODY, fontSize: 15, bold: true, color: C.ink, isTextBox: true,
   });
-  s.addShape(pptx.ShapeType.rect, {
-    x: 0.55, y: 4.5, w: 0.1, h: 1.5,
-    fill: { color: C.red }, line: { type: "none" },
-  });
-  s.addText("Why this matters: one source of truth for request/response types.", {
-    x: 0.9, y: 4.68, w: 7.1, h: 0.32,
-    fontFace: F_BODY, fontSize: 13, bold: true, color: C.ink, isTextBox: true,
-  });
-  s.addText("Change a response shape on the server and the client type updates at the next build — the two sides can never drift.", {
-    x: 0.9, y: 5.06, w: 7.1, h: 0.75,
-    fontFace: F_BODY, fontSize: 13, color: C.muted, isTextBox: true,
+  s.addText("tsoa generates the OpenAPI spec and the routes from annotated controllers; the frontend's typed API client is generated from the same spec so the two sides cannot drift apart.", {
+    x: 0.9, y: 3.8, w: 7.45, h: 0.75,
+    fontFace: F_BODY, fontSize: 13, color: C.muted, valign: "top", isTextBox: true,
   });
 
-  s.addImage({ path: IMG("C2! Container Diagram.png"), x: 8.6, y: 1.25, w: 4.1, h: 5.18 });
-  s.addText("C2 — the two containers", {
-    x: 8.6, y: 6.5, w: 4.1, h: 0.3,
-    fontFace: F_BODY, fontSize: 11, italic: true, color: C.faint,
-    align: "center", isTextBox: true,
+  callout(s, 0.55, 4.85, 8.0, 1.3);
+  s.addText("Every request takes the same path", {
+    x: 0.9, y: 4.98, w: 7.4, h: 0.35,
+    fontFace: F_BODY, fontSize: 15, bold: true, color: C.ink, isTextBox: true,
   });
+  s.addText("Route → Controller → Service → Prisma. Controllers stay thin; services own the rules and re-check the caller's role (defense in depth).", {
+    x: 0.9, y: 5.35, w: 7.45, h: 0.75,
+    fontFace: F_BODY, fontSize: 13, color: C.muted, valign: "top", isTextBox: true,
+  });
+
+  const ih = 5.2, iw = ih * 0.626;
+  s.addImage({ path: IMG("C2! Container Diagram.png"), x: 9.0 + (3.75 - iw) / 2, y: 1.3, w: iw, h: ih });
+  caption(s, "C2: three containers", 9.0, 6.55, 3.75);
 
   s.addNotes(
-    "Architecture — ~1:30. The one idea to drive home: contract-first. tsoa reads decorators on the controllers and emits both the route table and swagger.json; the web client is generated from that same file. So a change on the server shows up in the client's types at the next build — they cannot drift. Backend owns all rules (controller stays thin, service holds business logic, defense-in-depth role checks). Keep it to three bullets and the container diagram."
+    "~1:15. One sentence per container, then the decision that is mine: contract-first. Change a response shape on the server and the client's types change at the next build. Then the request path: controller → service → Prisma; the service re-checks the role even though the route already did."
   );
 }
 
-function slideDesign() {
-  const s = pptx.addSlide();
-  s.background = { color: C.bg };
-  streaks(s);
-  sectionLabel(s, "SYSTEM DESIGN — THE ROUND TRIP");
-  counter(s, 5);
-  title(s, "Two flows, modeled before code");
+// Round-trip slides show the happy-path sequence diagram alone, as large as
+// the slide allows: the labels are small, and the guards live in the paper.
+function diagramSlide(label, n, heading, file, aspect, cap, notes) {
+  const s = newSlide(label, n, heading);
+  const top = 1.35, maxW = SW - 1.1, maxH = 6.45 - top;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  s.addImage({ path: IMG(file), x: (SW - w) / 2, y: top, w, h });
+  caption(s, cap, 0.55, top + h + 0.05, maxW);
+  s.addNotes(notes);
+}
 
-  s.addImage({ path: IMG("SD-JobSeeker01-Apply-For-Jobs_Simple.png"), x: 0.55, y: 2.5, w: 6.4, h: 3.11 });
-  s.addText("1 · Job Seeker applies — happy path", {
-    x: 0.55, y: 5.75, w: 6.4, h: 0.3,
-    fontFace: F_BODY, fontSize: 12.5, italic: true, color: C.muted,
-    align: "center", isTextBox: true,
-  });
-
-  s.addImage({ path: IMG("SD-Employer05-Review-Application_Simple.png"), x: 7.35, y: 1.25, w: 5.2, h: 4.47 });
-  s.addText("2 · Employer reviews → status transitions", {
-    x: 7.35, y: 5.75, w: 5.2, h: 0.3,
-    fontFace: F_BODY, fontSize: 12.5, italic: true, color: C.muted,
-    align: "center", isTextBox: true,
-  });
-
-  s.addNotes(
-    "Design, the round trip — ~1:30. These are the happy-path sequence diagrams, shown exactly as modeled before implementation (the guarded full versions are in the paper). Left: the seeker applies — controller → service → Prisma → 201, application created as SUBMITTED. Right: the employer works through three steps — list, mark UNDER_REVIEW, decide ACCEPTED or REJECTED. Every guard (401/403/404/409) was documented; for the slide we show only the flow you're about to see live."
+function slideSeekerFlow() {
+  diagramSlide(
+    "SYSTEM DESIGN — ROUND TRIP ①", 7, "The Job Seeker applies for a job",
+    "SD-JobSeeker01-Apply-For-Jobs_Simple.png", 2.056,
+    "Apply for a job — happy path, modeled before implementation",
+    "~0:40. Follow one request down the lifelines: Frontend → ApplicationController → ApplicationService → Prisma → Database, and back as 201 Created with the application stored as SUBMITTED. Same path as the architecture slide. Don't read every arrow; the demo shows it live."
   );
 }
 
-function slideDemo() {
-  const s = pptx.addSlide();
-  s.background = { color: C.bg };
-  streaks(s);
-  sectionLabel(s, "LIVE DEMO");
-  counter(s, 6);
-  title(s, "One application, end to end");
-
-  const cards = [
-    { t: "1 · Job Seeker", d: "search the right posting → apply with a saved resume → watch it land in My Applications" },
-    { t: "2 · Employer", d: "open the same posting → review the application → mark UNDER_REVIEW → decide ACCEPTED" },
-    { t: "3 · Both sides", d: "the status ripples back to the seeker's tracker — same browser, two roles" },
-  ];
-  const cw = 3.9, gap = 0.24;
-  cards.forEach((c, i) => {
-    const x = 0.55 + i * (cw + gap);
-    card(s, { x, y: 1.35, w: cw, h: 2.4 });
-    s.addShape(pptx.ShapeType.rect, {
-      x, y: 1.35, w: cw, h: 0.09,
-      fill: { color: C.red }, line: { type: "none" },
-    });
-    s.addText(c.t, {
-      x: x + 0.2, y: 1.6, w: cw - 0.4, h: 0.35,
-      fontFace: F_BODY, fontSize: 15, bold: true, color: C.ink, isTextBox: true,
-    });
-    s.addText(c.d, {
-      x: x + 0.2, y: 2.05, w: cw - 0.4, h: 1.5,
-      fontFace: F_BODY, fontSize: 12.5, color: C.muted, isTextBox: true,
-    });
-  });
-
-  s.addShape(pptx.ShapeType.rect, {
-    x: 0.55, y: 4.15, w: 12.18, h: 0.95,
-    fill: { color: C.panel }, line: { type: "none" },
-  });
-  s.addShape(pptx.ShapeType.rect, {
-    x: 0.55, y: 4.15, w: 0.1, h: 0.95,
-    fill: { color: C.red }, line: { type: "none" },
-  });
-  s.addText("Runs locally: apps/api on :3000 (Swagger at /docs) · apps/web on :5173 · seeded data — 3 companies, 12 postings, fixed accounts and passwords.", {
-    x: 0.95, y: 4.3, w: 11.5, h: 0.65,
-    fontFace: F_BODY, fontSize: 13, color: C.ink,
-    valign: "middle", isTextBox: true,
-  });
-
-  s.addText("Target: ~2 minutes · scripted and rehearsed · screenshot fallbacks ready", {
-    x: 0.55, y: 5.45, w: 12.18, h: 0.4,
-    fontFace: F_BODY, fontSize: 13, italic: true, color: C.muted,
-    align: "center", isTextBox: true,
-  });
-
-  s.addNotes(
-    "LIVE DEMO — 2:00 hard cap. Keep the clock; this slides into Q&A. Beat 1: as the seeded seeker (job-seeker account), search a term, open 'Backend Engineer', Apply with the pre-uploaded resume, show it appear in My Applications as SUBMITTED. Beat 2: switch to the employer account (hr@fptsoftware.demo), open the same posting, find the fresh application, mark UNDER_REVIEW, then ACCEPT — and flip back to the seeker view to show the status now reads ACCEPTED. That 'ripple' is the point of one platform. If time remains (optional 15s closer): try an admin action as the seeker and show the 403. Fallback on any failure: say 'here's what that looks like' and jump to the appendix screenshot slide you will add during rehearsal — do not linger, your buffer is only ~30s."
+function slideEmployerFlow() {
+  diagramSlide(
+    "SYSTEM DESIGN — ROUND TRIP ②", 8, "The Employer reviews and decides",
+    "SD-Employer05-Review-Application_Simple.png", 1.164,
+    "Review an application — happy path, modeled before implementation",
+    "~0:40. Three steps, top to bottom: the employer opens the posting's application list; marks one application under review; then records the decision (accepted). Each step goes through the same controller → service → Prisma path. This closes the round trip the seeker started on the previous slide."
   );
 }
 
 function slideTesting() {
-  const s = pptx.addSlide();
-  s.background = { color: C.bg };
-  streaks(s);
-  sectionLabel(s, "TESTING & RESULTS");
-  counter(s, 7);
-  title(s, "Every business rule is verified");
+  const s = newSlide("TESTING", 9, "How the backend is verified");
 
   const stats = [
-    { n: "89", l: "test cases", s2: "across 7 suites" },
-    { n: "0", l: "failures", s2: "entire suite in ~30 s" },
-    { n: "7", l: "integration files", s2: "one per actor + expiry sweep" },
+    { n: "89", l: "test cases, 0 failures", s2: "the whole suite runs in ~30 s" },
+    { n: "74", l: "integration tests", s2: "HTTP request → real PostgreSQL" },
+    { n: "15", l: "unit tests", s2: "the recommendation scoring, no database" },
   ];
   const cw = 3.9, gap = 0.24;
   stats.forEach((st, i) => {
     const x = 0.55 + i * (cw + gap);
-    card(s, { x, y: 1.3, w: cw, h: 1.8 });
+    card(s, { x, y: 1.35, w: cw, h: 1.8 });
     s.addText(st.n, {
-      x, y: 1.48, w: cw, h: 0.7,
+      x, y: 1.5, w: cw, h: 0.7,
       fontFace: F_HEAD, fontSize: 40, bold: true, color: C.red,
       align: "center", isTextBox: true,
     });
     s.addText(st.l, {
       x: x + 0.15, y: 2.22, w: cw - 0.3, h: 0.35,
-      fontFace: F_BODY, fontSize: 13.5, bold: true, color: C.ink,
+      fontFace: F_BODY, fontSize: 14, bold: true, color: C.ink,
       align: "center", isTextBox: true,
     });
     s.addText(st.s2, {
       x: x + 0.15, y: 2.6, w: cw - 0.3, h: 0.3,
-      fontFace: F_BODY, fontSize: 10.5, color: C.faint,
+      fontFace: F_BODY, fontSize: 11, color: C.faint,
       align: "center", isTextBox: true,
     });
   });
 
   bullets(s, [
-    "Real database, real migrations — the suite derives a dedicated _test DB and applies prisma migrate deploy before every run.",
-    "Requirements traceability — each business rule is mapped to its use case and its passing test (the matrix is in the paper).",
-  ], 0.55, 3.45, 12.2, 1.9, 14, 10);
+    "A separate _test database, built from the real migrations and emptied before every test.",
+    "Requirements traceability: each tested rule is mapped to its use case and its test (full matrix in the paper).",
+  ], 0.55, 3.45, 12.2, 1.4, 14, 8);
 
-  s.addShape(pptx.ShapeType.rect, {
-    x: 0.55, y: 5.5, w: 12.18, h: 0.95,
-    fill: { color: C.panel }, line: { type: "none" },
+  callout(s, 0.55, 5.0, 12.18, 1.55);
+  s.addText("NOT YET COVERED", {
+    x: 0.95, y: 5.12, w: 11.5, h: 0.3,
+    fontFace: F_BODY, fontSize: 12, bold: true, color: C.red,
+    charSpacing: 1.4, isTextBox: true,
   });
-  s.addShape(pptx.ShapeType.rect, {
-    x: 0.55, y: 5.5, w: 0.1, h: 0.95,
-    fill: { color: C.red }, line: { type: "none" },
-  });
-  s.addText("Honest limits: the React UI is verified manually; load and concurrency are not yet exercised.", {
-    x: 0.95, y: 5.65, w: 11.5, h: 0.65,
-    fontFace: F_BODY, fontSize: 13, italic: true, color: C.ink,
-    valign: "middle", isTextBox: true,
+  s.addText("The employer's application review, profile management and password reset have no automated tests yet; the React UI is checked by hand; no load or concurrency testing.", {
+    x: 0.95, y: 5.45, w: 11.5, h: 0.95,
+    fontFace: F_BODY, fontSize: 14, color: C.ink, valign: "top", isTextBox: true,
   });
 
   s.addNotes(
-    "Testing — ~1:00. Numbers first: 89 cases, 0 failures, ~30 seconds — and it's not mocked, it runs against a derived test database built from the real migrations. The requirements traceability table is the strongest evidence: rule ↔ use case ↔ passing test. Then say the honest sentence yourself before they can: the UI is verified manually, and there is no load testing yet — the paper says so and so do I. That defuses the Q&A."
+    "~0:50. Numbers, then how: real database, real migrations, reset before each test. Then say the gaps yourself before they ask; the paper lists them in the Results section. Be ready to open one test and explain it line by line (see qa-prep.md)."
   );
 }
 
 function slideConclusion() {
-  const s = pptx.addSlide();
-  s.background = { color: C.bg };
-  streaks(s);
-  sectionLabel(s, "CONCLUSION");
-  counter(s, 8);
-  title(s, "What I built, what I learned");
+  const s = newSlide("CONCLUSION", 10, "What I built, what I learned");
 
   s.addText("Contribution", {
     x: 0.55, y: 1.3, w: 6.0, h: 0.35,
     fontFace: F_BODY, fontSize: 16, bold: true, color: C.ink, isTextBox: true,
   });
   bullets(s, [
-    "A centralized platform spanning the recruitment round trip — application to decision — in one contract-first monorepo.",
-    "89 passing tests pin the business rules to their use cases; the docs and the code never fell out of step.",
-  ], 0.55, 1.8, 6.2, 2.4);
+    "A working platform for the recruitment round trip.",
+    "Simple job recommendations, ranked on the seeker's stated preferences.",
+    "89 passing tests, traced back to the use cases they verify.",
+  ], 0.55, 1.8, 6.2, 3.2, 14, 10);
 
   s.addText("What I learned", {
     x: 7.05, y: 1.3, w: 5.7, h: 0.35,
     fontFace: F_BODY, fontSize: 16, bold: true, color: C.ink, isTextBox: true,
   });
   const lessons = [
-    "The document loop keeps analysis and implementation honest.",
-    "Generated contracts eliminate drift between two codebases.",
-    "Backend-first builds the core that every UI talks to.",
+    "Writing surprises back keeps the documents and the code honest.",
+    "A generated contract removes drift between two codebases.",
+    "Backend-first builds the core that every screen depends on.",
   ];
   lessons.forEach((l, i) => {
-    const y = 1.8 + i * 0.85;
-    card(s, { x: 7.05, y, w: 5.7, h: 0.72, fill: C.panel, line: { type: "none" } });
+    const y = 1.8 + i * 0.95;
+    card(s, { x: 7.05, y, w: 5.7, h: 0.8, fill: C.panel, line: { type: "none" } });
     s.addShape(pptx.ShapeType.rect, {
-      x: 7.05, y, w: 0.09, h: 0.72,
+      x: 7.05, y, w: 0.09, h: 0.8,
       fill: { color: C.red }, line: { type: "none" },
     });
     s.addText(l, {
-      x: 7.35, y: y + 0.13, w: 5.25, h: 0.5,
-      fontFace: F_BODY, fontSize: 13, color: C.ink, isTextBox: true,
+      x: 7.35, y: y + 0.1, w: 5.25, h: 0.6,
+      fontFace: F_BODY, fontSize: 13.5, color: C.ink, valign: "middle", isTextBox: true,
     });
   });
 
-  s.addShape(pptx.ShapeType.rect, {
-    x: 0.55, y: 5.35, w: 12.18, h: 1.05,
-    fill: { color: C.panel }, line: { type: "none" },
-  });
-  s.addShape(pptx.ShapeType.rect, {
-    x: 0.55, y: 5.35, w: 0.1, h: 1.05,
-    fill: { color: C.red }, line: { type: "none" },
-  });
-  s.addText("Limitations owned: prototype, not deployed. Next: notifications · deployment & scale · mobile.", {
-    x: 0.95, y: 5.55, w: 11.5, h: 0.65,
-    fontFace: F_BODY, fontSize: 14, italic: true, color: C.ink,
-    valign: "middle", isTextBox: true,
+  callout(s, 0.55, 5.1, 12.18, 1.45);
+  s.addText([
+    { text: "Limitations: ", options: { bold: true } },
+    { text: "a prototype run locally (not deployed and used by real users, not load-tested).", options: { breakLine: true } },
+    { text: "Next: ", options: { bold: true } },
+    { text: "notifications · employer-applicant messaging · deployment & scale · a mobile app." },
+  ], {
+    x: 0.95, y: 5.22, w: 11.5, h: 1.2,
+    fontFace: F_BODY, fontSize: 14, color: C.ink,
+    valign: "middle", paraSpaceAfter: 6, isTextBox: true,
   });
 
   s.addNotes(
-    "Conclusion — ~1:00. Contribution in two lines; then the three lessons, deliberately personal (that's the 'what I learned' the committee is told to listen for). Close by owning the limits before they ask: prototype, not deployed; the future list — notifications, deployment and scale, mobile — shows where this goes. Land it and open for questions."
+    "~0:50. Contribution, then the three personal lessons, then the limitations — said before they ask. End with: 'Let me show you the platform.' and move straight to the demo."
+  );
+}
+
+function slideDemo() {
+  const s = newSlide("LIVE DEMO → Q&A", 11, "Live demo: one application, end to end");
+
+  const cards = [
+    { t: "1 · Job Seeker", d: "dashboard recommendations, each with its reason → open “Backend Engineer” → apply with a saved resume → SUBMITTED" },
+    { t: "2 · Employer", d: "open the same posting → find the new application → mark UNDER_REVIEW → ACCEPT" },
+    { t: "3 · Back to the seeker", d: "My Applications now reads ACCEPTED" },
+  ];
+  const cw = 3.9, gap = 0.24;
+  cards.forEach((c, i) => {
+    const x = 0.55 + i * (cw + gap);
+    card(s, { x, y: 1.4, w: cw, h: 2.6 });
+    s.addShape(pptx.ShapeType.rect, {
+      x, y: 1.4, w: cw, h: 0.09,
+      fill: { color: C.red }, line: { type: "none" },
+    });
+    s.addText(c.t, {
+      x: x + 0.2, y: 1.65, w: cw - 0.4, h: 0.35,
+      fontFace: F_BODY, fontSize: 16, bold: true, color: C.ink, isTextBox: true,
+    });
+    s.addText(c.d, {
+      x: x + 0.2, y: 2.1, w: cw - 0.4, h: 1.75,
+      fontFace: F_BODY, fontSize: 14, color: C.muted, valign: "top", isTextBox: true,
+    });
+  });
+
+  callout(s, 0.55, 4.35, 12.18, 0.95);
+  s.addText("Runs locally: API on :3000 (Swagger UI at /docs) · web app on :5173 · seeded data - 3 companies, 12 postings.", {
+    x: 0.95, y: 4.45, w: 11.5, h: 0.75,
+    fontFace: F_BODY, fontSize: 13.5, color: C.ink,
+    valign: "middle", isTextBox: true,
+  });
+
+  s.addText("Questions are welcome during the demo.", {
+    x: 0.55, y: 5.7, w: 12.18, h: 0.45,
+    fontFace: F_HEAD, fontSize: 20, italic: true, color: C.muted,
+    align: "center", isTextBox: true,
+  });
+
+  s.addNotes(
+    "The demo sits outside the 10-minute talk and bridges into Q&A. Follow demo-script.md. If a council member interrupts with a question, answer it: that is Q&A starting early. If anything breaks, switch to the screenshots and carry on."
   );
 }
 
@@ -564,25 +629,23 @@ function slideThankYou() {
     fontFace: F_BODY, fontSize: 19, color: C.muted,
     align: "center", isTextBox: true,
   });
-  s.addText("— or ask me to open the repo: Swagger UI lives at /docs on apps/api —", {
-    x: 0, y: 4.35, w: SW, h: 0.35,
-    fontFace: F_BODY, fontSize: 13, italic: true, color: C.faint,
-    align: "center", isTextBox: true,
-  });
-  s.addImage({ path: LOGO, x: (SW - 1.8) / 2, y: 5.05, w: 1.8, h: 1.8 / LOGO_A });
+  s.addImage({ path: LOGO, x: (SW - 1.8) / 2, y: 4.8, w: 1.8, h: 1.8 / LOGO_A });
   s.addNotes(
-    "Leave this on screen during Q&A. Expected themes: why 2 modules in depth, the contract-first choice, the state machines, testing limits, and deployment plans — each has a prepared answer."
+    "Leave on screen during Q&A. Prepared answers: qa-prep.md — especially Testing (card 6) and Recommendations (card 7)."
   );
 }
 
 slideTitle();
+slideAgenda();
 slideWhy();
+slideApproach();
 slideGoal();
 slideArch();
-slideDesign();
-slideDemo();
+slideSeekerFlow();
+slideEmployerFlow();
 slideTesting();
 slideConclusion();
+slideDemo();
 slideThankYou();
 
 const out = path.join(__dirname, "defense-deck.pptx");

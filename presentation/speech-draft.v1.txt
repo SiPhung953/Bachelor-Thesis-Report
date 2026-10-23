@@ -1,0 +1,50 @@
+10 mins presentation, 15 mins QnA
+
+Slide 1: Title page
+Before we start, I would like the teachers and the counsil member to have a copy of today's presentation. I'm hoping that the copy will allow for an easier ... [TODO: Figure out the sentence]
+
+Let's begin
+
+Hello teachers, friends and counsil members. My name is Phung Dam Tien Si. I'm here to present my defense on designing and implementing a full stack web recruitment platform for students and employers.
+
+Slide 2: Table of content (Currently missing)
+[
+The Table of content will show what the presentation CAN have these chapter
+1. Introduction
+2. Goal and Scope
+3. System design
+4. Implementation - Job Seeker and Employer
+5. Live demo
+6. Conclusion
+]
+
+In this presentation [Could be a redundant start of a sentence], I will discuss my process of learning, my decision throughout the project, the implementation of the platform specifically for 2 main actors, and finally the demo and conclusion after the project.
+
+Slide 3: Introduction - Why recruitment?
+
+Let's look at the recruitment statistic in Vietnam.
+- In 2024, our labor force is at approximately 52.9 million people.
+- Nationwide survey shows that 35% of Vietnamese professionals are job hunting. Yet the hiring process remain slow: Another survey shows that the time between the application being sent and the job offer was accepted is a staggering 44 days. [This statistic, feels like conveying the idea that "I am addressing this problem with my product", but in reality the product is only a simple recruitment platform with no AI CV/Resume scanning or Screening questions, so the process of checking the application by hand still persist]
+- The Job Seeker, in their attempt to quickly get a new job, would create multiple account on different platform. And the Employer would face a similar problem where they have to manage multiple platform, and then stitch together applications and decisions by hand.
+
+From my perspective, this is a problem of people not having a centralized platform for the hiring process. And so, I took upon the challenge to create such centralized recruitment platform.
+
+During my internship, my journey with this project begins with studying the fundamentals of Software Development Life Cycle. The implementation process begins with documenting the use case, implementing said use case and if there were any surprises along the way, I would document them back and implement it.
+
+My goal during the development is to learn the skill necessary for Backend Engineering career, hence, I spend my focus on implementing the backend first.
+
+Slide 5: Goal and Scope
+Moving on, I want to set the scope on what should be available.
+
+I devised 4 main actors of this platform, the Guest, Job Seeker, Employer and the Back-Office worker who will interact with the platform.
+
+I will be focusing on 2 important actors that are fundamentals to any recruitment platform: The Job Seeker who can Apply for job ; the Employer who can Manage the Job Postings.
+
+Slide 6: System Design - Architecture
+The recruitment platform itself have 3 containers: The Frontend, the Backend, and the Database
+
+[I'm not sure whether I should go in to the technical stacks]
+
+Slide 7: System Design - the round trip
+[This chapter/section should be devided in to 2 slides, each slides containing a sequence diagram for the chosen actor and their workflow]
+[Maybe this slide should go in to the Controller - Service design, instead of just showing the sequence diagram right away?]

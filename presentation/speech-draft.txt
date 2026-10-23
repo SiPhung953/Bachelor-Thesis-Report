@@ -1,0 +1,114 @@
+10 mins presentation (slides 1-10), then the live demo as the bridge into 15 mins QnA.
+Target pace: about 130 words per minute. Timings in [brackets] are cumulative.
+If you reach 10:00 before slide 10 is finished, skip to "Let me show you the platform" and start the demo.
+
+==================================================================
+Slide 1: Title                                              [0:00 → 0:30]
+==================================================================
+Before I begin, I've prepared a printed copy of the slides for each member of the council, so you can follow along and write down any questions as we go.
+
+(hand out the copies)
+
+Good morning, members of the council, teachers, and friends. My name is Phung Dam Tien Si, and today I will present my thesis: the design and implementation of a full-stack web recruitment platform for students and employers.
+
+==================================================================
+Slide 2: Outline                                            [0:30 → 0:45]
+==================================================================
+I'll start with why I chose recruitment and how I worked. Then I'll set the scope, walk through the design of the two main flows, show how the backend is tested, and conclude. I'll finish with a short live demo, which will lead us into the questions.
+
+==================================================================
+Slide 3: Introduction - Why recruitment?                    [0:45 → 1:55]
+==================================================================
+Let's start with the recruitment market in Vietnam.
+
+In 2024, our labour force was about 52.9 million people. A survey of Vietnamese professionals found that 35% of them were actively looking for a new job.
+
+One of the well-known recruitment platform is TopCV, they reported more than 8 million candidate profiles. Yet hiring is still slow and largely manual: a global survey of recruiters found that it takes 44 days on average from a job being posted to an offer being made.
+
+Part of that friction comes from fragmentation. A job seeker who wants to reach more jobs has to recreate the same profile and resume on every platform, then check each one separately. Employers face the same problem in reverse: they publish a posting, but then have to stitch the applications and their decisions together by hand.
+
+Of course, a platform alone can't make companies decide faster. That depends on people and processes. What software can remove is the scattered, repeated work around each application. That is the part I chose to take on: one platform where an application goes from submission to decision in one place.
+
+==================================================================
+Slide 4: Introduction - How I worked                        [1:55 → 2:35]
+==================================================================
+Building that kind of platform was new to me, so before writing any code I had to learn how to build software properly. That's where this project started.
+
+During my internship, I began with the fundamentals: I first studied the Software Development Life Cycle.
+
+Then I worked in a loop. For each group of use cases, such as the profile, the resume, or the job application, I first documented the use cases with their specifications and diagrams. Then I implemented them, backend first and frontend after. And whenever the implementation revealed something I had not planned, I wrote it back into the documentation as a new use case.
+
+I chose to build the backend first on purpose: my goal is to learn the skills for a Backend Engineering career, so I focused on the business rules first.
+
+==================================================================
+Slide 5: Goal and Scope                                     [2:35 → 3:20]
+==================================================================
+The platform has four actors. The Guest can search jobs without an account. The Job Seeker applies for jobs and tracks their applications, and also gets job recommendations based on the preferences they entered. The Employer manages a company and its job postings, and reviews the applications. And the Back-Office Worker moderates postings and manages users.
+
+In total, I built seven modules. In this thesis I focus on the two that every recruitment platform needs: Job Application, for the Job Seeker, and Employer Job Management, for the Employer. These two complete each other: the seeker applies, the employer decides. Together, they form what I call the recruitment round trip. The other modules are implemented and summarized in the paper.
+
+==================================================================
+Slide 6: System Design - Architecture                       [3:20 → 4:35]
+==================================================================
+The platform has three containers.
+The frontend is a React single-page application.
+The backend API is written in TypeScript with Express, and it holds every business rule.
+And the database is PostgreSQL, which the backend accesses through the Prisma ORM.
+
+The design decision I want to highlight is that the system is contract-first. On the backend, I annotate the controllers, and a tool called tsoa generates both the routes and an OpenAPI specification from them. The frontend's API client is then generated from that same specification. So if I change the shape of a response on the server, the types on the client change at the next build. The two sides cannot drift apart.
+
+Inside the backend, every request follows the same path: route, controller, service, then Prisma. The controller stays thin. The service owns the business rules, and it checks the caller's role again, even though the route already checked it. That is defense in depth.
+
+==================================================================
+Slide 7: Round trip 1 - The Job Seeker applies              [4:35 → 5:15]
+==================================================================
+Now the first half of the round trip. This is the sequence diagram I drew before implementing the Apply feature. You can see the same path as before: the controller, the application service, Prisma, and the database.
+
+Before the service creates an application, it checks four things: the posting is active, its deadline has not passed, the resume belongs to this seeker, and the seeker has not already applied to this posting. If everything is fine, the application is stored with the status SUBMITTED. If any check fails, the request is refused and nothing is written.
+
+==================================================================
+Slide 8: Round trip 2 - The Employer manages and decides    [5:15 → 6:05]
+==================================================================
+The second half belongs to the Employer.
+
+On the left is the lifecycle of a job posting. A new posting starts as PENDING_APPROVAL, and it only becomes ACTIVE after a moderator approves it. From there, the employer can close it, an hourly system sweep expires it when the deadline passes, or it can be deleted. If the employer edits a posting, it goes back to moderation.
+
+On the right is the application. The employer opens it and marks it UNDER_REVIEW, then decides: ACCEPTED or REJECTED. While it is still SUBMITTED, the seeker may withdraw it. Only the owner of the posting can move an application, and the service refuses any transition that is not on this diagram. The rules live in the backend, not in the user interface.
+
+==================================================================
+Slide 9: Testing                                            [6:05 → 6:55]
+==================================================================
+To verify the backend, I have 89 automated tests, and all of them pass. The whole suite runs in about 30 seconds.
+74 of them are integration tests: they send real HTTP requests to the API, which runs against a separate test database. That database is built from the same migrations as the real one and is emptied before every test, so nothing is mocked. The other 15 are unit tests for the recommendation scoring.
+In the paper, each tested rule is mapped to its use case in a traceability table.
+
+I also want to be clear about what is not covered yet. The employer's application review, profile management and password reset have no automated tests. The user interface is checked by hand, and there is no load testing.
+
+==================================================================
+Slide 10: Conclusion                                        [6:55 → 7:45]
+==================================================================
+To conclude. I built a working platform for the recruitment round trip, from application to decision, in one contract-first codebase, with explainable job recommendations and 89 passing tests.
+
+I learned three things. First, writing every surprise back into the documentation keeps the documents and the code honest. Second, a generated contract removes the drift between two codebases. And third, building the backend first gives every screen a solid core to depend on.
+
+The platform is still a prototype. It runs locally, it has not been deployed or used by real users, and it has not been load-tested. The next steps are notifications, messaging between employers and applicants, deployment and scaling, and a mobile app.
+
+Thank you for listening. Let me show you the platform.
+
+==================================================================
+Slide 11: Live demo → QnA                     (outside the 10 minutes)
+==================================================================
+Follow demo-script.md. Say this one line first:
+"Please feel free to ask questions while I go through it."
+
+Beat 1, Job Seeker: "Here is the seeker's dashboard. These jobs are recommended from the preferences the seeker entered, and each one says why it was recommended." Open "Backend Engineer", apply with the saved resume. "The application is now SUBMITTED."
+Beat 2, Employer: "Now I log in as the employer who owns that posting. Here is the application we just sent. I mark it under review... and accept it."
+Beat 3, back to the seeker: "And on the seeker's side, the status now reads ACCEPTED. One platform, one round trip."
+
+Then move to slide 12 and take the questions.
+
+==================================================================
+Slide 12: Thank you / QnA
+==================================================================
+"Thank you. I'm happy to take your questions."
+Prepared answers: qa-prep.md (Testing = card 6, Recommendations = card 7).
