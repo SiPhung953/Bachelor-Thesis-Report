@@ -59,7 +59,7 @@ Functional requirements are statements of the services a system should provide, 
 		Allows employers to create and maintain company information presented to prospective applicants. \\
 		\hline
 		
-		Job Posting Management &
+		Job Management &
 		Allows employers to create, edit, publish, close, and manage job postings throughout their recruitment lifecycle. \\
 		\hline
 		
@@ -135,7 +135,7 @@ As shown in Figure \ref{diagram:uc-guest}, guests can browse job postings, view 
 
 \subsubsection{Authenticated User Use Cases}
 
-Figure \ref{diagram:uc-authenticated} covers the functions common to all signed-in users: managing account information, changing the password, and logging out. Business-specific functions are introduced through the specialized actors in the next section.
+Figure \ref{diagram:uc-authenticated} covers the functions common to all signed-in users: managing account information, changing the password, viewing recommended jobs, and logging out. Business-specific functions are introduced through the specialized actors in the next section.
 
 \begin{figure}[H]
 	\centering
@@ -172,11 +172,11 @@ The Employer represents the organizations and recruiters who publish job posting
 	\label{diagram:uc-employer}
 \end{figure}
 
-Figure \ref{diagram:uc-employer} shows the Employer's capabilities, including Company Profile Management, Job Management, and Application Management. These use cases collectively support the complete recruitment lifecycle on the employer's side, from creating a company profile and managing job postings to reviewing and updating the status of received applications. This functionality constitutes the Employer Job Management module examined in this thesis.
+Figure \ref{diagram:uc-employer} shows the Employer's capabilities, including Company Profile Management, Job Management, and Application Management. These use cases collectively support the complete recruitment lifecycle on the employer's side, from creating a company profile and managing job postings to reviewing and updating the status of received applications. This functionality constitutes the Job Management module examined in this thesis.
 
 \subsubsection{Back Office Worker Use Cases}
 
-The Back Office Worker, consist of Employer and System Administrator, represents internal personnel responsible for maintaining platform integrity and ensuring that the recruitment platform operates correctly.
+The Back Office Worker, consists of Moderator and System Administrator, represents internal personnel responsible for maintaining platform integrity and ensuring that the recruitment platform operates correctly.
 
 \begin{figure}[H]
 	\centering
@@ -185,7 +185,7 @@ The Back Office Worker, consist of Employer and System Administrator, represents
 	\label{diagram:uc-back_office}
 \end{figure}
 
-Figure \ref{diagram:uc-back_office} show the Back Office Worker's capabilities, including Platform Moderation and User Management. These use cases highlight the supervisory tasks of the back office worker, from managing user's status, moderating job postings, and overseeing important system events through logs.
+Figure \ref{diagram:uc-back_office} shows the Back Office Worker's capabilities, including Platform Moderation and User Management. These use cases highlight the supervisory tasks of the back office worker, from managing user's status, moderating job postings, and overseeing important system events through logs.
 
 \section{Use Case Specification}
 
@@ -267,7 +267,7 @@ This subsection provides a detailed specification of the Apply for Job use case 
 \newpage
 \subsection{Employer: Publish Job Posting}
 
-This subsection provides a detailed specification of the Publish Job Posting use case identified in the Employer Job Management module.
+This subsection provides a detailed specification of the Publish Job Posting use case identified in the Job Management module.
 
 \begin{usecasespectable}
 	{Use Case Specification: Publish Job Posting.}
@@ -332,7 +332,7 @@ This subsection provides a detailed specification of the Publish Job Posting use
 \newpage
 \subsection{Employer: Review Application}
 
-This subsection provides a detailed specification of the Review Application use case identified in the Employer Job Management module.
+This subsection provides a detailed specification of the Review Application use case identified in the Recruitment Management module.
 
 \begin{usecasespectable}
 	{Use Case Specification: Review Application.}
