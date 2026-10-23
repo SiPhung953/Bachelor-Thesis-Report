@@ -31,7 +31,7 @@ sequenceDiagram
     participant PrismaClient as «persistence»<br/>: PrismaClient
     participant Database as «database»<br/>: Database
 
-    Employer->>FrontendUI: 1 : Open the posting's application list
+    Employer->>+FrontendUI: 1 : Open the posting's application list
     FrontendUI->>+EmployerApplicationController: 2 : getJobApplications(jobId) with JWT
     EmployerApplicationController->>+EmployerApplicationService: 3 : getJobApplications(userId, jobId)
     EmployerApplicationService->>+PrismaClient: 4 : findApplicationsByJobId(jobId)
