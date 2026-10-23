@@ -279,10 +279,10 @@ This subsection provides a detailed specification of the Publish Job Posting use
 
 	Primary Actor & Employer \\ \hline
 
-	Goal & Publish a job posting for potential applicants. \\ \hline
+	Goal & Submit a job posting for moderation so it can be published to potential applicants. \\ \hline
 
 	Description &
-	Allows an Employer to create and publish a new job posting.
+	Allows an Employer to create a new job posting and submit it for moderation. The posting becomes publicly visible only after a moderator approves it.
 	\\ \hline
 
 	Preconditions &
@@ -323,7 +323,7 @@ This subsection provides a detailed specification of the Publish Job Posting use
 	Postconditions &
 	\begin{itemize}
 		\item A job posting with status \texttt{PENDING\_APPROVAL} is stored.
-		\item The posting is hidden from public search until approved.
+		\item The posting is hidden from public search until approved by a moderator.
 	\end{itemize}
 	\\ \hline
 
