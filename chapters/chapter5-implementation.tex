@@ -12,9 +12,9 @@ This chapter describes how the design presented in Chapter~\ref{chapter:system-d
 
 \section{Overview}
 
-The design in Chapter \ref{chapter:system-design} is implemented as a pnpm \cite{pnpm_docs} monorepo with two applications. The backend, \texttt{apps/api}, is a Node.js/Express service written in TypeScript: it uses Prisma for database access and tsoa \cite{tsoa_docs} to generate both the OpenAPI \cite{openapi_spec} specification and the route handlers from annotated controllers. The frontend, \texttt{apps/web}, is a React single-page application built with Vite \cite{vite_docs} and TypeScript. It uses the generated OpenAPI client for all API calls, Tailwind CSS with shadcn/ui components for styling, and React Router \cite{reactrouter_docs} for navigation.
+The design in Chapter \ref{chapter:system-design} is implemented as a pnpm \cite{pnpm_docs} monorepo with two applications. The backend, \texttt{apps/api}, is a Node.js/Express service written in TypeScript: it uses Prisma for database access and tsoa \cite{tsoa_docs} to generate both the OpenAPI \cite{openapi_spec} specification and the route handlers from annotated controllers. The frontend, \texttt{apps/web}, is a React SPA built with Vite \cite{vite_docs} and TypeScript. It uses the generated OpenAPI client for all API calls, Tailwind CSS with shadcn/ui components for styling, and React Router \cite{reactrouter_docs} for navigation.
 
-The two applications exchange data exclusively over REST: the API exposes JSON endpoints and the web client calls them through generated functions whose request and response types match the backend DTOs. Because the client is regenerated from the backend's OpenAPI specification, a change to a response type on the server is reflected in the client at the next build instead of drifting silently.
+The two applications exchange data exclusively over REST: the API exposes JSON endpoints and the web client calls them through generated functions whose request and response types match the backend data transfer objects (DTOs). Because the client is regenerated from the backend's OpenAPI specification, a change to a response type on the server is reflected in the client at the next build instead of drifting silently.
 
 \subsection{Request Pipeline}
 

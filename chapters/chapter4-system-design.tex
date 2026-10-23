@@ -23,7 +23,7 @@ The design follows a small set of guiding principles, each addressing one or mor
 		\hline
 		
 		Layered Architecture &
-		Separates presentation, API, business logic, and data access concerns, improving maintainability and testability \cite{fowler2002peaa}. \\
+		Separates presentation, application programming interface (API), business logic, and data access concerns, improving maintainability and testability \cite{fowler2002peaa}. \\
 		\hline
 		
 		Feature-Oriented Modular Design &
@@ -78,12 +78,12 @@ The Container diagram decomposes the system into its major deployable units and 
 As illustrated in Figure~\ref{diagram:c2-container}, the system consists of three containers:
 
 \begin{itemize}
-	\item The Frontend Web App is a React \cite{react_docs} single-page application that renders the user interface.
-	\item The Backend API is a Node.js/Express service \cite{nodejs_docs, express_docs}, built with TypeScript \cite{typescript_docs} and Prisma ORM \cite{prisma_docs}, that implements all business logic and exposes it as a REST API, following the Representational State Transfer architectural style \cite{fielding2000rest}.
+	\item The Frontend Web App is a React \cite{react_docs} single-page application (SPA) that renders the user interface (UI).
+	\item The Backend API is a Node.js/Express service \cite{nodejs_docs, express_docs}, built with TypeScript \cite{typescript_docs} and the Prisma object-relational mapping (ORM) library \cite{prisma_docs}, that implements all business logic and exposes it as a Representational State Transfer (REST) API \cite{fielding2000rest}.
 	\item The Database is a PostgreSQL \cite{postgresql_docs} instance that persists user accounts, job postings, applications, and other platform data.
 \end{itemize}
 
-The Frontend communicates with the Backend over HTTPS \cite{rfc9110} using JSON \cite{rfc8259}, and the Backend communicates with the Database using SQL through Prisma.
+The Frontend communicates with the Backend over Hypertext Transfer Protocol Secure (HTTPS) \cite{rfc9110} using JavaScript Object Notation (JSON) \cite{rfc8259}, and the Backend communicates with the Database using Structured Query Language (SQL) through Prisma.
 
 \subsection{Component View: Frontend}
 The Frontend component diagram decomposes the Frontend Web App container into its internal building blocks.
@@ -99,7 +99,7 @@ As shown in Figure~\ref{diagram:c3-frontend}, the feature components are organiz
 
 Two shared components support the feature layers. The Application Shell and Router manages navigation and role-based access, while the Shared UI Kit provides reusable interface elements and common loading and error states.
 
-Every feature component communicates with the backend exclusively through a centralized API Client, a generated SDK that wraps REST calls, injects the Bearer token, handles 401 interception, and parses responses. No feature component makes direct HTTP requests; the API Client is the single outbound integration point.
+Every feature component communicates with the backend exclusively through a centralized API Client, a generated software development kit (SDK) that wraps REST calls, injects the Bearer token, handles 401 interception, and parses responses. No feature component makes direct Hypertext Transfer Protocol (HTTP) requests; the API Client is the single outbound integration point.
 
 \subsection{Component View: Backend}
 The Backend component diagram decomposes the Backend API container into functional components that implement the platform's business capabilities.
@@ -122,7 +122,7 @@ All components access PostgreSQL through a single Prisma Client instance, provid
 The database design defines how the system's persistent data is organized and managed. It identifies the main business entities, their relationships, and the constraints that ensure data consistency. The design follows the principles introduced in Section~\ref{c4:section:design-overview}, particularly data integrity, by using a normalized relational schema with clearly defined primary and foreign key relationships \cite{codd1970relational}.
 
 \subsection{Entity Relationship Overview}
-Figure~\ref{diagram:erd-overview} presents an overview of the complete database schema used by the platform as an entity-relationship diagram \cite{chen1976er}. To improve readability, the overview diagram includes the primary entities, key attributes, and relationships while omitting system-generated fields such as timestamps and audit metadata.
+Figure~\ref{diagram:erd-overview} presents an overview of the complete database schema used by the platform as an entity-relationship diagram (ERD) \cite{chen1976er}. To improve readability, the overview diagram includes the primary entities, key attributes, and relationships while omitting system-generated fields such as timestamps and audit metadata.
 
 \begin{figure}[H]
 	\centering
@@ -198,7 +198,7 @@ Table~\ref{tab:backend-folders} summarizes the purpose of each top-level entry.
 		\hline
 		
 		authentication.ts &
-		Implements \texttt{expressAuthentication} for tsoa: verifies the JWT on protected routes and rejects banned accounts. \\
+		Implements \texttt{expressAuthentication} for tsoa: verifies the JSON Web Token (JWT) on protected routes and rejects banned accounts. \\
 		\hline
 		
 		api-external &
@@ -245,7 +245,7 @@ Table~\ref{tab:backend-folders} summarizes the purpose of each top-level entry.
 A small set of reusable infrastructure components is shared across all business modules, avoiding duplication and ensuring consistent behavior.
 
 \begin{itemize}
-	\item JWT Authentication: issues and verifies signed JSON Web Tokens \cite{rfc7519} carrying the user's identifier and role, and is enforced through the \texttt{expressAuthentication} hook on protected routes.
+	\item JWT Authentication: issues and verifies signed JWTs \cite{rfc7519} carrying the user's identifier and role, and is enforced through the \texttt{expressAuthentication} hook on protected routes.
 	\item Role Guards: helpers such as \texttt{assertJobSeeker} and \texttt{assertEmployer} reject requests from users who lack the required role, applied as the first step of every service method. The guards are always paired with the tsoa \texttt{@Security} decorator to form defense in depth, a strategy of layering several independent safeguards so that a failure in one is caught by another \cite{nist2020sp80053}.
 	\item HttpError: a uniform error type carrying an HTTP status and message, translated into the proper JSON error response.
 	\item Prisma Client: the generated ORM client, instantiated once in \texttt{lib/prisma.ts} and imported by services for all database access.
@@ -315,7 +315,7 @@ Company Profile Management takes no company identifier in its operations because
 \section{Frontend Design}
 \label{c4:section:frontend-design}
 
-The frontend is a React single-page application. Pages are grouped in feature folders that mirror the backend module structure, so a feature can be traced end to end.
+The frontend is a React SPA. Pages are grouped in feature folders that mirror the backend module structure, so a feature can be traced end to end.
 
 \subsection{Frontend Structure and Shared Components}
 \label{c4:subsection:frontend-structure}
