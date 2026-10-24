@@ -270,11 +270,11 @@ Figure~\ref{diagram:class-job-application} presents the class diagram of the Job
 \end{figure}
 
 \subsubsection{Design Explanation}
-Following the thin controller, rich service principle, ApplicationController exposes three REST endpoints and delegates each directly to a matching ApplicationService method, without containing business logic itself. This separation keeps HTTP adaptation concerns - request parsing, response shaping, and error mapping - distinct from the business rules that determine how an application can be created, listed, or withdrawn.
+Following the thin controller, rich service principle, \texttt{ApplicationController} exposes three REST endpoints and delegates each directly to a matching \texttt{ApplicationService} method, without containing business logic itself. This separation keeps HTTP adaptation concerns - request parsing, response shaping, and error mapping - distinct from the business rules that determine how an application can be created, listed, or withdrawn.
 
-ApplicationService is the only class in the module that owns business logic and the only class that accesses the database, doing so through the shared Prisma Client. It operates on the User, Job, Resume, and Application entities whose relationships are detailed in Figure~\ref{diagram:erd-job-application}. The service depends on two shared infrastructure components: AssertRole, and AuditLogger. These components are documented in Section~\ref{c4:subsection:shared-backend-components}.
+\texttt{ApplicationService} is the only class in the module that owns business logic and the only class that accesses the database, doing so through the shared Prisma Client. It operates on the User, Job, Resume, and Application entities whose relationships are detailed in Figure~\ref{diagram:erd-job-application}. The service depends on two shared infrastructure components: \texttt{AssertRole}, and \texttt{AuditLogger}. These components are documented in Section~\ref{c4:subsection:shared-backend-components}.
 
-Authentication and role authorization are enforced at two levels. At the controller boundary, tsoa's \texttt{@Security("jwt", ["JOB\_SEEKER"])} decorator causes the framework to verify the JWT and confirm the caller's role before the controller method is entered. The service then re-asserts the same role via AssertRole, providing defense in depth: business methods remain protected regardless of how they are invoked. Each service method corresponds to a single use case described in Chapter~\ref{chapter:system-analysis}.
+Authentication and role authorization are enforced at two levels. At the controller boundary, tsoa's \texttt{@Security("jwt", ["JOB\_SEEKER"])} decorator causes the framework to verify the JWT and confirm the caller's role before the controller method is entered. The service then re-asserts the same role via \texttt{AssertRole}, providing defense in depth: business methods remain protected regardless of how they are invoked. Each service method corresponds to a single use case described in Chapter~\ref{chapter:system-analysis}.
 
 \subsection{Employer Job Management Module}
 \label{c4:subsection:employer-job-module}
@@ -305,9 +305,15 @@ Figures~\ref{diagram:class-company-profile}, \ref{diagram:class-job-posting}, an
 \end{figure}
 
 \subsubsection{Design Explanation}
-The Employer Job Management Module is decomposed into three cohesive controller and service pairs, each owning a distinct subdomain of the employer workflow. EmployerCompanyController and EmployerCompanyService handle company profile management; JobManagementController and JobManagementService manage the lifecycle of job postings; and EmployerApplicationController and EmployerApplicationService cover the review of incoming applications. This separation keeps each pair focused on a single business concern and allows it to evolve independently.
+The Employer Job Management Module is decomposed into three cohesive controller and service pairs, each owning a distinct subdomain of the employer workflow.
+\begin{itemize}
+	\item \texttt{EmployerCompanyController} and \texttt{EmployerCompanyService} handle company profile management.
+	\item \texttt{JobManagementController} and \texttt{JobManagementService} manage the lifecycle of job postings.
+	\item \texttt{EmployerApplicationController} and \texttt{EmployerApplicationService} cover the review of incoming applications.
+\end{itemize}
+This separation keeps each pair focused on a single business concern and allows it to evolve independently.
 
-Across all three pairs the same structural pattern is applied: each controller is annotated with tsoa's \texttt{@Security("jwt", ["EMPLOYER"])} decorator at the class level, while exposing REST endpoints and delegating each directly to a matching service method. Each service is the sole owner of business rules and the only class in its pair that accesses the database through the shared Prisma Client. Every service method depends on AssertRole and AuditLogger, which are described in Section~\ref{c4:subsection:shared-backend-components}.
+Across all three pairs the same structural pattern is applied: each controller is annotated with tsoa's \texttt{@Security("jwt", ["EMPLOYER"])} decorator at the class level, while exposing REST endpoints and delegating each directly to a matching service method. Each service is the sole owner of business rules and the only class in its pair that accesses the database through the shared Prisma Client. Every service method depends on \texttt{AssertRole} and \texttt{AuditLogger}, which are described in Section~\ref{c4:subsection:shared-backend-components}.
 
 Company Profile Management takes no company identifier in its operations because the employer-company relationship is one-to-one: the owning employer is resolved from the authenticated user. Job Posting Management's own methods can only move a posting into \texttt{PENDING\_APPROVAL}, \texttt{CLOSED}, or \texttt{DELETED}, so a posting cannot become publicly visible without first passing through this external moderation gate. Employer Application Management exposes operations for the employer-driven status transitions that complement the job-seeker-initiated \texttt{SUBMITTED} and \texttt{WITHDRAWN} transitions defined in the Job Application Module. Together the three pairs implement the complete round trip of a recruitment event studied in Chapter~\ref{chapter:system-analysis}.
 
@@ -320,7 +326,7 @@ The frontend is a React SPA. Pages are grouped in feature folders that mirror th
 \subsection{Frontend Structure and Shared Components}
 \label{c4:subsection:frontend-structure}
 
-Each feature module under \texttt{ui-external/} follows the same internal shape: page-level components sit directly in the module's folder, and any component used only within that module is placed in a nested \texttt{components/} folder beneath it.
+Each feature module under \texttt{ui-external/} follows the same internal shape: page-level components sit directly in the module's folder, and any component used only within that module is placed in a nested \texttt{components/} folder beneath it. For example, the Job Application module is organized as follows:
 
 \dirtree{%
 	.1 ui-external/applications.
