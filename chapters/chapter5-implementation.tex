@@ -72,11 +72,11 @@ The module lives in \texttt{api-external/job-application/} and exposes the endpo
 		\hline
 		\textbf{Endpoint} & \textbf{Purpose} \\
 		\hline
-		POST /applications & Submit an application for a job using a chosen resume. \\
+		POST \path{/applications} & Submit an application for a job using a chosen resume. \\
 		\hline
-		GET /applications/my & List the caller's applications with job and company summary. \\
+		GET \path{/applications/my} & List the caller's applications with job and company summary. \\
 		\hline
-		PATCH /applications/\{id\}/withdraw & Withdraw a submitted application. \\
+		PATCH \path{/applications/{id}/withdraw} & Withdraw a submitted application. \\
 		\hline
 	\end{tabular}
 \end{table}
@@ -151,11 +151,11 @@ The company controller is mounted at \texttt{/employer/company} and exposes the 
 		\hline
 		\textbf{Endpoint} & \textbf{Purpose} \\
 		\hline
-		GET /employer/company & View the caller's own company profile. \\
+		GET \path{/employer/company} & View the caller's own company profile. \\
 		\hline
-		POST /employer/company & Create the caller's company profile. \\
+		POST \path{/employer/company} & Create the caller's company profile. \\
 		\hline
-		PATCH /employer/company & Update the caller's company profile. \\
+		PATCH \path{/employer/company} & Update the caller's company profile. \\
 		\hline
 	\end{tabular}
 \end{table}
@@ -193,19 +193,19 @@ The endpoints in Table~\ref{tab:job-posting-endpoints} implement the full lifecy
 		\hline
 		\textbf{Endpoint} & \textbf{Purpose} \\
 		\hline
-		GET /employer/jobs & List the employer's postings, newest first. \\
+		GET \path{/employer/jobs} & List the employer's postings, newest first. \\
 		\hline
-		GET /employer/jobs/\{id\} & Detail of one owned posting. \\
+		GET \path{/employer/jobs/{id}} & Detail of one owned posting. \\
 		\hline
-		POST /employer/jobs & Create a posting (status \texttt{PENDING\_APPROVAL}). \\
+		POST \path{/employer/jobs} & Create a posting (status \texttt{PENDING\_APPROVAL}). \\
 		\hline
-		PATCH /employer/jobs/\{id\} & Edit a posting; resets it to \texttt{PENDING\_APPROVAL}. \\
+		PATCH \path{/employer/jobs/{id}} & Edit a posting; resets its status to \texttt{PENDING\_APPROVAL}. \\
 		\hline
-		PATCH /employer/jobs/\{id\}/close & Close an \texttt{ACTIVE} posting. \\
+		PATCH \path{/employer/jobs/{id}/close} & Close an \texttt{ACTIVE} posting. \\
 		\hline
-		PATCH /employer/jobs/\{id\}/reopen & Re-open a \texttt{CLOSED} posting. \\
+		PATCH \path{/employer/jobs/{id}/reopen} & Re-open a \texttt{CLOSED} posting. \\
 		\hline
-		PATCH /employer/jobs/\{id\}/delete & Soft-delete a posting. \\
+		PATCH \path{/employer/jobs/{id}/delete} & Soft-delete a posting. \\
 		\hline
 	\end{tabular}
 \end{table}
@@ -260,13 +260,13 @@ The endpoints in Table~\ref{tab:employer-application-endpoints} close the loop o
 		\hline
 		\textbf{Endpoint} & \textbf{Purpose} \\
 		\hline
-		GET /employer/jobs/\{id\}/applications & List applications received by a posting. \\
+		GET \path{/employer/jobs/{id}/applications} & List applications received by a posting. \\
 		\hline
-		GET /employer/applications/\{id\} & Full detail of one application (candidate and resume). \\
+		GET \path{/employer/applications/{id}} & Full detail of one application (candidate and resume). \\
 		\hline
-		PATCH /employer/applications/\{id\}/under-review & Move \texttt{SUBMITTED} to \texttt{UNDER\_REVIEW}. \\
+		PATCH \path{/employer/applications/{id}/under-review} & Move \texttt{SUBMITTED} to \texttt{UNDER\_REVIEW}. \\
 		\hline
-		PATCH /employer/applications/\{id\}/status & Accept or reject an application under review. \\
+		PATCH \path{/employer/applications/{id}/status} & Accept or reject an application under review. \\
 		\hline
 	\end{tabular}
 \end{table}
