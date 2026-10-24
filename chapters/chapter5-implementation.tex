@@ -14,7 +14,7 @@ This chapter describes how the design presented in Chapter~\ref{chapter:system-d
 
 The design in Chapter \ref{chapter:system-design} is implemented as a pnpm \cite{pnpm_docs} monorepo, a single version-controlled repository that holds several related projects \cite{potvin2016monorepo}, in this case two applications. The backend, \texttt{apps/api}, is a Node.js/Express service written in TypeScript: it uses Prisma for database access and tsoa \cite{tsoa_docs} to generate both the OpenAPI \cite{openapi_spec} specification and the route handlers from annotated controllers. The frontend, \texttt{apps/web}, is a React SPA built with Vite \cite{vite_docs} and TypeScript. It uses the generated OpenAPI client for all API calls, Tailwind CSS with shadcn/ui components for styling, and React Router \cite{reactrouter_docs} for navigation.
 
-The two applications exchange data exclusively over REST: the API exposes JSON endpoints and the web client calls them through generated functions whose request and response types match the backend data transfer objects (DTOs). Because the client is regenerated from the backend's OpenAPI specification, a change to a response type on the server is reflected in the client at the next build instead of drifting silently.
+The two applications exchange data exclusively over REST: the API exposes JSON endpoints and the web client calls them through generated functions whose request and response types match the backend data transfer objects (DTOs). Because the client is regenerated from the backend's OpenAPI specification, a change to a response type on the server is reflected in the client at the next build.
 
 \subsection{Request Pipeline}
 
@@ -25,8 +25,8 @@ HTTP request
   -> generated/routes.ts        (tsoa-generated route table)
   -> Controller                 (tsoa decorators; routing + status codes)
   -> Service                    (business rules; owns all Prisma access)
-  -> Prisma Client              (SQL)
-  -> PostgreSQL
+  -> Prisma Client              (generated typed queries, translated to SQL)
+  -> PostgreSQL                 (executes the SQL)
 \end{verbatim}
 
 tsoa reads the \texttt{@Route}, \texttt{@Get}/\texttt{@Post}/\texttt{@Patch}, and \texttt{@Security} decorators on each controller and emits \texttt{routes.ts} plus \texttt{swagger.json}. The \texttt{@Security("jwt", [role])} decorator marks an endpoint as protected and declares the required scope; at runtime, tsoa calls \texttt{expressAuthentication}, implemented in \texttt{authentication.ts}, which verifies the JWT, rejects banned accounts, and attaches the authenticated user as \texttt{currentUser} on the request. The service then re-checks the role itself as defense in depth.
@@ -57,6 +57,8 @@ Services raise a uniform \texttt{HttpError(status, message)}; a global error han
 \end{table}
 
 \section{Backend Implementation}
+
+This section describes how the two featured modules are realized in the backend. Each module follows the request pipeline described above: controllers handle routing and status codes, while services enforce the business rules from the use case specifications before any data is written.
 
 \subsection{Job Application Module}
 
