@@ -15,10 +15,10 @@ This chapter reports how the implementation described in Chapter~\ref{chapter:im
 The system's defining property is what it refuses to do, not what it does correctly: most use cases in Chapter~\ref{chapter:system-analysis} are constraints, such as an Employer managing only their own postings or a posting becoming visible only after moderation. A suite that exercised only the successful path would therefore prove little, since it would never attempt what the specification forbids. This follows the long-standing testing principle that test cases must be written for invalid and unexpected input conditions as well as valid ones \cite{myers2011testing}. Negative cases carry the evidential weight, and are cheap to add once a fixture exists.
 
 Testing is concentrated at two levels, distinguishing tests of individual units in isolation from tests of units combined into a working whole \cite{myers2011testing}.
-
-\paragraph{Unit tests} cover the recommendation algorithm described in Section~\ref{chapter:implementation}. \texttt{scoreJob} is a pure function over plain objects, so its tests need no database, no HTTP layer and no fixtures; every input is visible in the test itself. This makes the algorithm's behaviour reproducible from the text of the test alone.
-
-\paragraph{Integration tests} drive the real Express application through its HTTP interface, exercising the full request pipeline --- route table, controller, service, Prisma, PostgreSQL --- against a real database. This is the level at which business rules actually live, since the services own every rule and every database access.
+\begin{itemize}
+	\item \textbf{Unit tests}: cover the recommendation algorithm described in Section~\ref{chapter:implementation}. \texttt{scoreJob} is a pure function over plain objects, so its tests need no database, no HTTP layer and no fixtures; every input is visible in the test itself. This makes the algorithm's behaviour reproducible from the text of the test alone.
+	\item \textbf{Integration tests}: drive the real Express application through its HTTP interface, exercising the full request pipeline against a real database. This is the level at which business rules actually live, since the services own every rule and every database access.
+\end{itemize}
 
 \section{Test Environment}
 
@@ -26,11 +26,11 @@ The suite uses Vitest \cite{vitest_docs} as the test runner and supertest \cite{
 
 Three properties of the environment are worth recording, since each affects whether the results can be trusted.
 
-\textbf{The test database is derived, not configured.} The connection string is computed by appending the suffix \texttt{\_test} to the application's own \texttt{DATABASE\_URL}, so the database \texttt{mydb} yields \texttt{mydb\_test}. The derivation is a safety measure rather than a convenience: the suite truncates every table before each test case, so a manually configured connection string pointing at the development database would destroy it.
-
-\textbf{The schema is built from the migrations.} Before the suite runs, \texttt{prisma migrate deploy} creates the test database and applies every migration in sequence. The tests therefore run against the same schema a deployment would produce, so a defective migration fails here rather than in production.
-
-\textbf{Each test case begins from an empty database.} Every table is truncated and the three role records re-inserted before each case, so a test can never pass or fail depending on what an earlier test left behind. For the same reason, test files run sequentially rather than in parallel, since they share one database.
+\begin{itemize}
+	\item \textbf{The test database is derived, not configured.} The connection string is computed by appending the suffix \texttt{\_test} to the application's own \texttt{DATABASE\_URL}, so the database \texttt{mydb} yields \texttt{mydb\_test}. The derivation is a safety measure rather than a convenience: the suite truncates every table before each test case, so a manually configured connection string pointing at the development database would destroy it.
+	\item \textbf{The schema is built from the migrations.} Before the suite runs, \texttt{prisma migrate deploy} creates the test database and applies every migration in sequence. The tests therefore run against the same schema a deployment would produce, so a defective migration fails here rather than in production.
+	\item \textbf{Each test case begins from an empty database.} Every table is truncated and the three role records re-inserted before each case, so a test can never pass or fail depending on what an earlier test left behind. For the same reason, test files run sequentially rather than in parallel, since they share one database.
+\end{itemize}
 
 Fixtures create database rows and issue authentication tokens directly rather than through the registration and login endpoints, so a test fails only when the behaviour it targets is actually broken, not because an unrelated setup endpoint has a defect. Those setup flows are covered by their own tests.
 
@@ -234,13 +234,10 @@ The second is account banning. A ban must take effect on the access token the us
 \section{Limitations}
 
 The following were not covered by automated testing, and are recorded here rather than left implicit.
-
-\textbf{The UI is untested.} No automated test exercises the React application. Interface behaviour was verified manually.
-
-\textbf{Several use cases have no automated coverage.} These are UC-AUTH-04 (Forgot Password), UC-PROFILE-01 to UC-PROFILE-06, UC-EMP-00 (Create Company Profile), UC-EMP-06 to UC-EMP-08 (application review and status updates) and UC-ADMIN-03 (View Users). The password-reset flow was excluded deliberately, since testing it would require dispatching real electronic mail; the remainder were omitted for reasons of time.
-
-\textbf{File upload is not exercised end to end.} Fixtures create CV records directly without writing files to disk, so the storage layer is not covered.
-
-\textbf{Concurrency and load were not tested.} Every test runs against a single-user database with no contention, so behaviour under simultaneous access is unverified.
-
-\textbf{Only status codes are asserted, not error bodies.} The application registers no error-handling middleware, so errors are rendered by the framework's default handler rather than as structured responses. There is consequently no error contract for the tests to verify.
+\begin{itemize}
+	\item \textbf{The UI is untested}: No automated test exercises the React application. Interface behaviour was verified manually.
+	\item \textbf{Several use cases have no automated coverage}: These are UC-AUTH-04 (Forgot Password), UC-PROFILE-01 to UC-PROFILE-06, UC-EMP-00 (Create Company Profile), UC-EMP-06 to UC-EMP-08 (application review and status updates) and UC-ADMIN-03 (View Users). The password-reset flow was excluded deliberately, since testing it would require dispatching real electronic mail; the remainder were omitted for reasons of time.
+	\item \textbf{File upload is not exercised end to end}: Fixtures create CV records directly without writing files to disk, so the storage layer is not covered.
+	\item \textbf{Concurrency and load were not tested}: Every test runs against a single-user database with no contention, so behaviour under simultaneous access is unverified.
+	\item \textbf{Only status codes are asserted, not error bodies}: The application registers no error-handling middleware, so errors are rendered by the framework's default handler rather than as structured responses. There is consequently no error contract for the tests to verify.
+\end{itemize}
